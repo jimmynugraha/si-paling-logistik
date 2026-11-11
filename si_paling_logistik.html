@@ -1,0 +1,3101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Si Paling Logistik - Sistem Operasional EDC & HUB</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- JsBarcode CDN untuk Barcode Nota -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  
+  <!-- SheetJS CDN untuk Ekspor Excel (.xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    /* Sembunyikan scrollbar untuk navigasi horizontal yang rapi */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- ================= LAYAR LOGIN ================= -->
+  <div id="loginShell" class="min-h-screen flex items-center justify-center p-4 bg-slate-900 bg-radial from-slate-800 to-slate-950">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30 text-2xl">
+          <i class="fa-solid fa-boxes-packing"></i>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Si Paling Logistik</h1>
+        <p class="text-xs text-slate-400 font-semibold mt-1">Portal Operasional EDC & Sparepart</p>
+      </div>
+
+      <!-- Pesan Notifikasi Login -->
+      <div id="loginAlert" class="hidden mb-4 p-3 rounded-xl text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+        <span id="loginAlertText">User ID atau password tidak valid!</span>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">User ID</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-user text-sm"></i>
+            </span>
+            <input type="text" id="loginUserId" required placeholder="Masukkan User ID" 
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-lock text-sm"></i>
+            </span>
+            <input type="password" id="loginPassword" required placeholder="••••••••" 
+              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          </div>
+        </div>
+
+        <button type="submit" 
+          class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-lg shadow-blue-500/25 active:scale-98 transition flex items-center justify-center gap-2">
+          <span>Masuk ke Sistem</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= LAYAR UTAMA APLIKASI ================= -->
+  <div id="appShell" class="hidden min-h-screen flex flex-col">
+    <!-- Header Utama -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <!-- Logo & Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-boxes-packing"></i>
+          </div>
+          <div>
+            <h1 class="font-black text-slate-800 text-sm sm:text-base leading-tight">Si Paling Logistik</h1>
+            <div class="flex items-center gap-2">
+              <span id="userSpBadge" class="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span id="labelUserSp">01 Cirebon</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol Aksi Team Leader & Profil User -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Tombol Ekspor Excel (Khusus Team Leader) -->
+          <button id="btnExportExcel" onclick="exportAllDataToExcel()" class="hidden px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-xl transition items-center gap-1.5">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+            <span class="hidden md:inline">Ekspor Excel</span>
+          </button>
+
+          <!-- Tombol Reset Ganti Bulan (Khusus Team Leader) -->
+          <button id="btnMonthlyReset" onclick="openModalMonthlyReset()" class="hidden px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold rounded-xl transition items-center gap-1.5">
+            <i class="fa-solid fa-calendar-xmark text-rose-600"></i>
+            <span class="hidden md:inline">Reset Bulanan</span>
+          </button>
+
+          <!-- Info User Login -->
+          <div class="text-right hidden sm:block border-l pl-3 border-slate-200">
+            <div id="loggedUserName" class="text-xs font-bold text-slate-800">Nama User</div>
+            <span id="loggedUserRoleBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">Role</span>
+          </div>
+
+          <!-- Tombol Logout -->
+          <button onclick="logout()" title="Keluar Aplikasi" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 flex items-center justify-center transition active:scale-95">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bilah Navigasi Menu: Desktop (Pills) & Mobile (Strip 3 Hamburger Menu) -->
+      <div class="bg-slate-50 border-t border-slate-200 px-3 sm:px-6 py-2">
+        <!-- Tampilan Mobile (Strip 3 Hamburger) - Muncul di bawah 768px (md) -->
+        <div class="md:hidden flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold text-slate-400 uppercase">Menu:</span>
+            <span id="mobileActiveTabLabel" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200">
+              <i id="mobileActiveTabIcon" class="fa-solid fa-cart-shopping text-blue-600"></i>
+              <span id="mobileActiveTabText">Checkout Barang</span>
+            </span>
+          </div>
+          <button type="button" onclick="toggleMobileNavMenu()" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center justify-center text-sm shadow-2xs active:scale-95 transition">
+            <i id="mobileMenuIcon" class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+
+        <!-- Menu Dropdown Strip 3 (Khusus HP / Screen < 768px) -->
+        <div id="mobileNavDropdown" class="hidden md:hidden mt-2 pt-2 border-t border-slate-200/80 space-y-1">
+          <!-- Render dinamis via JS -->
+        </div>
+
+        <!-- Tampilan Laptop / Layar Lebar (Horizontal Segmented Bar) -->
+        <div class="hidden md:flex items-center justify-center">
+          <nav id="roleNavTabs" class="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl whitespace-nowrap shadow-2xs">
+            <!-- Render dinamis via JS -->
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Konten Utama Halaman -->
+    <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+      
+      <!-- ================= 1. CHECKOUT BARANG TEKNISI CIREBON / EDIT KATALOG TL ================= -->
+      <section id="viewCheckoutTeknisi" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 id="checkoutCatalogTitle" class="text-base sm:text-lg font-black text-slate-800">Checkout Barang (01 Cirebon)</h2>
+          </div>
+          <!-- Tombol Tambah Barang Baru Khusus Team Leader -->
+          <button id="btnAddNewCatalogItem" onclick="openModalAddNewItem()" class="hidden px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-plus"></i>
+            <span>Tambah Barang Baru</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- List Item Kartu Stok Gudang -->
+          <div id="catalogGridContainer" class="lg:col-span-2 space-y-3">
+            <div id="stockGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Render otomatis via JS -->
+            </div>
+          </div>
+
+          <!-- Keranjang Checkout Teknisi (Hanya aktif untuk teknisi) -->
+          <div id="cartCheckoutContainer" class="lg:col-span-1">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm sticky top-28 space-y-4">
+              <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                  </div>
+                  <h3 class="font-bold text-slate-800 text-sm">Keranjang Checkout</h3>
+                </div>
+                <span id="cartCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">0 Item</span>
+              </div>
+
+              <!-- Daftar Barang di Keranjang -->
+              <div id="cartItemsList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                <!-- Render via JS -->
+              </div>
+
+              <!-- Informasi Teknisi Pengambil -->
+              <div class="pt-3 border-t border-slate-100 space-y-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-600 mb-1">Catatan / Keperluan</label>
+                  <input type="text" id="checkoutNotes" placeholder="Contoh: Kebutuhan merchant BNI / Maintenance" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <button id="btnProcessCheckout" onclick="processCheckout()" disabled class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-receipt"></i>
+                  <span>Buat Kwitansi & Barcode</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 1.1 RIWAYAT CHECKOUT TEKNISI ================= -->
+      <section id="viewHistoryTeknisi" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Riwayat Checkout Barang</h2>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">No. Kwitansi</th>
+                  <th class="py-3 px-4">Waktu</th>
+                  <th class="py-3 px-4">Teknisi</th>
+                  <th class="py-3 px-4">Rincian Barang</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. PENGEMBALIAN BARANG RETUR ================= -->
+      <section id="viewPengembalianTeknisi" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 id="returSectionTitle" class="text-base sm:text-lg font-black text-slate-800">Pengembalian Barang Retur</h2>
+          </div>
+        </div>
+
+        <!-- Form Input Retur (Hanya ditampilkan untuk Teknisi) -->
+        <div id="returFormCard" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm max-w-2xl mx-auto space-y-4">
+          <h3 class="text-sm font-bold text-slate-800 border-b pb-2.5 border-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-rotate-left text-blue-600"></i> Form Pengembalian Fisik ke Logistik
+          </h3>
+          <form onsubmit="handleReturSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Jenis Barang</label>
+                <select id="returItemType" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+                  <option value="Mesin EDC">Mesin EDC</option>
+                  <option value="Adaptor / Charger">Adaptor / Charger</option>
+                  <option value="Baterai EDC">Baterai EDC</option>
+                  <option value="Dudukan / FKM">Dudukan / FKM</option>
+                  <option value="SIM / SAM Card">SIM / SAM Card</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Serial Number (SN) / Kode</label>
+                <input type="text" id="returSerialNumber" required placeholder="Contoh: SN-EDC9981273" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Customer / Bank / Merchant</label>
+                <select id="returCustomerSelect" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+                  <!-- Diisi dinamis dari master dropdown -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kelengkapan</label>
+                <select id="returKelengkapanSelect" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+                  <!-- Diisi dinamis dari master dropdown -->
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Keterangan Kerusakan / Alasan Tarikan</label>
+              <textarea id="returReason" rows="2" required placeholder="Contoh: Mati total, port charger longgar, atau merchant tutup usaha" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"></textarea>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 active:scale-98 transition">
+              Kirim Form Pengembalian
+            </button>
+          </form>
+        </div>
+
+        <!-- Tabel Monitoring Retur -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-xs sm:text-sm">Riwayat & Status Pengembalian Barang</h3>
+            <span class="text-xs text-slate-400 font-medium" id="returTotalCount">0 Data Retur</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">No. Retur</th>
+                  <th class="py-3 px-4">Jenis Barang</th>
+                  <th class="py-3 px-4">Serial Number (SN)</th>
+                  <th class="py-3 px-4">Customer</th>
+                  <th class="py-3 px-4">Kelengkapan</th>
+                  <th class="py-3 px-4">Teknisi</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th id="thActionLogistikRetur" class="py-3 px-4 text-center">Aksi Validasi</th>
+                </tr>
+              </thead>
+              <tbody id="returTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2.1 PROFILING BNI ================= -->
+      <section id="viewProfilingBNI" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Profiling BNI</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Tombol Toggle Ciutkan/Buka Form Khusus Teknisi -->
+            <button id="btnToggleProfilingForm" type="button" onclick="toggleProfilingFormAccordion()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition inline-flex items-center gap-1.5 shadow-2xs">
+              <i id="iconToggleProfiling" class="fa-solid fa-chevron-up transition-transform duration-200"></i>
+              <span id="textToggleProfiling">Ciutkan Formulir</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Form Pengajuan Profiling BNI (Khusus Teknisi) -->
+        <div id="profilingFormCard" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm max-w-3xl mx-auto space-y-6 transition-all duration-300">
+          <div class="pb-3 border-b border-slate-200">
+            <h3 class="text-sm sm:text-base font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+              <i class="fa-solid fa-ticket text-blue-600"></i> Formulir Pengajuan Tiket & Profiling BNI
+            </h3>
+          </div>
+
+          <form onsubmit="handleProfilingBNISubmit(event)" id="innerProfilingForm" class="space-y-6 text-xs sm:text-sm">
+            <!-- Bagian 1: Data Pengajuan Tiket -->
+            <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-4">
+              <h4 class="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wide flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px]">1</span>
+                Data Pengajuan Tiket
+              </h4>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">TID <span class="text-rose-500">*</span></label>
+                <input type="text" id="profTID" required placeholder="Teks jawaban singkat" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-semibold">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kategori JO <span class="text-rose-500">*</span></label>
+                <span class="text-[11px] text-slate-400 block mb-2">Pergantian Simcard masuk kategori CM</span>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="kategoriJO" value="CM (Perbaikan)" checked class="text-blue-600 focus:ring-blue-500">
+                    <span>CM (Perbaikan)</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="kategoriJO" value="RP (Pergantian)" class="text-blue-600 focus:ring-blue-500">
+                    <span>RP (Pergantian)</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="kategoriJO" value="FK (Supply)" class="text-blue-600 focus:ring-blue-500">
+                    <span>FK (Supply)</span>
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer whitespace-nowrap">
+                      <input type="radio" name="kategoriJO" value="Yang lain" id="radioKategoriLain" class="text-blue-600 focus:ring-blue-500">
+                      <span>Yang lain:</span>
+                    </label>
+                    <input type="text" id="kategoriJOLainText" placeholder="Keterangan kategori lain" class="flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold">
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kebutuhan <span class="text-rose-500">*</span></label>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" name="kebutuhan" value="Profiling" checked class="rounded text-blue-600 focus:ring-blue-500">
+                    <span>Profiling</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" name="kebutuhan" value="Aktivasi" class="rounded text-blue-600 focus:ring-blue-500">
+                    <span>Aktivasi</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" name="kebutuhan" value="Tiket Sentra" class="rounded text-blue-600 focus:ring-blue-500">
+                    <span>Tiket Sentra</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Jelaskan Kendala EDC <span class="text-rose-500">*</span></label>
+                <span class="text-[11px] text-slate-400 block mb-1">Contoh: EDC Mati Total, Port Charger EDC rusak, Printer EDC error, Replace Simcard</span>
+                <textarea id="profKendala" rows="2" required placeholder="Teks jawaban panjang" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-semibold"></textarea>
+              </div>
+            </div>
+
+            <!-- Bagian 2: Data Pengajuan Profiling -->
+            <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-4">
+              <h4 class="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wide flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white inline-flex items-center justify-center text-[10px]">2</span>
+                Data Pengajuan Profiling
+              </h4>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">SN Baru <span class="text-rose-500">*</span></label>
+                <span class="text-[11px] text-slate-400 block mb-1">Isi angka 0 jika SN diajukan dari office</span>
+                <input type="text" id="profSNBaru" required placeholder="Teks jawaban singkat / 0" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-semibold">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ICCID Baru <span class="text-rose-500">*</span></label>
+                <span class="text-[11px] text-slate-400 block mb-1">Isi angka 0 jika SN diajukan dari office</span>
+                <input type="text" id="profICCIDBaru" required placeholder="Teks jawaban singkat / 0" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-semibold">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">APN <span class="text-rose-500">*</span></label>
+                <span class="text-[11px] text-slate-400 block mb-2">Pilih rekomendasi jaringan pengajuan (disesuaikan tergantung stok)</span>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="apnOption" value="EDCINGENICO - TELKOMSEL" checked class="text-blue-600">
+                    <span>EDCINGENICO - TELKOMSEL</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="apnOption" value="M2MINGENICO - XL" class="text-blue-600">
+                    <span>M2MINGENICO - XL</span>
+                  </label>
+                  <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input type="radio" name="apnOption" value="M2MINGENICO - INDOSAT" class="text-blue-600">
+                    <span>M2MINGENICO - INDOSAT</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 active:scale-98 transition">
+              Kirim Formulir Profiling BNI
+            </button>
+          </form>
+        </div>
+
+        <!-- Tabel Riwayat Pengajuan Profiling BNI -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-xs sm:text-sm">Riwayat Pengajuan Profiling BNI</h3>
+            <span class="text-xs text-slate-400 font-medium" id="profilingTotalCount">0 Tiket</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">TID</th>
+                  <th class="py-3 px-4">Kategori JO</th>
+                  <th class="py-3 px-4">Kebutuhan</th>
+                  <th class="py-3 px-4">Kendala EDC</th>
+                  <th class="py-3 px-4">SN Baru</th>
+                  <th class="py-3 px-4">ICCID Baru</th>
+                  <th class="py-3 px-4">APN</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="profilingTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. PERMINTAAN BARANG UNTUK HUB KE WH PUSAT ================= -->
+      <section id="viewRequestHUB" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Permintaan Barang HUB ke WH Pusat</h2>
+          </div>
+          <button onclick="openModalRequestHUB()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition active:scale-95">
+            <i class="fa-solid fa-plus"></i>
+            <span>Buat Pengajuan Baru</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">No. Pengajuan</th>
+                  <th class="py-3 px-4">Tanggal</th>
+                  <th class="py-3 px-4">HUB Pemohon</th>
+                  <th class="py-3 px-4">Item Kebutuhan</th>
+                  <th class="py-3 px-4 text-center">Status Pengajuan</th>
+                  <th class="py-3 px-4 text-center">Aksi / Cetak</th>
+                </tr>
+              </thead>
+              <tbody id="hubRequestTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. SCANNER & VERIFIKASI NOTA (LOGISTIK & TEAM LEADER) ================= -->
+      <section id="viewLogistikScanner" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Scanner & Verifikasi Pengeluaran Logistik</h2>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
+          <div class="text-center space-y-2">
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-barcode"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-sm">Scan Barcode / Masukkan No. Kwitansi</h3>
+          </div>
+
+          <form onsubmit="handleScanTicket(event)" class="space-y-3">
+            <div class="relative">
+              <input type="text" id="scanTicketInput" placeholder="Contoh: CO-CRB-202611-001" required 
+                class="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-mono font-bold text-sm tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+              <button type="button" onclick="pasteFromClipboard()" class="absolute right-2 top-2 p-1.5 text-slate-400 hover:text-blue-600 rounded-lg">
+                <i class="fa-solid fa-paste"></i>
+              </button>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 active:scale-98 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Cari & Verifikasi Nota</span>
+            </button>
+          </form>
+
+          <!-- Hasil Pencarian Tiket Scanner -->
+          <div id="scanResultArea" class="hidden pt-4 border-t border-slate-100 space-y-4">
+            <!-- Render hasil via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 5. MANAJEMEN STOK FISIK (TEAM LEADER) ================= -->
+      <section id="viewManajemenStok" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Manajemen Stok Fisik Gudang (01 Cirebon)</h2>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">Nama Barang</th>
+                  <th class="py-3 px-4">Kategori</th>
+                  <th class="py-3 px-4">Satuan</th>
+                  <th class="py-3 px-4 text-center">Stok Saat Ini</th>
+                  <th class="py-3 px-4 text-center">Input Stok Manual</th>
+                  <th class="py-3 px-4 text-center">Status</th>
+                  <th class="py-3 px-4 text-center">Aksi Edit</th>
+                </tr>
+              </thead>
+              <tbody id="stockManagementTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 6. MANAGEMENT AKSES & USER (TEAM LEADER) ================= -->
+      <section id="viewManagementAkses" class="hidden space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800">Management Akses & Pengguna</h2>
+          </div>
+          <button onclick="openModalCreateUser()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-2 transition active:scale-95">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Tambah User Baru</span>
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
+                  <th class="py-3 px-4">User ID</th>
+                  <th class="py-3 px-4">Nama Lengkap</th>
+                  <th class="py-3 px-4">Peran (Role)</th>
+                  <th class="py-3 px-4">Service Point / HUB</th>
+                  <th class="py-3 px-4 text-center">Status Akun</th>
+                  <th class="py-3 px-4 text-center">Aksi Kelola</th>
+                </tr>
+              </thead>
+              <tbody id="userManagementTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- Render via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= MODAL DIALOGS ================= -->
+
+  <!-- Modal 1: Kwitansi & Barcode Checkout -->
+  <div id="modalReceipt" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-center">
+      <div id="printArea" class="space-y-4 text-left p-2">
+        <div class="text-center pb-3 border-b border-dashed border-slate-200">
+          <h4 class="font-black text-base text-slate-800 uppercase">Kwitansi Checkout Barang</h4>
+          <span class="text-[11px] text-slate-400 font-semibold">Gudang 01 Cirebon</span>
+        </div>
+        
+        <div class="text-xs space-y-1">
+          <div class="flex justify-between"><span class="text-slate-400">No. Kwitansi:</span><span id="rcptTicketNo" class="font-bold font-mono text-slate-800"></span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Waktu:</span><span id="rcptDate" class="font-bold text-slate-800"></span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Teknisi:</span><span id="rcptTech" class="font-bold text-slate-800"></span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Status:</span><span id="rcptStatus" class="font-bold text-emerald-600"></span></div>
+        </div>
+
+        <div class="border-t border-b border-dashed border-slate-200 py-2.5">
+          <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Daftar Barang:</span>
+          <div id="rcptItemsList" class="space-y-1 text-xs font-semibold"></div>
+        </div>
+
+        <!-- SVG Barcode yang Dibuat oleh JsBarcode -->
+        <div class="pt-2 text-center flex flex-col items-center">
+          <svg id="receiptBarcodeSvg" class="max-w-full"></svg>
+          <span class="text-[10px] text-slate-400 mt-1">Tunjukkan barcode ini kepada petugas logistik</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="window.print()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+          <i class="fa-solid fa-print mr-1"></i> Cetak / PDF
+        </button>
+        <button onclick="closeReceiptModal()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Verifikasi & Ceklis Retur Fisik Gudang -->
+  <div id="modalVerifyRetur" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-clipboard-check text-blue-600"></i>
+          Verifikasi Penerimaan Fisik Retur
+        </h3>
+        <button onclick="closeModalVerifyRetur()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div id="verifyReturDetails" class="bg-slate-50 p-3.5 rounded-xl text-xs space-y-1 border border-slate-200">
+        <!-- Render detail via JS -->
+      </div>
+
+      <div class="space-y-3">
+        <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Ceklis Validasi Fisik Wajib:</span>
+        <label class="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+          <input type="checkbox" id="chkReturSN" onchange="validateReturChecklist()" class="mt-0.5 rounded text-blue-600">
+          <span>Serial Number (SN) fisik sesuai dengan yang tertera di sistem</span>
+        </label>
+        <label class="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+          <input type="checkbox" id="chkReturKelengkapan" onchange="validateReturChecklist()" class="mt-0.5 rounded text-blue-600">
+          <span>Kelengkapan aksesoris/kabel/dus fisik sesuai deklarasi</span>
+        </label>
+        <label class="flex items-start gap-2.5 text-xs text-slate-700 font-medium cursor-pointer">
+          <input type="checkbox" id="chkReturKondisi" onchange="validateReturChecklist()" class="mt-0.5 rounded text-blue-600">
+          <span>Pemeriksaan kondisi fisik telah selesai dan siap masuk rak retur</span>
+        </label>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModalVerifyRetur()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Batal</button>
+        <button type="button" id="btnConfirmReturSubmit" onclick="executeConfirmRetur()" disabled class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Konfirmasi Terima Fisik
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Pengajuan Permintaan Barang HUB ke WH Pusat -->
+  <div id="modalRequestHUB" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-paper-plane text-blue-600"></i>
+          Surat Permintaan Barang (HUB ke WH Pusat)
+        </h3>
+        <button onclick="closeModalRequestHUB()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleHubRequestSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">HUB Pemohon</label>
+          <select id="hubRequesterSelect" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="01 Cirebon">01 Cirebon</option>
+            <option value="01 HUB Kuningan">01 HUB Kuningan</option>
+            <option value="01 HUB Majalengka">01 HUB Majalengka</option>
+            <option value="01 HUB Indramayu">01 HUB Indramayu</option>
+            <option value="01 HUB Cilamaya">01 HUB Cilamaya</option>
+            <option value="01 HUB Karawang">01 HUB Karawang</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tujuan Pengajuan</label>
+          <input type="text" value="Warehouse Pusat (Jakarta)" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-500">
+        </div>
+
+        <!-- Input Terstruktur Barang Kebutuhan (Bisa Diedit Team Leader) -->
+        <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Input Kebutuhan Restock:</span>
+            <!-- Tombol Edit Nama Barang Khusus Team Leader -->
+            <button type="button" id="btnEditHubItems" onclick="openModalEditHubItems()" class="hidden text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Edit Nama Barang</span>
+            </button>
+          </div>
+          <div id="hubRestockInputsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <!-- Render dinamis via JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Keterangan / Alasan Restock</label>
+          <input type="text" id="hubRequestNotes" placeholder="Contoh: Buffer stok menipis persiapan weekend" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalRequestHUB()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20">Kirim Permintaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Tambah User Baru (Team Leader) -->
+  <div id="modalCreateUser" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-blue-600"></i> Tambah Pengguna Baru
+        </h3>
+        <button onclick="closeModalCreateUser()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleCreateUserSubmit(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">User ID (Unik)</label>
+            <input type="text" id="newUserId" required placeholder="Contoh: TEK-CRB02" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold uppercase">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Nama Lengkap</label>
+            <input type="text" id="newUserName" required placeholder="Nama Teknisi/Staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Peran Utama (Role)</label>
+            <select id="newUserRole" onchange="applyDefaultRolePermissions()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+              <option value="teknisi">Teknisi (HP View)</option>
+              <option value="logistik">Logistik (Gudang)</option>
+              <option value="lead">Team Leader (Akses Utama)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Service Point / HUB Asal</label>
+            <input type="text" id="newUserServicePoint" list="spOptionsList" required placeholder="Ketik atau pilih lokasi" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <datalist id="spOptionsList">
+              <!-- Opsi SP dinamis -->
+            </datalist>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Password Awal</label>
+          <input type="password" id="newUserPassword" required placeholder="••••••••" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+
+        <!-- Ceklis Buka Akses Granular -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Pilih Hak Akses Menu:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_mgmtAkses" class="rounded text-blue-600"> <span>Management Akses</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_stockMgmt" class="rounded text-blue-600"> <span>Manajemen Stok Gudang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_catalogEdit" class="rounded text-blue-600"> <span>Edit Katalog Barang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_scanNota" class="rounded text-blue-600"> <span>Scan & Verifikasi Nota</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_returMonitoring" class="rounded text-blue-600"> <span>Monitoring Retur</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_hubRequest" class="rounded text-blue-600"> <span>Permintaan Barang HUB</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_checkout" class="rounded text-blue-600"> <span>Checkout Barang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_historyCheckout" class="rounded text-blue-600"> <span>History Checkout</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_returTeknisi" class="rounded text-blue-600"> <span>Pengembalian Retur (Form)</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="perm_profilingBNI" class="rounded text-blue-600"> <span>Profiling BNI</span></label>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalCreateUser()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Simpan User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Edit Akses & SP Pengguna (Team Leader) -->
+  <div id="modalEditPermissions" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-blue-600"></i> Edit Akses: <span id="editPermUserId" class="font-mono text-blue-600"></span>
+        </h3>
+        <button onclick="closeModalEditPermissions()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Service Point / HUB Asal</label>
+          <input type="text" id="editPermUserSP" list="spOptionsList" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <span class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Pengaturan Ceklis Menu Akses:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_mgmtAkses" class="rounded text-blue-600"> <span>Management Akses</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_stockMgmt" class="rounded text-blue-600"> <span>Manajemen Stok Gudang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_catalogEdit" class="rounded text-blue-600"> <span>Edit Katalog Barang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_scanNota" class="rounded text-blue-600"> <span>Scan & Verifikasi Nota</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_returMonitoring" class="rounded text-blue-600"> <span>Monitoring Retur</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_hubRequest" class="rounded text-blue-600"> <span>Permintaan Barang HUB</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_checkout" class="rounded text-blue-600"> <span>Checkout Barang</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_historyCheckout" class="rounded text-blue-600"> <span>History Checkout</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_returTeknisi" class="rounded text-blue-600"> <span>Pengembalian Retur (Form)</span></label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="edit_perm_profilingBNI" class="rounded text-blue-600"> <span>Profiling BNI</span></label>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalEditPermissions()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="button" onclick="saveUserPermissionsChanges()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Simpan Perubahan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Ganti Password Pengguna -->
+  <div id="modalResetPassword" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm">Ganti Password User</h3>
+        <button onclick="closeModalResetPassword()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleSaveNewPassword(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">User ID Target</label>
+          <input type="text" id="targetResetUserId" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-mono font-bold text-slate-600">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Password Baru</label>
+          <input type="password" id="inputNewPasswordVal" required placeholder="Minimal 4 karakter" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalResetPassword()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Perbarui Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7: Edit Barang Katalog & Stok Gudang (Team Leader) -->
+  <div id="modalEditItem" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-blue-600"></i> Edit Detail Barang
+        </h3>
+        <button onclick="closeEditItemModal()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleSaveItemEdit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="editItemId">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Barang</label>
+          <input type="text" id="editItemName" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kategori</label>
+            <input type="text" id="editItemCategory" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold uppercase">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Satuan</label>
+            <input type="text" id="editItemUnit" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Kuantitas Stok Fisik</label>
+          <input type="number" id="editItemStock" min="0" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="deleteCatalogItem()" class="py-2.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold rounded-xl text-xs transition" title="Hapus Barang dari Katalog">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+          <button type="button" onclick="closeEditItemModal()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7.1: Tambah Barang Baru ke Katalog (Khusus Team Leader) -->
+  <div id="modalAddNewItem" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-box-open text-blue-600"></i> Tambah Barang ke Katalog
+        </h3>
+        <button onclick="closeModalAddNewItem()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleAddNewCatalogItemSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nama Barang Baru</label>
+          <input type="text" id="newItemName" required placeholder="Contoh: Thermal Paper 80mm / Kabel LAN Cat 6" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Kategori</label>
+            <input type="text" id="newItemCategory" required placeholder="CONSUMABLE / HARDWARE" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold uppercase">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Satuan</label>
+            <input type="text" id="newItemUnit" required placeholder="Roll / Unit / Pcs / Box" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Stok Awal Fisik Gudang</label>
+          <input type="number" id="newItemStock" min="0" required placeholder="0" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold font-mono">
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalAddNewItem()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Simpan Barang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 8: Edit Profiling BNI (Team Leader & Logistik) -->
+  <div id="modalEditProfiling" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-pen text-blue-600"></i> Update Profiling BNI
+        </h3>
+        <button onclick="closeModalEditProfiling()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleSaveProfilingEdit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="editProfId">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">TID</label>
+          <input type="text" id="editProfTID" readonly class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-mono font-bold text-slate-600">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">SN EDC Baru</label>
+          <input type="text" id="editProfSN" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ICCID Baru</label>
+          <input type="text" id="editProfICCID" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">APN</label>
+          <select id="editProfAPN" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="EDCINGENICO - TELKOMSEL">EDCINGENICO - TELKOMSEL</option>
+            <option value="M2MINGENICO - XL">M2MINGENICO - XL</option>
+            <option value="M2MINGENICO - INDOSAT">M2MINGENICO - INDOSAT</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Status Tiket</label>
+          <select id="editProfStatus" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
+            <option value="Proses">Proses</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeModalEditProfiling()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">Batal</button>
+          <button type="submit" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 9: Reset Bulanan Data Riwayat (Team Leader) -->
+  <div id="modalMonthlyReset" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-rose-700 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation"></i> Reset & Bersihkan Data Bulanan
+        </h3>
+        <button onclick="closeModalMonthlyReset()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600">Pilih riwayat data operasional yang ingin diarsipkan / dibersihkan saat berganti bulan. <strong>Master stok dan akun user tidak akan terhapus.</strong></p>
+
+        <div class="bg-rose-50/70 p-3 rounded-xl border border-rose-200 space-y-2">
+          <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+            <input type="checkbox" id="resetChkCheckout" checked class="rounded text-rose-600">
+            <span>Riwayat Checkout Barang</span>
+          </label>
+          <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+            <input type="checkbox" id="resetChkRetur" checked class="rounded text-rose-600">
+            <span>Riwayat Pengembalian Retur</span>
+          </label>
+          <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+            <input type="checkbox" id="resetChkHub" checked class="rounded text-rose-600">
+            <span>Surat Permintaan Barang HUB ke WH Pusat</span>
+          </label>
+          <label class="flex items-center gap-2 font-semibold text-slate-800 cursor-pointer">
+            <input type="checkbox" id="resetChkProfiling" checked class="rounded text-rose-600">
+            <span>Riwayat Tiket Profiling BNI</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModalMonthlyReset()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs">Batal</button>
+        <button type="button" onclick="executeMonthlyReset()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-md shadow-rose-500/20">
+          Eksekusi Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 10: Pengaturan Master Dropdown (Team Leader) -->
+  <div id="modalMasterDropdown" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-blue-600"></i> Pengaturan Master Dropdown
+        </h3>
+        <button onclick="closeModalMasterDropdown()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="font-bold text-slate-700">Daftar Service Point / HUB</span>
+            <button type="button" onclick="addNewMasterItem('hub')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
+          </div>
+          <div id="masterListHUB" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="font-bold text-slate-700">Daftar Kelengkapan Retur</span>
+            <button type="button" onclick="addNewMasterItem('kelengkapan')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
+          </div>
+          <div id="masterListKelengkapan" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="font-bold text-slate-700">Daftar Customer / Bank</span>
+            <button type="button" onclick="addNewMasterItem('customer')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
+          </div>
+          <div id="masterListCustomer" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button type="button" onclick="closeModalMasterDropdown()" class="px-4 py-2 bg-slate-100 font-bold text-xs rounded-xl text-slate-700">Selesai</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 11: Edit Nama & Satuan Barang Restock HUB (Team Leader) -->
+  <div id="modalEditHubItems" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-blue-600"></i> Edit Nama Barang Restock HUB
+        </h3>
+        <button onclick="closeModalEditHubItems()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs" id="editHubItemsList">
+        <!-- Render dinamis via JS -->
+      </div>
+
+      <div class="pt-2 flex justify-between items-center border-t border-slate-100">
+        <button type="button" onclick="addNewHubRestockItem()" class="text-blue-600 font-bold hover:underline text-xs inline-flex items-center gap-1">
+          <i class="fa-solid fa-plus"></i> Tambah Item Baru
+        </button>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeModalEditHubItems()" class="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition">Batal</button>
+        <button type="button" onclick="saveHubRestockItems()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md transition">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Notifikasi Alert Universal (Pengganti alert()) -->
+  <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
+      <div id="alertIconContainer" class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto text-xl bg-blue-50 text-blue-600">
+        <i id="alertIcon" class="fa-solid fa-circle-info"></i>
+      </div>
+      <h4 id="alertTitle" class="font-bold text-slate-800 text-sm">Pemberitahuan</h4>
+      <p id="alertMessage" class="text-xs text-slate-600 leading-relaxed font-medium"></p>
+      <button onclick="closeCustomAlert()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 transition">
+        Mengerti
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC LENGKAP ================= -->
+  <script>
+    // Penanganan Aman Muat LocalStorage
+    function safeStorageLoad(key, defaultVal) {
+      try {
+        const item = localStorage.getItem(key);
+        if (!item || item === 'undefined' || item === 'null') return defaultVal;
+        return JSON.parse(item);
+      } catch (e) {
+        console.warn('Gagal membaca storage key:', key, e);
+        return defaultVal;
+      }
+    }
+
+    // Penanganan Aman Simpan LocalStorage
+    function safeStorageSave(key, val) {
+      try {
+        localStorage.setItem(key, JSON.stringify(val));
+      } catch (e) {
+        console.warn('Gagal menyimpan storage key:', key, e);
+      }
+    }
+
+    // ================= DATA MASTER AWAL =================
+    const DEFAULT_STOCK = [
+      { id: 'item-thermal', name: 'Thermal Paper 58mm', category: 'Consumable', stock: 180, unit: 'Roll', icon: 'fa-scroll', color: 'bg-amber-100 text-amber-700' },
+      { id: 'item-edc', name: 'Mesin EDC Android 4G', category: 'Hardware', stock: 24, unit: 'Unit', icon: 'fa-calculator', color: 'bg-blue-100 text-blue-700' },
+      { id: 'item-fkm', name: 'FKM / Dudukan Akrilik', category: 'Accessories', stock: 45, unit: 'Pcs', icon: 'fa-shield-halved', color: 'bg-purple-100 text-purple-700' },
+      { id: 'item-sticker', name: 'Sticker Bank / QRIS', category: 'Consumable', stock: 350, unit: 'Lembar', icon: 'fa-note-sticky', color: 'bg-emerald-100 text-emerald-700' },
+      { id: 'item-sim', name: 'SIM Card Multi Operator', category: 'Connectivity', stock: 120, unit: 'Pcs', icon: 'fa-sim-card', color: 'bg-indigo-100 text-indigo-700' },
+      { id: 'item-sam', name: 'SAM Card Security', category: 'Connectivity', stock: 65, unit: 'Pcs', icon: 'fa-microchip', color: 'bg-rose-100 text-rose-700' },
+      { id: 'item-charger', name: 'Adaptor Charger EDC 5V', category: 'Accessories', stock: 30, unit: 'Pcs', icon: 'fa-plug', color: 'bg-orange-100 text-orange-700' },
+      { id: 'item-battery', name: 'Baterai EDC Li-ion 2600mAh', category: 'Hardware', stock: 28, unit: 'Pcs', icon: 'fa-battery-full', color: 'bg-teal-100 text-teal-700' }
+    ];
+
+    const DEFAULT_MASTER_DROPDOWN = {
+      hubList: ['01 Cirebon', '01 HUB Kuningan', '01 HUB Majalengka', '01 HUB Indramayu', '01 HUB Cilamaya', '01 HUB Karawang'],
+      kelengkapanList: ['Fullset (Unit + Adaptor + Dus)', 'Unit + Adaptor Saja', 'Unit Only', 'Adaptor Rusak Saja', 'Kabel USB Saja'],
+      customerList: ['BNI 46', 'BRI', 'Mandiri', 'BCA', 'Merchant Reguler']
+    };
+
+    // Master Barang Restock HUB (Bisa Diedit Team Leader)
+    const DEFAULT_HUB_RESTOCK_ITEMS = [
+      { id: 'edc', name: 'Mesin EDC', unit: 'Unit' },
+      { id: 'thermal', name: 'Thermal Paper 58mm', unit: 'Roll' },
+      { id: 'sim', name: 'SIM Card Multi', unit: 'Pcs' },
+      { id: 'charger', name: 'Adaptor / Charger', unit: 'Pcs' },
+      { id: 'baterai', name: 'Baterai EDC', unit: 'Pcs' },
+      { id: 'fkm', name: 'Dudukan / FKM', unit: 'Pcs' }
+    ];
+
+    const DEFAULT_USERS = [
+      {
+        id: 'admin',
+        name: 'Administrator',
+        role: 'lead',
+        servicePoint: '01 Cirebon',
+        password: 'admin666',
+        active: true,
+        permissions: [
+          'perm_mgmtAkses',
+          'perm_stockMgmt',
+          'perm_catalogEdit',
+          'perm_scanNota',
+          'perm_returMonitoring',
+          'perm_hubRequest',
+          'perm_checkout',
+          'perm_historyCheckout',
+          'perm_returTeknisi',
+          'perm_profilingBNI'
+        ]
+      }
+    ];
+
+    // ================= STATE APLIKASI =================
+    let currentUser = null;
+    let warehouseStock = safeStorageLoad('app_stock_cirebon', DEFAULT_STOCK);
+    let masterDropdown = safeStorageLoad('app_master_dropdown', DEFAULT_MASTER_DROPDOWN);
+    let hubRestockItems = safeStorageLoad('app_hub_items', DEFAULT_HUB_RESTOCK_ITEMS);
+    let systemUsers = safeStorageLoad('app_system_users', DEFAULT_USERS);
+
+    // Pastikan akun utama admin selalu ada dan aktif
+    const existingAdmin = systemUsers.find(u => u.id.toLowerCase() === 'admin');
+    if (!existingAdmin) {
+      systemUsers.unshift(DEFAULT_USERS[0]);
+      safeStorageSave('app_system_users', systemUsers);
+    } else {
+      existingAdmin.password = 'admin666';
+      existingAdmin.role = 'lead';
+      existingAdmin.active = true;
+      safeStorageSave('app_system_users', systemUsers);
+    }
+
+    let checkoutHistory = safeStorageLoad('app_checkout_history', []);
+    let returHistory = safeStorageLoad('app_retur_history', []);
+    let hubRequests = safeStorageLoad('app_hub_requests', []);
+    let profilingBNIList = safeStorageLoad('app_profiling_bni', []);
+    let cart = {};
+    let pendingVerifyReturIndex = -1;
+    let profilingFormCollapsed = false;
+
+    // ================= UNIVERSAL ALERT DIALOG =================
+    function showCustomAlert(title, message, isError = false) {
+      const modal = document.getElementById('customAlertModal');
+      const titleEl = document.getElementById('alertTitle');
+      const msgEl = document.getElementById('alertMessage');
+      const iconCont = document.getElementById('alertIconContainer');
+      const icon = document.getElementById('alertIcon');
+
+      if (!modal) return;
+      titleEl.innerText = title;
+      msgEl.innerText = message;
+
+      if (isError) {
+        iconCont.className = "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto text-xl bg-rose-50 text-rose-600";
+        icon.className = "fa-solid fa-circle-exclamation";
+      } else {
+        iconCont.className = "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto text-xl bg-blue-50 text-blue-600";
+        icon.className = "fa-solid fa-circle-check";
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeCustomAlert() {
+      const modal = document.getElementById('customAlertModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // ================= LOGIN & AUTHENTICATION =================
+    function handleLoginSubmit(e) {
+      if (e) e.preventDefault();
+      const uInput = document.getElementById('loginUserId').value.trim();
+      const pInput = document.getElementById('loginPassword').value.trim();
+
+      const user = systemUsers.find(u => u.id.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+
+      if (!user) {
+        const alertBox = document.getElementById('loginAlert');
+        const alertText = document.getElementById('loginAlertText');
+        alertText.innerText = 'User ID atau password tidak cocok!';
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      if (user.active === false) {
+        const alertBox = document.getElementById('loginAlert');
+        const alertText = document.getElementById('loginAlertText');
+        alertText.innerText = 'Akun Anda dinonaktifkan oleh Team Leader!';
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      currentUser = user;
+      document.getElementById('loginAlert').classList.add('hidden');
+      document.getElementById('loginShell').classList.add('hidden');
+      document.getElementById('appShell').classList.remove('hidden');
+
+      // Update Info Header
+      document.getElementById('loggedUserName').innerText = currentUser.name;
+      document.getElementById('loggedUserRoleBadge').innerText = currentUser.role.toUpperCase();
+      document.getElementById('labelUserSp').innerText = currentUser.servicePoint || '01 Cirebon';
+
+      // Kontrol Tombol Khusus Team Leader di Header
+      const isLead = currentUser.role === 'lead';
+      document.getElementById('btnExportExcel').classList.toggle('hidden', !isLead);
+      document.getElementById('btnMonthlyReset').classList.toggle('hidden', !isLead);
+
+      // Inisialisasi Tampilan & Dropdown
+      populateMasterDropdownOptions();
+      setupRoleNavigation();
+    }
+
+    function presetLogin(roleType) {
+      let targetUser = systemUsers.find(u => u.role === roleType);
+      if (!targetUser) {
+        if (roleType === 'teknisi') targetUser = systemUsers[0];
+        else if (roleType === 'logistik') targetUser = systemUsers[1];
+        else targetUser = systemUsers[2];
+      }
+      document.getElementById('loginUserId').value = targetUser.id;
+      document.getElementById('loginPassword').value = targetUser.password;
+      handleLoginSubmit();
+    }
+
+    function logout() {
+      currentUser = null;
+      cart = {};
+      document.getElementById('appShell').classList.add('hidden');
+      document.getElementById('loginShell').classList.remove('hidden');
+      document.getElementById('loginUserId').value = '';
+      document.getElementById('loginPassword').value = '';
+    }
+
+    // ================= NAVIGASI & HAK AKSES ROLE =================
+    let mobileNavOpen = false;
+
+    function toggleMobileNavMenu() {
+      const dropdown = document.getElementById('mobileNavDropdown');
+      const icon = document.getElementById('mobileMenuIcon');
+      if (!dropdown) return;
+      mobileNavOpen = !mobileNavOpen;
+      if (mobileNavOpen) {
+        dropdown.classList.remove('hidden');
+        if (icon) icon.className = 'fa-solid fa-xmark';
+      } else {
+        dropdown.classList.add('hidden');
+        if (icon) icon.className = 'fa-solid fa-bars';
+      }
+    }
+
+    function setupRoleNavigation() {
+      const navContainer = document.getElementById('roleNavTabs');
+      const mobileNavContainer = document.getElementById('mobileNavDropdown');
+      if (!navContainer) return;
+
+      navContainer.innerHTML = '';
+      if (mobileNavContainer) mobileNavContainer.innerHTML = '';
+
+      const perms = currentUser.permissions || [];
+      const isLead = currentUser.role === 'lead';
+      const isLogistik = currentUser.role === 'logistik';
+      const tabs = [];
+
+      // 1. Management Akses (Team Leader)
+      if (isLead || perms.includes('perm_mgmtAkses')) {
+        tabs.push({ id: 'tab_mgmtAkses', label: 'Management Akses', icon: 'fa-users-gear', view: 'viewManagementAkses' });
+      }
+
+      // 2. Manajemen Stok Gudang (Team Leader)
+      if (isLead || perms.includes('perm_stockMgmt')) {
+        tabs.push({ id: 'tab_stockMgmt', label: 'Manajemen Stok Gudang', icon: 'fa-boxes-stacked', view: 'viewManajemenStok' });
+      }
+
+      // 3. Edit Katalog Barang (TL) ATAU Checkout Barang (Teknisi)
+      if (isLead || perms.includes('perm_catalogEdit')) {
+        tabs.push({ id: 'tab_checkoutCatalog', label: 'Edit Katalog Barang', icon: 'fa-pen-to-square', view: 'viewCheckoutTeknisi' });
+      } else if (perms.includes('perm_checkout')) {
+        tabs.push({ id: 'tab_checkoutCatalog', label: 'Checkout Barang', icon: 'fa-cart-shopping', view: 'viewCheckoutTeknisi' });
+      }
+
+      // 4. History Checkout (Teknisi)
+      if (perms.includes('perm_historyCheckout')) {
+        tabs.push({ id: 'tab_historyCheckout', label: 'History Checkout', icon: 'fa-clock-rotate-left', view: 'viewHistoryTeknisi' });
+      }
+
+      // 5. Scan & Verifikasi Nota (Bisa diakses Logistik, Team Leader, dan akun yang diberi izin)
+      if (isLead || isLogistik || perms.includes('perm_scanNota')) {
+        tabs.push({ id: 'tab_scanNota', label: 'Scan & Verifikasi Nota', icon: 'fa-barcode', view: 'viewLogistikScanner' });
+      }
+
+      // 6. Monitoring Retur (Logistik/TL) ATAU Pengembalian Barang (Teknisi)
+      if (isLead || isLogistik || perms.includes('perm_returMonitoring')) {
+        tabs.push({ id: 'tab_retur', label: 'Monitoring Retur', icon: 'fa-clipboard-check', view: 'viewPengembalianTeknisi' });
+      } else if (perms.includes('perm_returTeknisi')) {
+        tabs.push({ id: 'tab_retur', label: 'Pengembalian Barang (Retur)', icon: 'fa-rotate-left', view: 'viewPengembalianTeknisi' });
+      }
+
+      // 7. Profiling BNI
+      if (isLead || perms.includes('perm_profilingBNI')) {
+        tabs.push({ id: 'tab_profilingBNI', label: 'Profiling BNI', icon: 'fa-id-card', view: 'viewProfilingBNI' });
+      }
+
+      // 8. Permintaan Barang HUB
+      if (isLead || isLogistik || perms.includes('perm_hubRequest')) {
+        tabs.push({ id: 'tab_hubRequest', label: 'Permintaan Barang HUB', icon: 'fa-paper-plane', view: 'viewRequestHUB' });
+      }
+
+      // Render Desktop Tabs
+      tabs.forEach((tab, index) => {
+        const btn = document.createElement('button');
+        btn.id = tab.id;
+        btn.className = `px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 ${index === 0 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`;
+        btn.innerHTML = `<i class="fa-solid ${tab.icon} text-xs"></i> <span>${tab.label}</span>`;
+        btn.onclick = () => switchTab(tab.view, btn, tab.label, tab.icon);
+        navContainer.appendChild(btn);
+
+        // Render Mobile Menu Items
+        if (mobileNavContainer) {
+          const mBtn = document.createElement('button');
+          mBtn.className = "w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-between text-slate-700 hover:bg-blue-50 hover:text-blue-700 bg-white border border-slate-100";
+          mBtn.innerHTML = `
+            <span class="flex items-center gap-2.5">
+              <i class="fa-solid ${tab.icon} text-slate-400 text-xs w-4"></i>
+              <span>${tab.label}</span>
+            </span>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
+          `;
+          mBtn.onclick = () => {
+            switchTab(tab.view, btn, tab.label, tab.icon);
+            toggleMobileNavMenu();
+          };
+          mobileNavContainer.appendChild(mBtn);
+        }
+      });
+
+      if (tabs.length > 0) {
+        switchTab(tabs[0].view, navContainer.children[0], tabs[0].label, tabs[0].icon);
+      }
+      refreshUI();
+    }
+
+    function switchTab(viewId, activeBtn, tabLabel, tabIcon) {
+      const views = [
+        'viewCheckoutTeknisi',
+        'viewHistoryTeknisi',
+        'viewPengembalianTeknisi',
+        'viewProfilingBNI',
+        'viewRequestHUB',
+        'viewLogistikScanner',
+        'viewManajemenStok',
+        'viewManagementAkses'
+      ];
+
+      views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.classList.add('hidden');
+      });
+
+      const target = document.getElementById(viewId);
+      if (target) target.classList.remove('hidden');
+
+      // Update Desktop Active Tab
+      const navContainer = document.getElementById('roleNavTabs');
+      if (navContainer && activeBtn) {
+        Array.from(navContainer.children).forEach(btn => {
+          btn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        });
+        activeBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 bg-blue-600 text-white shadow-xs';
+      }
+
+      // Update Mobile Active Indicator
+      if (tabLabel) {
+        const lbl = document.getElementById('mobileActiveTabText');
+        const ico = document.getElementById('mobileActiveTabIcon');
+        if (lbl) lbl.innerText = tabLabel;
+        if (ico && tabIcon) ico.className = `fa-solid ${tabIcon} text-blue-600`;
+      }
+    }
+
+    // Toggle Ciutkan Accordion Formulir Profiling BNI (Teknisi)
+    function toggleProfilingFormAccordion() {
+      const card = document.getElementById('profilingFormCard');
+      const inner = document.getElementById('innerProfilingForm');
+      const icon = document.getElementById('iconToggleProfiling');
+      const text = document.getElementById('textToggleProfiling');
+
+      profilingFormCollapsed = !profilingFormCollapsed;
+      if (profilingFormCollapsed) {
+        inner.classList.add('hidden');
+        card.classList.remove('p-6');
+        card.classList.add('p-3');
+        icon.className = 'fa-solid fa-chevron-down';
+        text.innerText = 'Buka Formulir Pengajuan';
+      } else {
+        inner.classList.remove('hidden');
+        card.classList.remove('p-3');
+        card.classList.add('p-6');
+        icon.className = 'fa-solid fa-chevron-up';
+        text.innerText = 'Ciutkan Formulir';
+      }
+    }
+
+    // Refresh UI sesuai role dan state
+    function refreshUI() {
+      const isLead = currentUser.role === 'lead';
+      const isLogistik = currentUser.role === 'logistik';
+      const isTeknisi = currentUser.role === 'teknisi';
+
+      // Judul Katalog & Visibility Keranjang
+      const catalogTitle = document.getElementById('checkoutCatalogTitle');
+      const cartCont = document.getElementById('cartCheckoutContainer');
+      const catalogGridCont = document.getElementById('catalogGridContainer');
+      const btnAddCatalog = document.getElementById('btnAddNewCatalogItem');
+
+      if (isLead || (currentUser.permissions && currentUser.permissions.includes('perm_catalogEdit'))) {
+        if (catalogTitle) catalogTitle.innerText = "Edit Katalog Barang (" + (currentUser.servicePoint || '01 Cirebon') + ")";
+        if (cartCont) cartCont.classList.add('hidden');
+        if (btnAddCatalog) btnAddCatalog.classList.remove('hidden');
+        if (catalogGridCont) {
+          catalogGridCont.classList.remove('lg:col-span-2');
+          catalogGridCont.classList.add('lg:col-span-3');
+        }
+      } else {
+        if (catalogTitle) catalogTitle.innerText = "Checkout Barang (" + (currentUser.servicePoint || '01 Cirebon') + ")";
+        if (cartCont) cartCont.classList.remove('hidden');
+        if (btnAddCatalog) btnAddCatalog.classList.add('hidden');
+        if (catalogGridCont) {
+          catalogGridCont.classList.remove('lg:col-span-3');
+          catalogGridCont.classList.add('lg:col-span-2');
+        }
+      }
+
+      // Visibility Form Pengembalian Retur
+      const returFormCard = document.getElementById('returFormCard');
+      const returSectionTitle = document.getElementById('returSectionTitle');
+      const thActionLogistikRetur = document.getElementById('thActionLogistikRetur');
+
+      if (isLead || isLogistik) {
+        if (returFormCard) returFormCard.classList.add('hidden');
+        if (returSectionTitle) returSectionTitle.innerText = "Monitoring & Validasi Retur Barang";
+        if (thActionLogistikRetur) thActionLogistikRetur.classList.remove('hidden');
+      } else {
+        if (returFormCard) returFormCard.classList.remove('hidden');
+        if (returSectionTitle) returSectionTitle.innerText = "Pengembalian Barang Retur ke Logistik";
+        if (thActionLogistikRetur) thActionLogistikRetur.classList.add('hidden');
+      }
+
+      // Visibility Form Profiling BNI (Sembunyikan untuk Lead & Logistik)
+      const profilingFormCard = document.getElementById('profilingFormCard');
+      const btnToggleProfilingForm = document.getElementById('btnToggleProfilingForm');
+      if (isLead || isLogistik) {
+        if (profilingFormCard) profilingFormCard.classList.add('hidden');
+        if (btnToggleProfilingForm) btnToggleProfilingForm.classList.add('hidden');
+      } else {
+        if (profilingFormCard && !profilingFormCollapsed) profilingFormCard.classList.remove('hidden');
+        if (btnToggleProfilingForm) btnToggleProfilingForm.classList.remove('hidden');
+      }
+
+      // Render Semua Komponen
+      renderStockCatalog();
+      renderCartUI();
+      renderHistoryTeknisi();
+      renderReturTable();
+      renderProfilingBNITable();
+      renderHubRequestTable();
+      renderStockManagementTable();
+      renderUserManagementTable();
+    }
+
+    // ================= KATALOG BARANG & KERANJANG CHECKOUT =================
+    function renderStockCatalog() {
+      const grid = document.getElementById('stockGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const isLead = currentUser.role === 'lead';
+      const canEditCatalog = isLead || (currentUser.permissions && currentUser.permissions.includes('perm_catalogEdit'));
+      const canCheckout = (currentUser.permissions && currentUser.permissions.includes('perm_checkout')) && !canEditCatalog;
+
+      warehouseStock.forEach(item => {
+        const inCartQty = cart[item.id] || 0;
+        const availableStock = item.stock - inCartQty;
+        const isLow = item.stock <= 10;
+
+        const card = document.createElement('div');
+        card.className = "bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs hover:border-blue-300 transition flex flex-col justify-between";
+
+        let actionArea = '';
+        if (canEditCatalog) {
+          actionArea = `
+            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-end">
+              <button onclick="openEditItemModal('${item.id}')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 rounded-xl font-bold text-xs transition inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>Edit Barang</span>
+              </button>
+            </div>
+          `;
+        } else if (canCheckout) {
+          actionArea = `
+            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                ${inCartQty > 0 ? `<span class="text-xs font-bold text-blue-600">${inCartQty} di keranjang</span>` : ''}
+              </div>
+              <button onclick="addToCart('${item.id}')" ${availableStock <= 0 ? 'disabled' : ''} class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 ml-auto">
+                <i class="fa-solid fa-cart-plus"></i>
+                <span>+ Ambil</span>
+              </button>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl ${item.color} flex items-center justify-center text-base shrink-0 shadow-2xs">
+                  <i class="fa-solid ${item.icon}"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-800 text-xs sm:text-sm leading-snug">${item.name}</h4>
+                  <span class="text-[10px] font-semibold text-slate-400 uppercase">${item.category}</span>
+                </div>
+              </div>
+              <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                ${isLow ? 'Kritis' : 'Aman'}
+              </span>
+            </div>
+            <div class="mt-3 flex items-baseline justify-end text-xs">
+              <span class="font-bold font-mono text-lg ${availableStock <= 5 ? 'text-rose-600' : 'text-slate-800'}">
+                ${item.stock} <span class="text-xs font-semibold text-slate-400">${item.unit}</span>
+              </span>
+            </div>
+          </div>
+          ${actionArea}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function addToCart(itemId) {
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!item) return;
+      const currentInCart = cart[itemId] || 0;
+      if (currentInCart < item.stock) {
+        cart[itemId] = currentInCart + 1;
+        renderCartUI();
+        renderStockCatalog();
+      } else {
+        showCustomAlert('Stok Terbatas', 'Jumlah pengambilan melebihi stok fisik gudang.', true);
+      }
+    }
+
+    function updateCartQty(itemId, delta) {
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!item) return;
+      const currentInCart = cart[itemId] || 0;
+      const newQty = currentInCart + delta;
+
+      if (newQty <= 0) {
+        delete cart[itemId];
+      } else if (newQty <= item.stock) {
+        cart[itemId] = newQty;
+      } else {
+        showCustomAlert('Stok Tidak Cukup', 'Stok gudang tidak mencukupi untuk penambahan ini.', true);
+      }
+      renderCartUI();
+      renderStockCatalog();
+    }
+
+    function renderCartUI() {
+      const list = document.getElementById('cartItemsList');
+      const badge = document.getElementById('cartCountBadge');
+      const btn = document.getElementById('btnProcessCheckout');
+      if (!list || !badge || !btn) return;
+
+      list.innerHTML = '';
+      const keys = Object.keys(cart);
+      let totalQty = 0;
+
+      if (keys.length === 0) {
+        list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs font-semibold">Keranjang masih kosong</div>`;
+        badge.innerText = '0 Item';
+        btn.disabled = true;
+        return;
+      }
+
+      keys.forEach(id => {
+        const item = warehouseStock.find(i => i.id === id);
+        if (!item) return;
+        const qty = cart[id];
+        totalQty += qty;
+
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs";
+        row.innerHTML = `
+          <div class="pr-2">
+            <h5 class="font-bold text-slate-800 leading-tight">${item.name}</h5>
+            <span class="text-[10px] text-slate-400 font-semibold">${item.unit}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="updateCartQty('${id}', -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">-</button>
+            <span class="w-7 text-center font-bold font-mono text-slate-800 text-xs">${qty}</span>
+            <button onclick="updateCartQty('${id}', 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">+</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      badge.innerText = `${totalQty} Item`;
+      btn.disabled = totalQty <= 0;
+    }
+
+    function processCheckout() {
+      const keys = Object.keys(cart);
+      if (keys.length === 0) return;
+
+      const itemsDetail = keys.map(id => {
+        const item = warehouseStock.find(i => i.id === id);
+        return {
+          id: id,
+          name: item ? item.name : id,
+          qty: cart[id],
+          unit: item ? item.unit : 'Pcs'
+        };
+      });
+
+      const ticketNo = 'CO-CRB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900));
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const notes = document.getElementById('checkoutNotes').value.trim() || '-';
+
+      const newReceipt = {
+        ticketNo: ticketNo,
+        date: nowStr,
+        techId: currentUser.id,
+        techName: currentUser.name,
+        servicePoint: currentUser.servicePoint || '01 Cirebon',
+        items: itemsDetail,
+        notes: notes,
+        status: 'Menunggu Ambil'
+      };
+
+      checkoutHistory.unshift(newReceipt);
+      safeStorageSave('app_checkout_history', checkoutHistory);
+
+      // Reset keranjang
+      cart = {};
+      document.getElementById('checkoutNotes').value = '';
+      renderCartUI();
+      renderStockCatalog();
+      renderHistoryTeknisi();
+
+      // Buka Modal Kwitansi & Barcode
+      showReceiptModal(newReceipt);
+    }
+
+    function showReceiptModal(rcpt) {
+      document.getElementById('rcptTicketNo').innerText = rcpt.ticketNo;
+      document.getElementById('rcptDate').innerText = rcpt.date;
+      document.getElementById('rcptTech').innerText = rcpt.techName + ' (' + rcpt.techId + ')';
+      document.getElementById('rcptStatus').innerText = rcpt.status;
+
+      const listCont = document.getElementById('rcptItemsList');
+      listCont.innerHTML = '';
+      rcpt.items.forEach(it => {
+        const d = document.createElement('div');
+        d.className = 'flex justify-between';
+        d.innerHTML = `<span class="text-slate-700">${it.name}</span> <span class="font-bold font-mono text-slate-800">${it.qty} ${it.unit}</span>`;
+        listCont.appendChild(d);
+      });
+
+      // Render Barcode menggunakan pustaka JsBarcode
+      if (typeof JsBarcode !== 'undefined') {
+        try {
+          JsBarcode("#receiptBarcodeSvg", rcpt.ticketNo, {
+            format: "CODE128",
+            lineColor: "#0f172a",
+            width: 1.8,
+            height: 48,
+            displayValue: true,
+            fontSize: 12,
+            font: "monospace"
+          });
+        } catch (e) {
+          console.warn('Barcode render error:', e);
+        }
+      }
+
+      document.getElementById('modalReceipt').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('modalReceipt').classList.add('hidden');
+    }
+
+    // ================= RIWAYAT CHECKOUT TEKNISI =================
+    function renderHistoryTeknisi() {
+      const tbody = document.getElementById('historyTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const isTeknisi = currentUser.role === 'teknisi';
+      const filtered = isTeknisi 
+        ? checkoutHistory.filter(h => h.techId === currentUser.id)
+        : checkoutHistory;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-semibold">Belum ada riwayat checkout</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(h => {
+        const isDone = h.status === 'Sudah Diambil';
+        const itemsStr = h.items.map(it => `${it.name} (${it.qty} ${it.unit})`).join(', ');
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${h.ticketNo}</td>
+          <td class="py-3 px-4 text-slate-500">${h.date}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${h.techName}</td>
+          <td class="py-3 px-4 text-slate-600 max-w-xs truncate" title="${itemsStr}">${itemsStr}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[110px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${h.status}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick='showReceiptModal(${JSON.stringify(h)})' class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+              <i class="fa-solid fa-barcode"></i>
+              <span>Buka Nota</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ================= SCANNER & VERIFIKASI PENGELUARAN (LOGISTIK & TL) =================
+    function handleScanTicket(e) {
+      if (e) e.preventDefault();
+      const code = document.getElementById('scanTicketInput').value.trim().toUpperCase();
+      const resultArea = document.getElementById('scanResultArea');
+      resultArea.classList.remove('hidden');
+
+      const found = checkoutHistory.find(h => h.ticketNo.toUpperCase() === code);
+
+      if (!found) {
+        resultArea.innerHTML = `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold text-center">
+            <i class="fa-solid fa-circle-xmark text-lg block mb-1"></i>
+            Kwitansi <strong>${code}</strong> tidak ditemukan di sistem!
+          </div>
+        `;
+        return;
+      }
+
+      const isAlreadyTaken = found.status === 'Sudah Diambil';
+      const itemsListHtml = found.items.map(it => `
+        <div class="flex justify-between py-1 border-b border-slate-100 text-xs">
+          <span class="font-medium text-slate-700">${it.name}</span>
+          <span class="font-mono font-bold text-slate-900">${it.qty} ${it.unit}</span>
+        </div>
+      `).join('');
+
+      resultArea.innerHTML = `
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-mono font-bold text-blue-600 text-sm">${found.ticketNo}</span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${isAlreadyTaken ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isAlreadyTaken ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${found.status}
+            </span>
+          </div>
+
+          <div class="text-xs space-y-0.5 text-slate-500">
+            <div>Teknisi: <strong class="text-slate-800">${found.techName}</strong> (${found.techId})</div>
+            <div>Waktu: <strong class="text-slate-800">${found.date}</strong></div>
+            <div>Keperluan: <strong class="text-slate-800">${found.notes}</strong></div>
+          </div>
+
+          <div class="pt-2">
+            <span class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Rincian Barang Keluar:</span>
+            ${itemsListHtml}
+          </div>
+
+          <div class="pt-2">
+            ${isAlreadyTaken ? `
+              <div class="p-2.5 rounded-xl bg-slate-200 text-slate-600 text-center text-xs font-bold">
+                <i class="fa-solid fa-check-double mr-1"></i> Barang sudah diserahkan sebelumnya
+              </div>
+            ` : `
+              <button onclick="confirmStockDeduction('${found.ticketNo}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-check"></i>
+                <span>Verifikasi & Potong Stok Gudang</span>
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmStockDeduction(ticketNo) {
+      const found = checkoutHistory.find(h => h.ticketNo === ticketNo);
+      if (!found || found.status === 'Sudah Diambil') return;
+
+      // Cek ketersediaan stok fisik gudang
+      for (let it of found.items) {
+        const stockItem = warehouseStock.find(s => s.id === it.id);
+        if (!stockItem || stockItem.stock < it.qty) {
+          showCustomAlert('Gagal Verifikasi', `Stok ${it.name} tidak cukup di gudang saat ini.`, true);
+          return;
+        }
+      }
+
+      // Potong stok fisik gudang secara otomatis
+      found.items.forEach(it => {
+        const stockItem = warehouseStock.find(s => s.id === it.id);
+        if (stockItem) {
+          stockItem.stock -= it.qty;
+        }
+      });
+
+      found.status = 'Sudah Diambil';
+      safeStorageSave('app_stock_cirebon', warehouseStock);
+      safeStorageSave('app_checkout_history', checkoutHistory);
+
+      showCustomAlert('Berhasil!', `Barang untuk tiket ${ticketNo} telah diverifikasi dan stok gudang otomatis terpotong.`);
+      document.getElementById('scanTicketInput').value = '';
+      document.getElementById('scanResultArea').classList.add('hidden');
+
+      renderStockCatalog();
+      renderStockManagementTable();
+      renderHistoryTeknisi();
+    }
+
+    function pasteFromClipboard() {
+      if (checkoutHistory.length > 0) {
+        const pending = checkoutHistory.find(h => h.status === 'Menunggu Ambil');
+        if (pending) {
+          document.getElementById('scanTicketInput').value = pending.ticketNo;
+          handleScanTicket();
+        } else {
+          document.getElementById('scanTicketInput').value = checkoutHistory[0].ticketNo;
+          handleScanTicket();
+        }
+      } else {
+        showCustomAlert('Info', 'Belum ada tiket checkout dalam riwayat.');
+      }
+    }
+
+    // ================= PENGEMBALIAN BARANG RETUR =================
+    function handleReturSubmit(e) {
+      if (e) e.preventDefault();
+      const itemType = document.getElementById('returItemType').value;
+      const sn = document.getElementById('returSerialNumber').value.trim();
+      const customer = document.getElementById('returCustomerSelect').value;
+      const kelengkapan = document.getElementById('returKelengkapanSelect').value;
+      const reason = document.getElementById('returReason').value.trim();
+
+      const newRetur = {
+        returNo: 'RET-CRB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        itemType: itemType,
+        sn: sn,
+        customer: customer,
+        kelengkapan: kelengkapan,
+        reason: reason,
+        techId: currentUser.id,
+        techName: currentUser.name,
+        status: 'Menunggu Ceklis',
+        receivedBy: '-'
+      };
+
+      returHistory.unshift(newRetur);
+      safeStorageSave('app_retur_history', returHistory);
+
+      document.getElementById('returSerialNumber').value = '';
+      document.getElementById('returReason').value = '';
+
+      showCustomAlert('Retur Terkirim', `Data retur ${newRetur.returNo} berhasil disimpan. Silakan serahkan unit fisik ke logistik untuk dicek.`);
+      renderReturTable();
+    }
+
+    function renderReturTable() {
+      const tbody = document.getElementById('returTableBody');
+      const counter = document.getElementById('returTotalCount');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const isTeknisi = currentUser.role === 'teknisi';
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+
+      if (counter) counter.innerText = `${returHistory.length} Data Retur`;
+
+      if (returHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400 font-semibold">Belum ada data pengembalian retur</td></tr>`;
+        return;
+      }
+
+      returHistory.forEach((r, idx) => {
+        const isDone = r.status === 'Diterima Gudang';
+
+        let actionCell = '';
+        if (isLeadOrLogistik) {
+          actionCell = `
+            <td class="py-3 px-4 text-center">
+              ${isDone ? `
+                <span class="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-check"></i> Diterima (${r.receivedBy})
+                </span>
+              ` : `
+                <button onclick="openModalVerifyRetur(${idx})" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                  <i class="fa-solid fa-clipboard-check"></i>
+                  <span>Verifikasi & Ceklis</span>
+                </button>
+              `}
+            </td>
+          `;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${r.returNo}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${r.itemType}</td>
+          <td class="py-3 px-4 font-mono font-semibold text-slate-800 bg-slate-50/50">${r.sn}</td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${r.customer}</td>
+          <td class="py-3 px-4 text-slate-600">${r.kelengkapan}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${r.techName}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[120px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${r.status}
+            </span>
+          </td>
+          ${actionCell}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModalVerifyRetur(index) {
+      pendingVerifyReturIndex = index;
+      const item = returHistory[index];
+      if (!item) return;
+
+      const detailsEl = document.getElementById('verifyReturDetails');
+      detailsEl.innerHTML = `
+        <div class="flex justify-between"><span class="text-slate-500">No. Retur:</span> <strong class="font-mono text-slate-800">${item.returNo}</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Item & SN:</span> <strong class="text-slate-800">${item.itemType} - ${item.sn}</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Customer:</span> <strong class="text-slate-800">${item.customer}</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Kelengkapan:</span> <strong class="text-slate-800">${item.kelengkapan}</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Teknisi Pengirim:</span> <strong class="text-slate-800">${item.techName}</strong></div>
+        <div class="flex justify-between"><span class="text-slate-500">Kendala:</span> <span class="italic text-slate-700">${item.reason}</span></div>
+      `;
+
+      // Reset checkboxes
+      document.getElementById('chkReturSN').checked = false;
+      document.getElementById('chkReturKelengkapan').checked = false;
+      document.getElementById('chkReturKondisi').checked = false;
+      document.getElementById('btnConfirmReturSubmit').disabled = true;
+
+      document.getElementById('modalVerifyRetur').classList.remove('hidden');
+    }
+
+    function validateReturChecklist() {
+      const c1 = document.getElementById('chkReturSN').checked;
+      const c2 = document.getElementById('chkReturKelengkapan').checked;
+      const c3 = document.getElementById('chkReturKondisi').checked;
+      document.getElementById('btnConfirmReturSubmit').disabled = !(c1 && c2 && c3);
+    }
+
+    function closeModalVerifyRetur() {
+      document.getElementById('modalVerifyRetur').classList.add('hidden');
+      pendingVerifyReturIndex = -1;
+    }
+
+    function executeConfirmRetur() {
+      if (pendingVerifyReturIndex < 0 || !returHistory[pendingVerifyReturIndex]) return;
+      const item = returHistory[pendingVerifyReturIndex];
+      item.status = 'Diterima Gudang';
+      item.receivedBy = currentUser.name;
+
+      safeStorageSave('app_retur_history', returHistory);
+      closeModalVerifyRetur();
+      showCustomAlert('Validasi Selesai', `Barang retur ${item.returNo} berhasil diverifikasi dan diterima di gudang.`);
+      renderReturTable();
+    }
+
+    // ================= PROFILING BNI =================
+    function handleProfilingBNISubmit(e) {
+      if (e) e.preventDefault();
+      const tid = document.getElementById('profTID').value.trim();
+
+      // Kategori JO
+      let katJO = '';
+      const katRadios = document.getElementsByName('kategoriJO');
+      for (let r of katRadios) {
+        if (r.checked) {
+          katJO = r.value;
+          break;
+        }
+      }
+      if (katJO === 'Yang lain') {
+        const lainText = document.getElementById('kategoriJOLainText').value.trim();
+        katJO = lainText ? `Lain: ${lainText}` : 'Yang lain';
+      }
+
+      // Kebutuhan (Multiple checkboxes)
+      const kebutuhanArr = [];
+      const kebBoxes = document.getElementsByName('kebutuhan');
+      for (let b of kebBoxes) {
+        if (b.checked) kebutuhanArr.push(b.value);
+      }
+      const kebutuhanStr = kebutuhanArr.length > 0 ? kebutuhanArr.join(', ') : '-';
+
+      const kendala = document.getElementById('profKendala').value.trim();
+      const snBaru = document.getElementById('profSNBaru').value.trim() || '0';
+      const iccidBaru = document.getElementById('profICCIDBaru').value.trim() || '0';
+
+      // APN Radio
+      let apnVal = 'EDCINGENICO - TELKOMSEL';
+      const apnRadios = document.getElementsByName('apnOption');
+      for (let a of apnRadios) {
+        if (a.checked) {
+          apnVal = a.value;
+          break;
+        }
+      }
+
+      const newRecord = {
+        id: 'PROF-' + Date.now().toString().slice(-6),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        tid: tid,
+        kategoriJO: katJO,
+        kebutuhan: kebutuhanStr,
+        kendala: kendala,
+        snBaru: snBaru,
+        iccidBaru: iccidBaru,
+        apn: apnVal,
+        techId: currentUser.id,
+        techName: currentUser.name,
+        status: 'Proses'
+      };
+
+      profilingBNIList.unshift(newRecord);
+      safeStorageSave('app_profiling_bni', profilingBNIList);
+
+      // Reset form
+      document.getElementById('profTID').value = '';
+      document.getElementById('profKendala').value = '';
+      document.getElementById('profSNBaru').value = '';
+      document.getElementById('profICCIDBaru').value = '';
+      document.getElementById('kategoriJOLainText').value = '';
+
+      showCustomAlert('Berhasil!', `Pengajuan Profiling BNI dengan TID ${tid} berhasil disimpan.`);
+      renderProfilingBNITable();
+    }
+
+    function renderProfilingBNITable() {
+      const tbody = document.getElementById('profilingTableBody');
+      const counter = document.getElementById('profilingTotalCount');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (counter) counter.innerText = `${profilingBNIList.length} Tiket`;
+
+      if (profilingBNIList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400 font-semibold">Belum ada pengajuan profiling BNI</td></tr>`;
+        return;
+      }
+
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+
+      profilingBNIList.forEach(p => {
+        const isDone = p.status === 'Done';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${p.tid}</td>
+          <td class="py-3 px-4 font-semibold text-slate-800">${p.kategoriJO}</td>
+          <td class="py-3 px-4 font-bold text-slate-700">${p.kebutuhan}</td>
+          <td class="py-3 px-4 text-slate-600 max-w-xs font-medium" title="${p.kendala}">${p.kendala}</td>
+          <td class="py-3 px-4 font-mono font-bold text-slate-800">${p.snBaru}</td>
+          <td class="py-3 px-4 font-mono text-slate-700">${p.iccidBaru}</td>
+          <td class="py-3 px-4 text-[11px] font-semibold text-slate-600">${p.apn}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[95px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${p.status}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            ${isLeadOrLogistik ? `
+              <button onclick="openModalEditProfiling('${p.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                <i class="fa-solid fa-pen"></i>
+                <span>Edit</span>
+              </button>
+            ` : `
+              <span class="text-xs text-slate-400 font-semibold">${p.techName}</span>
+            `}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModalEditProfiling(id) {
+      const found = profilingBNIList.find(p => p.id === id);
+      if (!found) return;
+
+      document.getElementById('editProfId').value = found.id;
+      document.getElementById('editProfTID').value = found.tid;
+      document.getElementById('editProfSN').value = found.snBaru;
+      document.getElementById('editProfICCID').value = found.iccidBaru;
+      document.getElementById('editProfAPN').value = found.apn;
+      document.getElementById('editProfStatus').value = found.status;
+
+      document.getElementById('modalEditProfiling').classList.remove('hidden');
+    }
+
+    function closeModalEditProfiling() {
+      document.getElementById('modalEditProfiling').classList.add('hidden');
+    }
+
+    function handleSaveProfilingEdit(e) {
+      if (e) e.preventDefault();
+      const id = document.getElementById('editProfId').value;
+      const found = profilingBNIList.find(p => p.id === id);
+      if (!found) return;
+
+      found.snBaru = document.getElementById('editProfSN').value.trim();
+      found.iccidBaru = document.getElementById('editProfICCID').value.trim();
+      found.apn = document.getElementById('editProfAPN').value;
+      found.status = document.getElementById('editProfStatus').value;
+
+      safeStorageSave('app_profiling_bni', profilingBNIList);
+      closeModalEditProfiling();
+      showCustomAlert('Berhasil', 'Data Profiling BNI berhasil diperbarui.');
+      renderProfilingBNITable();
+    }
+
+    // ================= PERMINTAAN BARANG HUB KE WH PUSAT =================
+    function renderHubRestockInputs() {
+      const container = document.getElementById('hubRestockInputsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      hubRestockItems.forEach(item => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label class="block font-bold text-slate-700 mb-1">${item.name} (${item.unit})</label>
+          <input type="number" id="hubQty_${item.id}" min="0" placeholder="0" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono font-bold">
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function openModalRequestHUB() {
+      renderHubRestockInputs();
+
+      // Cek hak akses Team Leader untuk menampilkan tombol edit nama barang
+      const isLead = currentUser && currentUser.role === 'lead';
+      const btnEdit = document.getElementById('btnEditHubItems');
+      if (btnEdit) btnEdit.classList.toggle('hidden', !isLead);
+
+      document.getElementById('hubRequestNotes').value = '';
+      document.getElementById('modalRequestHUB').classList.remove('hidden');
+    }
+
+    function closeModalRequestHUB() {
+      document.getElementById('modalRequestHUB').classList.add('hidden');
+    }
+
+    // Modal Edit Nama & Satuan Barang Restock (Khusus Team Leader)
+    function openModalEditHubItems() {
+      const list = document.getElementById('editHubItemsList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      hubRestockItems.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2";
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 text-xs">Item #${index + 1}</span>
+            ${hubRestockItems.length > 1 ? `
+              <button type="button" onclick="deleteHubRestockItem(${index})" class="text-rose-500 hover:text-rose-700 text-xs font-semibold">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            ` : ''}
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
+              <input type="text" id="editHubName_${index}" value="${item.name}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
+              <input type="text" id="editHubUnit_${index}" value="${item.unit}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      document.getElementById('modalEditHubItems').classList.remove('hidden');
+    }
+
+    function closeModalEditHubItems() {
+      document.getElementById('modalEditHubItems').classList.add('hidden');
+    }
+
+    function addNewHubRestockItem() {
+      const newId = 'item_' + Date.now().toString().slice(-4);
+      hubRestockItems.push({
+        id: newId,
+        name: 'Item Restock Baru',
+        unit: 'Pcs'
+      });
+      openModalEditHubItems();
+    }
+
+    function deleteHubRestockItem(index) {
+      if (hubRestockItems.length <= 1) return;
+      hubRestockItems.splice(index, 1);
+      openModalEditHubItems();
+    }
+
+    function saveHubRestockItems() {
+      hubRestockItems.forEach((item, index) => {
+        const nameEl = document.getElementById(`editHubName_${index}`);
+        const unitEl = document.getElementById(`editHubUnit_${index}`);
+        if (nameEl && nameEl.value.trim()) item.name = nameEl.value.trim();
+        if (unitEl && unitEl.value.trim()) item.unit = unitEl.value.trim();
+      });
+
+      safeStorageSave('app_hub_items', hubRestockItems);
+      closeModalEditHubItems();
+      renderHubRestockInputs();
+      showCustomAlert('Berhasil', 'Daftar nama dan satuan barang restock HUB berhasil diperbarui.');
+    }
+
+    function handleHubRequestSubmit(e) {
+      if (e) e.preventDefault();
+      const requester = document.getElementById('hubRequesterSelect').value;
+      const notes = document.getElementById('hubRequestNotes').value.trim() || '-';
+
+      // Kumpulkan item dari daftar dinamis
+      const itemsArr = [];
+      hubRestockItems.forEach(item => {
+        const input = document.getElementById(`hubQty_${item.id}`);
+        const val = input ? parseInt(input.value) || 0 : 0;
+        if (val > 0) {
+          itemsArr.push(`- ${item.name}: ${val} ${item.unit}`);
+        }
+      });
+
+      if (itemsArr.length === 0) {
+        showCustomAlert('Perhatian', 'Harap isi jumlah minimal untuk 1 jenis barang.', true);
+        return;
+      }
+
+      const itemsFormatted = itemsArr.join('\n');
+
+      const newReq = {
+        reqNo: 'REQ-HUB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        hub: requester,
+        destination: 'Warehouse Pusat (Jakarta)',
+        items: itemsFormatted,
+        notes: notes,
+        status: 'Proses Email',
+        createdBy: currentUser.name
+      };
+
+      hubRequests.unshift(newReq);
+      safeStorageSave('app_hub_requests', hubRequests);
+
+      closeModalRequestHUB();
+      showCustomAlert('Terkirim', `Surat permintaan restock ${newReq.reqNo} berhasil dibuat.`);
+      renderHubRequestTable();
+    }
+
+    function renderHubRequestTable() {
+      const tbody = document.getElementById('hubRequestTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (hubRequests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-semibold">Belum ada surat permintaan barang HUB</td></tr>`;
+        return;
+      }
+
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+
+      hubRequests.forEach(req => {
+        let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+        let dotColor = 'bg-amber-500';
+
+        if (req.status === 'Done Email') {
+          badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+          dotColor = 'bg-blue-500';
+        } else if (req.status === 'Sudah Terkirim') {
+          badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          dotColor = 'bg-emerald-500';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${req.reqNo}</td>
+          <td class="py-3 px-4 text-slate-500">${req.date}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${req.hub}</td>
+          <td class="py-3 px-4 text-slate-700 whitespace-pre-line max-w-xs">${req.items}</td>
+          <td class="py-3 px-4 text-center">
+            ${isLeadOrLogistik ? `
+              <select onchange="updateHubRequestStatus('${req.reqNo}', this.value)" class="text-xs font-bold p-1 rounded-lg border border-slate-200 bg-white">
+                <option value="Proses Email" ${req.status === 'Proses Email' ? 'selected' : ''}>Proses Email</option>
+                <option value="Done Email" ${req.status === 'Done Email' ? 'selected' : ''}>Done Email</option>
+                <option value="Sudah Terkirim" ${req.status === 'Sudah Terkirim' ? 'selected' : ''}>Sudah Terkirim</option>
+              </select>
+            ` : `
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[110px] justify-center ${badgeColor} border">
+                <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+                ${req.status}
+              </span>
+            `}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="printHubLetter('${req.reqNo}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+              <i class="fa-solid fa-print"></i>
+              <span>Cetak</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateHubRequestStatus(reqNo, newStatus) {
+      const found = hubRequests.find(r => r.reqNo === reqNo);
+      if (found) {
+        found.status = newStatus;
+        safeStorageSave('app_hub_requests', hubRequests);
+        renderHubRequestTable();
+      }
+    }
+
+    function printHubLetter(reqNo) {
+      const found = hubRequests.find(r => r.reqNo === reqNo);
+      if (!found) return;
+      window.print();
+    }
+
+    // ================= MANAJEMEN STOK GUDANG (TEAM LEADER) =================
+    function renderStockManagementTable() {
+      const tbody = document.getElementById('stockManagementTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      warehouseStock.forEach(item => {
+        const isLow = item.stock <= 10;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-800">${item.name}</div>
+          </td>
+          <td class="py-3 px-4 font-semibold text-slate-500 uppercase text-[10px]">${item.category}</td>
+          <td class="py-3 px-4 font-semibold text-slate-700">${item.unit}</td>
+          <td class="py-3 px-4 text-center font-mono font-bold text-sm ${isLow ? 'text-rose-600' : 'text-slate-800'}">${item.stock}</td>
+          <td class="py-3 px-4 text-center">
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              <input type="number" id="inputStock_${item.id}" value="${item.stock}" min="0" class="w-20 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono font-bold text-xs focus:ring-1 focus:ring-blue-500">
+              <button onclick="saveManualStockInput('${item.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition">
+                Simpan
+              </button>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+              ${isLow ? 'Kritis' : 'Aman'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="openEditItemModal('${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+              <i class="fa-solid fa-pen"></i>
+              <span>Edit Lengkap</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function saveManualStockInput(itemId) {
+      const input = document.getElementById(`inputStock_${itemId}`);
+      if (!input) return;
+      const val = parseInt(input.value);
+      if (isNaN(val) || val < 0) {
+        showCustomAlert('Input Salah', 'Jumlah stok harus angka 0 atau lebih.', true);
+        return;
+      }
+
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (item) {
+        item.stock = val;
+        safeStorageSave('app_stock_cirebon', warehouseStock);
+        showCustomAlert('Stok Diperbarui', `Stok ${item.name} berhasil diubah menjadi ${val} ${item.unit}.`);
+        renderStockManagementTable();
+        renderStockCatalog();
+      }
+    }
+
+    function openEditItemModal(itemId) {
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!item) return;
+
+      document.getElementById('editItemId').value = item.id;
+      document.getElementById('editItemName').value = item.name;
+      document.getElementById('editItemCategory').value = item.category;
+      document.getElementById('editItemUnit').value = item.unit;
+      document.getElementById('editItemStock').value = item.stock;
+
+      document.getElementById('modalEditItem').classList.remove('hidden');
+    }
+
+    function closeEditItemModal() {
+      document.getElementById('modalEditItem').classList.add('hidden');
+    }
+
+    function deleteCatalogItem() {
+      const id = document.getElementById('editItemId').value;
+      const index = warehouseStock.findIndex(i => i.id === id);
+      if (index === -1) return;
+
+      const itemName = warehouseStock[index].name;
+      warehouseStock.splice(index, 1);
+      delete cart[id];
+
+      safeStorageSave('app_stock_cirebon', warehouseStock);
+      closeEditItemModal();
+      showCustomAlert('Barang Dihapus', `${itemName} berhasil dihapus dari katalog gudang.`);
+      renderStockCatalog();
+      renderStockManagementTable();
+    }
+
+    // Modal Tambah Barang Baru ke Katalog (Khusus Team Leader)
+    function openModalAddNewItem() {
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemCategory').value = 'CONSUMABLE';
+      document.getElementById('newItemUnit').value = 'Pcs';
+      document.getElementById('newItemStock').value = '0';
+      document.getElementById('modalAddNewItem').classList.remove('hidden');
+    }
+
+    function closeModalAddNewItem() {
+      document.getElementById('modalAddNewItem').classList.add('hidden');
+    }
+
+    function handleAddNewCatalogItemSubmit(e) {
+      if (e) e.preventDefault();
+      const name = document.getElementById('newItemName').value.trim();
+      const category = document.getElementById('newItemCategory').value.trim().toUpperCase();
+      const unit = document.getElementById('newItemUnit').value.trim();
+      const stock = parseInt(document.getElementById('newItemStock').value) || 0;
+
+      const newId = 'item-' + Date.now().toString().slice(-6);
+      const colorPresets = [
+        'bg-blue-100 text-blue-700',
+        'bg-emerald-100 text-emerald-700',
+        'bg-amber-100 text-amber-700',
+        'bg-purple-100 text-purple-700',
+        'bg-teal-100 text-teal-700',
+        'bg-rose-100 text-rose-700'
+      ];
+      const randomColor = colorPresets[Math.floor(Math.random() * colorPresets.length)];
+
+      const newItem = {
+        id: newId,
+        name: name,
+        category: category,
+        stock: stock,
+        unit: unit,
+        icon: 'fa-box-open',
+        color: randomColor
+      };
+
+      warehouseStock.push(newItem);
+      safeStorageSave('app_stock_cirebon', warehouseStock);
+
+      closeModalAddNewItem();
+      showCustomAlert('Berhasil!', `Barang "${name}" berhasil ditambahkan ke katalog & master gudang.`);
+      renderStockCatalog();
+      renderStockManagementTable();
+    }
+
+    function handleSaveItemEdit(e) {
+      if (e) e.preventDefault();
+      const id = document.getElementById('editItemId').value;
+      const item = warehouseStock.find(i => i.id === id);
+      if (!item) return;
+
+      item.name = document.getElementById('editItemName').value.trim();
+      item.category = document.getElementById('editItemCategory').value.trim();
+      item.unit = document.getElementById('editItemUnit').value.trim();
+      item.stock = parseInt(document.getElementById('editItemStock').value) || 0;
+
+      safeStorageSave('app_stock_cirebon', warehouseStock);
+      closeEditItemModal();
+      showCustomAlert('Berhasil', 'Detail barang berhasil diperbarui.');
+      renderStockCatalog();
+      renderStockManagementTable();
+    }
+
+    // ================= MANAGEMENT AKSES & USER (TEAM LEADER) =================
+    function renderUserManagementTable() {
+      const tbody = document.getElementById('userManagementTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      systemUsers.forEach(u => {
+        const isActive = u.active !== false;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-slate-800">${u.id}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${u.role === 'lead' ? 'bg-purple-100 text-purple-700' : u.role === 'logistik' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}">
+              ${u.role}
+            </span>
+          </td>
+          <td class="py-3 px-4 font-semibold text-slate-600">${u.servicePoint || '01 Cirebon'}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+              ${isActive ? 'Aktif' : 'Nonaktif'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              <button onclick="openModalEditPermissions('${u.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Akses</span>
+              </button>
+              <button onclick="openModalResetPassword('${u.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                <i class="fa-solid fa-key"></i>
+                <span>Password</span>
+              </button>
+              ${u.id !== currentUser.id ? `
+                <button onclick="toggleUserActiveState('${u.id}')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${isActive ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}">
+                  ${isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModalCreateUser() {
+      document.getElementById('newUserId').value = '';
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserPassword').value = '';
+      document.getElementById('newUserServicePoint').value = '01 Cirebon';
+      document.getElementById('newUserRole').value = 'teknisi';
+      applyDefaultRolePermissions();
+      document.getElementById('modalCreateUser').classList.remove('hidden');
+    }
+
+    function closeModalCreateUser() {
+      document.getElementById('modalCreateUser').classList.add('hidden');
+    }
+
+    function applyDefaultRolePermissions() {
+      const role = document.getElementById('newUserRole').value;
+      const chkMap = {
+        perm_mgmtAkses: role === 'lead',
+        perm_stockMgmt: role === 'lead',
+        perm_catalogEdit: role === 'lead',
+        perm_scanNota: role === 'logistik' || role === 'lead',
+        perm_returMonitoring: role === 'logistik' || role === 'lead',
+        perm_hubRequest: true,
+        perm_checkout: role === 'teknisi',
+        perm_historyCheckout: role === 'teknisi',
+        perm_returTeknisi: role === 'teknisi',
+        perm_profilingBNI: true
+      };
+
+      for (let k in chkMap) {
+        const el = document.getElementById(k);
+        if (el) el.checked = chkMap[k];
+      }
+    }
+
+    function handleCreateUserSubmit(e) {
+      if (e) e.preventDefault();
+      const uid = document.getElementById('newUserId').value.trim().toUpperCase();
+      const name = document.getElementById('newUserName').value.trim();
+      const role = document.getElementById('newUserRole').value;
+      const sp = document.getElementById('newUserServicePoint').value.trim() || '01 Cirebon';
+      const pass = document.getElementById('newUserPassword').value.trim();
+
+      if (systemUsers.some(u => u.id.toUpperCase() === uid)) {
+        showCustomAlert('User ID Sudah Ada', `User ID ${uid} sudah terdaftar di sistem.`, true);
+        return;
+      }
+
+      // Kumpulkan permissions dari ceklis
+      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
+      const perms = [];
+      permIds.forEach(p => {
+        const el = document.getElementById(p);
+        if (el && el.checked) perms.push(p);
+      });
+
+      const newUser = {
+        id: uid,
+        name: name,
+        role: role,
+        servicePoint: sp,
+        password: pass,
+        active: true,
+        permissions: perms
+      };
+
+      systemUsers.push(newUser);
+      safeStorageSave('app_system_users', systemUsers);
+      closeModalCreateUser();
+      showCustomAlert('Berhasil', `Pengguna baru ${name} (${uid}) berhasil ditambahkan.`);
+      renderUserManagementTable();
+    }
+
+    function openModalEditPermissions(userId) {
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      document.getElementById('editPermUserId').innerText = user.id;
+      document.getElementById('editPermUserSP').value = user.servicePoint || '01 Cirebon';
+
+      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
+      permIds.forEach(p => {
+        const el = document.getElementById('edit_' + p);
+        if (el) {
+          el.checked = user.permissions && user.permissions.includes(p);
+        }
+      });
+
+      document.getElementById('modalEditPermissions').classList.remove('hidden');
+    }
+
+    function closeModalEditPermissions() {
+      document.getElementById('modalEditPermissions').classList.add('hidden');
+    }
+
+    function saveUserPermissionsChanges() {
+      const uid = document.getElementById('editPermUserId').innerText;
+      const user = systemUsers.find(u => u.id === uid);
+      if (!user) return;
+
+      user.servicePoint = document.getElementById('editPermUserSP').value.trim() || '01 Cirebon';
+
+      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
+      const newPerms = [];
+      permIds.forEach(p => {
+        const el = document.getElementById('edit_' + p);
+        if (el && el.checked) newPerms.push(p);
+      });
+      user.permissions = newPerms;
+
+      safeStorageSave('app_system_users', systemUsers);
+      closeModalEditPermissions();
+      showCustomAlert('Hak Akses Diperbarui', `Hak akses untuk ${user.name} (${user.id}) berhasil disimpan.`);
+      renderUserManagementTable();
+
+      // Jika yang diedit adalah user saat ini, perbarui navigasinya
+      if (currentUser && currentUser.id === user.id) {
+        currentUser = user;
+        document.getElementById('labelUserSp').innerText = user.servicePoint;
+        setupRoleNavigation();
+      }
+    }
+
+    function toggleUserActiveState(userId) {
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user) return;
+      user.active = !(user.active !== false);
+      safeStorageSave('app_system_users', systemUsers);
+      renderUserManagementTable();
+    }
+
+    function openModalResetPassword(userId) {
+      document.getElementById('targetResetUserId').value = userId;
+      document.getElementById('inputNewPasswordVal').value = '';
+      document.getElementById('modalResetPassword').classList.remove('hidden');
+    }
+
+    function closeModalResetPassword() {
+      document.getElementById('modalResetPassword').classList.add('hidden');
+    }
+
+    function handleSaveNewPassword(e) {
+      if (e) e.preventDefault();
+      const uid = document.getElementById('targetResetUserId').value;
+      const newPass = document.getElementById('inputNewPasswordVal').value.trim();
+      const user = systemUsers.find(u => u.id === uid);
+
+      if (user && newPass) {
+        user.password = newPass;
+        safeStorageSave('app_system_users', systemUsers);
+        closeModalResetPassword();
+        showCustomAlert('Password Berhasil Diubah', `Password untuk user ${uid} telah diperbarui.`);
+      }
+    }
+
+    // ================= MASTER DROPDOWN (TEAM LEADER) =================
+    function populateMasterDropdownOptions() {
+      // 1. Dropdown HUB Pemohon di Form Surat HUB
+      const hubSelect = document.getElementById('hubRequesterSelect');
+      if (hubSelect) {
+        hubSelect.innerHTML = '';
+        masterDropdown.hubList.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.innerText = h;
+          hubSelect.appendChild(opt);
+        });
+      }
+
+      // 2. Datalist Service Point
+      const spDatalist = document.getElementById('spOptionsList');
+      if (spDatalist) {
+        spDatalist.innerHTML = '';
+        masterDropdown.hubList.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h;
+          spDatalist.appendChild(opt);
+        });
+      }
+
+      // 3. Dropdown Retur Customer
+      const custSelect = document.getElementById('returCustomerSelect');
+      if (custSelect) {
+        custSelect.innerHTML = '';
+        masterDropdown.customerList.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.innerText = c;
+          custSelect.appendChild(opt);
+        });
+      }
+
+      // 4. Dropdown Retur Kelengkapan
+      const kelSelect = document.getElementById('returKelengkapanSelect');
+      if (kelSelect) {
+        kelSelect.innerHTML = '';
+        masterDropdown.kelengkapanList.forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.innerText = k;
+          kelSelect.appendChild(opt);
+        });
+      }
+    }
+
+    function openModalMasterDropdown() {
+      renderMasterBadges();
+      document.getElementById('modalMasterDropdown').classList.remove('hidden');
+    }
+
+    function closeModalMasterDropdown() {
+      document.getElementById('modalMasterDropdown').classList.add('hidden');
+      populateMasterDropdownOptions();
+    }
+
+    function renderMasterBadges() {
+      // Render HUB
+      const hCont = document.getElementById('masterListHUB');
+      hCont.innerHTML = masterDropdown.hubList.map((h, i) => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
+          ${h}
+          <button onclick="removeMasterItem('hub', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
+        </span>
+      `).join('');
+
+      // Render Kelengkapan
+      const kCont = document.getElementById('masterListKelengkapan');
+      kCont.innerHTML = masterDropdown.kelengkapanList.map((k, i) => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
+          ${k}
+          <button onclick="removeMasterItem('kelengkapan', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
+        </span>
+      `).join('');
+
+      // Render Customer
+      const cCont = document.getElementById('masterListCustomer');
+      cCont.innerHTML = masterDropdown.customerList.map((c, i) => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
+          ${c}
+          <button onclick="removeMasterItem('customer', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
+        </span>
+      `).join('');
+    }
+
+    function addNewMasterItem(type) {
+      let label = type === 'hub' ? 'Nama Service Point / HUB' : type === 'kelengkapan' ? 'Opsi Kelengkapan Retur' : 'Nama Customer / Bank';
+      let defaultPrompt = type === 'hub' ? '01 HUB Baru' : type === 'kelengkapan' ? 'Unit + Kabel' : 'Bank Mandiri';
+      
+      const val = window.prompt(`Masukkan ${label}:`, defaultPrompt);
+      if (!val || !val.trim()) return;
+
+      const trimmed = val.trim();
+      if (type === 'hub' && !masterDropdown.hubList.includes(trimmed)) masterDropdown.hubList.push(trimmed);
+      if (type === 'kelengkapan' && !masterDropdown.kelengkapanList.includes(trimmed)) masterDropdown.kelengkapanList.push(trimmed);
+      if (type === 'customer' && !masterDropdown.customerList.includes(trimmed)) masterDropdown.customerList.push(trimmed);
+
+      safeStorageSave('app_master_dropdown', masterDropdown);
+      renderMasterBadges();
+      populateMasterDropdownOptions();
+    }
+
+    function removeMasterItem(type, index) {
+      if (type === 'hub') masterDropdown.hubList.splice(index, 1);
+      if (type === 'kelengkapan') masterDropdown.kelengkapanList.splice(index, 1);
+      if (type === 'customer') masterDropdown.customerList.splice(index, 1);
+
+      safeStorageSave('app_master_dropdown', masterDropdown);
+      renderMasterBadges();
+      populateMasterDropdownOptions();
+    }
+
+    // ================= RESET DATA BULANAN (TEAM LEADER) =================
+    function openModalMonthlyReset() {
+      document.getElementById('modalMonthlyReset').classList.remove('hidden');
+    }
+
+    function closeModalMonthlyReset() {
+      document.getElementById('modalMonthlyReset').classList.add('hidden');
+    }
+
+    function executeMonthlyReset() {
+      const rCheckout = document.getElementById('resetChkCheckout').checked;
+      const rRetur = document.getElementById('resetChkRetur').checked;
+      const rHub = document.getElementById('resetChkHub').checked;
+      const rProf = document.getElementById('resetChkProfiling').checked;
+
+      let msg = [];
+      if (rCheckout) {
+        checkoutHistory = [];
+        safeStorageSave('app_checkout_history', []);
+        msg.push('Riwayat Checkout');
+      }
+      if (rRetur) {
+        returHistory = [];
+        safeStorageSave('app_retur_history', []);
+        msg.push('Riwayat Retur');
+      }
+      if (rHub) {
+        hubRequests = [];
+        safeStorageSave('app_hub_requests', []);
+        msg.push('Permintaan HUB');
+      }
+      if (rProf) {
+        profilingBNIList = [];
+        safeStorageSave('app_profiling_bni', []);
+        msg.push('Profiling BNI');
+      }
+
+      closeModalMonthlyReset();
+      showCustomAlert('Reset Berhasil', `Data berikut telah direset: ${msg.join(', ') || 'Tidak ada data dipilih'}. Master stok tetap aman.`);
+      refreshUI();
+    }
+
+    // ================= EKSPOR EXCEL (TEAM LEADER) =================
+    function exportAllDataToExcel() {
+      if (typeof XLSX === 'undefined') {
+        showCustomAlert('Error', 'Pustaka Excel belum siap. Cek koneksi internet Anda.', true);
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Master Stok
+      const wsStock = XLSX.utils.json_to_sheet(warehouseStock.map(s => ({
+        ID: s.id,
+        "Nama Barang": s.name,
+        Kategori: s.category,
+        "Stok Fisik": s.stock,
+        Satuan: s.unit
+      })));
+      XLSX.utils.book_append_sheet(wb, wsStock, "Stok Gudang");
+
+      // Sheet 2: Riwayat Checkout
+      const wsCheckout = XLSX.utils.json_to_sheet(checkoutHistory.map(c => ({
+        "No Tiket": c.ticketNo,
+        Waktu: c.date,
+        Teknisi: c.techName,
+        "User ID": c.techId,
+        "Service Point": c.servicePoint,
+        Status: c.status,
+        Keperluan: c.notes,
+        "Rincian Barang": c.items.map(it => `${it.name} (${it.qty} ${it.unit})`).join('; ')
+      })));
+      XLSX.utils.book_append_sheet(wb, wsCheckout, "Riwayat Checkout");
+
+      // Sheet 3: Pengembalian Retur
+      const wsRetur = XLSX.utils.json_to_sheet(returHistory.map(r => ({
+        "No Retur": r.returNo,
+        Waktu: r.date,
+        "Jenis Barang": r.itemType,
+        "Serial Number": r.sn,
+        Customer: r.customer,
+        Kelengkapan: r.kelengkapan,
+        Teknisi: r.techName,
+        Status: r.status,
+        "Diterima Oleh": r.receivedBy,
+        "Alasan Kerusakan": r.reason
+      })));
+      XLSX.utils.book_append_sheet(wb, wsRetur, "Monitoring Retur");
+
+      // Sheet 4: Profiling BNI
+      const wsProf = XLSX.utils.json_to_sheet(profilingBNIList.map(p => ({
+        TID: p.tid,
+        Waktu: p.date,
+        "Kategori JO": p.kategoriJO,
+        Kebutuhan: p.kebutuhan,
+        Kendala: p.kendala,
+        "SN Baru": p.snBaru,
+        "ICCID Baru": p.iccidBaru,
+        APN: p.apn,
+        Teknisi: p.techName,
+        Status: p.status
+      })));
+      XLSX.utils.book_append_sheet(wb, wsProf, "Profiling BNI");
+
+      // Sheet 5: Permintaan HUB
+      const wsHub = XLSX.utils.json_to_sheet(hubRequests.map(h => ({
+        "No Pengajuan": h.reqNo,
+        Waktu: h.date,
+        "HUB Pemohon": h.hub,
+        Tujuan: h.destination,
+        "Daftar Item": h.items,
+        Keterangan: h.notes,
+        Status: h.status,
+        "Dibuat Oleh": h.createdBy
+      })));
+      XLSX.utils.book_append_sheet(wb, wsHub, "Permintaan HUB");
+
+      const fileName = `Laporan_Logistik_EDC_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      showCustomAlert('Ekspor Berhasil', `File ${fileName} berhasil diunduh.`);
+    }
+
+    // ================= INITIAL LOAD =================
+    window.addEventListener('DOMContentLoaded', () => {
+      populateMasterDropdownOptions();
+    });
+  </script>
+</body>
+</html>
