@@ -8,14 +8,18 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Font Awesome Icons -->
+  <!-- Font Awesome 6 Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- JsBarcode CDN untuk Barcode Nota -->
+  <!-- JsBarcode CDN untuk Barcode SVG Nota -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   
   <!-- SheetJS CDN untuk Ekspor Excel (.xlsx) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Firebase SDK Compat (App & Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +31,6 @@
       font-family: 'Inter', sans-serif;
       background-color: #f8fafc;
     }
-    /* Sembunyikan scrollbar untuk navigasi horizontal yang rapi */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -99,6 +102,12 @@
           <i class="fa-solid fa-arrow-right text-xs"></i>
         </button>
       </form>
+      
+      <!-- Indikator Cloud Database Sync -->
+      <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-400">
+        <span id="dbCloudDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="dbCloudStatus">Terhubung ke Firebase Firestore</span>
+      </div>
     </div>
   </div>
 
@@ -115,7 +124,7 @@
           <div>
             <h1 class="font-black text-slate-800 text-sm sm:text-base leading-tight">Si Paling Logistik</h1>
             <div class="flex items-center gap-2">
-              <span id="userSpBadge" class="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+              <span class="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                 <span id="labelUserSp">01 Cirebon</span>
               </span>
@@ -166,7 +175,7 @@
           </button>
         </div>
 
-        <!-- Menu Dropdown Strip 3 (Khusus HP / Screen < 768px) -->
+        <!-- Menu Dropdown Strip 3 (Khusus HP / Layar < 768px) -->
         <div id="mobileNavDropdown" class="hidden md:hidden mt-2 pt-2 border-t border-slate-200/80 space-y-1">
           <!-- Render dinamis via JS -->
         </div>
@@ -1092,49 +1101,7 @@
     </div>
   </div>
 
-  <!-- Modal 10: Pengaturan Master Dropdown (Team Leader) -->
-  <div id="modalMasterDropdown" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
-        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-blue-600"></i> Pengaturan Master Dropdown
-        </h3>
-        <button onclick="closeModalMasterDropdown()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="space-y-4 text-xs">
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="font-bold text-slate-700">Daftar Service Point / HUB</span>
-            <button type="button" onclick="addNewMasterItem('hub')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
-          </div>
-          <div id="masterListHUB" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="font-bold text-slate-700">Daftar Kelengkapan Retur</span>
-            <button type="button" onclick="addNewMasterItem('kelengkapan')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
-          </div>
-          <div id="masterListKelengkapan" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <span class="font-bold text-slate-700">Daftar Customer / Bank</span>
-            <button type="button" onclick="addNewMasterItem('customer')" class="text-blue-600 font-bold hover:underline">+ Tambah</button>
-          </div>
-          <div id="masterListCustomer" class="flex flex-wrap gap-1.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div>
-        </div>
-      </div>
-
-      <div class="pt-2 flex justify-end">
-        <button type="button" onclick="closeModalMasterDropdown()" class="px-4 py-2 bg-slate-100 font-bold text-xs rounded-xl text-slate-700">Selesai</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 11: Edit Nama & Satuan Barang Restock HUB (Team Leader) -->
+  <!-- Modal 10: Edit Nama & Satuan Barang Restock HUB (Team Leader) -->
   <div id="modalEditHubItems" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b pb-3 border-slate-100">
@@ -1161,7 +1128,7 @@
     </div>
   </div>
 
-  <!-- Modal Notifikasi Alert Universal (Pengganti alert()) -->
+  <!-- Modal Notifikasi Universal -->
   <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
       <div id="alertIconContainer" class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto text-xl bg-blue-50 text-blue-600">
@@ -1175,30 +1142,60 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT LOGIC LENGKAP ================= -->
+  <!-- ================= JAVASCRIPT LOGIC LENGKAP & FIREBASE FIRESTORE SYNC ================= -->
   <script>
-    // Penanganan Aman Muat LocalStorage
+    // 1. KONFIGURASI FIREBASE RESMI ANDA
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQxiu2TpcNKy9zw_ak84dYv3G3qeK-CxA",
+      authDomain: "si-paling-logistik.firebaseapp.com",
+      projectId: "si-paling-logistik",
+      storageBucket: "si-paling-logistik.firebasestorage.app",
+      messagingSenderId: "745869891634",
+      appId: "1:745869891634:web:4edbe7f4d308192d82442b",
+      measurementId: "G-6MV9FMTQD3"
+    };
+
+    // Inisialisasi Firebase & Firestore
+    let db = null;
+    let isCloudOnline = false;
+
+    try {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        isCloudOnline = true;
+      }
+    } catch (e) {
+      console.warn("Firebase Init Error (Fallback LocalStorage):", e);
+    }
+
+    // Helper LocalStorage
     function safeStorageLoad(key, defaultVal) {
       try {
         const item = localStorage.getItem(key);
         if (!item || item === 'undefined' || item === 'null') return defaultVal;
         return JSON.parse(item);
       } catch (e) {
-        console.warn('Gagal membaca storage key:', key, e);
         return defaultVal;
       }
     }
 
-    // Penanganan Aman Simpan LocalStorage
     function safeStorageSave(key, val) {
       try {
         localStorage.setItem(key, JSON.stringify(val));
-      } catch (e) {
-        console.warn('Gagal menyimpan storage key:', key, e);
+      } catch (e) {}
+    }
+
+    // Helper Firestore Sync
+    function syncToCloud(docKey, data) {
+      safeStorageSave(docKey, data);
+      if (db && isCloudOnline) {
+        db.collection("app_data").doc(docKey).set({ payload: JSON.stringify(data), updatedAt: Date.now() })
+          .catch(err => console.warn("Sync Firestore error:", err));
       }
     }
 
-    // ================= DATA MASTER AWAL =================
+    // DATA MASTER DEFAULT
     const DEFAULT_STOCK = [
       { id: 'item-thermal', name: 'Thermal Paper 58mm', category: 'Consumable', stock: 180, unit: 'Roll', icon: 'fa-scroll', color: 'bg-amber-100 text-amber-700' },
       { id: 'item-edc', name: 'Mesin EDC Android 4G', category: 'Hardware', stock: 24, unit: 'Unit', icon: 'fa-calculator', color: 'bg-blue-100 text-blue-700' },
@@ -1216,7 +1213,6 @@
       customerList: ['BNI 46', 'BRI', 'Mandiri', 'BCA', 'Merchant Reguler']
     };
 
-    // Master Barang Restock HUB (Bisa Diedit Team Leader)
     const DEFAULT_HUB_RESTOCK_ITEMS = [
       { id: 'edc', name: 'Mesin EDC', unit: 'Unit' },
       { id: 'thermal', name: 'Thermal Paper 58mm', unit: 'Roll' },
@@ -1249,25 +1245,12 @@
       }
     ];
 
-    // ================= STATE APLIKASI =================
+    // STATE LOKAL
     let currentUser = null;
     let warehouseStock = safeStorageLoad('app_stock_cirebon', DEFAULT_STOCK);
     let masterDropdown = safeStorageLoad('app_master_dropdown', DEFAULT_MASTER_DROPDOWN);
     let hubRestockItems = safeStorageLoad('app_hub_items', DEFAULT_HUB_RESTOCK_ITEMS);
     let systemUsers = safeStorageLoad('app_system_users', DEFAULT_USERS);
-
-    // Pastikan akun utama admin selalu ada dan aktif
-    const existingAdmin = systemUsers.find(u => u.id.toLowerCase() === 'admin');
-    if (!existingAdmin) {
-      systemUsers.unshift(DEFAULT_USERS[0]);
-      safeStorageSave('app_system_users', systemUsers);
-    } else {
-      existingAdmin.password = 'admin666';
-      existingAdmin.role = 'lead';
-      existingAdmin.active = true;
-      safeStorageSave('app_system_users', systemUsers);
-    }
-
     let checkoutHistory = safeStorageLoad('app_checkout_history', []);
     let returHistory = safeStorageLoad('app_retur_history', []);
     let hubRequests = safeStorageLoad('app_hub_requests', []);
@@ -1275,6 +1258,48 @@
     let cart = {};
     let pendingVerifyReturIndex = -1;
     let profilingFormCollapsed = false;
+    let mobileNavOpen = false;
+
+    // Pastikan admin selalu terdaftar
+    if (!systemUsers.some(u => u.id.toLowerCase() === 'admin')) {
+      systemUsers.unshift(DEFAULT_USERS[0]);
+      syncToCloud('app_system_users', systemUsers);
+    }
+
+    // PASANG REAL-TIME LISTENER KE CLOUD FIRESTORE
+    function initFirestoreLiveListeners() {
+      if (!db || !isCloudOnline) return;
+
+      const collectionsToListen = [
+        { key: 'app_system_users', setter: (d) => { systemUsers = d; if (currentUser) { const me = systemUsers.find(u => u.id === currentUser.id); if (me) currentUser = me; } } },
+        { key: 'app_stock_cirebon', setter: (d) => { warehouseStock = d; } },
+        { key: 'app_checkout_history', setter: (d) => { checkoutHistory = d; } },
+        { key: 'app_retur_history', setter: (d) => { returHistory = d; } },
+        { key: 'app_hub_requests', setter: (d) => { hubRequests = d; } },
+        { key: 'app_profiling_bni', setter: (d) => { profilingBNIList = d; } },
+        { key: 'app_hub_items', setter: (d) => { hubRestockItems = d; } },
+        { key: 'app_master_dropdown', setter: (d) => { masterDropdown = d; populateMasterDropdownOptions(); } }
+      ];
+
+      collectionsToListen.forEach(col => {
+        db.collection("app_data").doc(col.key).onSnapshot(doc => {
+          if (doc.exists && doc.data().payload) {
+            try {
+              const parsed = JSON.parse(doc.data().payload);
+              col.setter(parsed);
+              safeStorageSave(col.key, parsed);
+              if (currentUser) refreshUI();
+            } catch (err) {}
+          } else {
+            // Inisialisasi awal ke cloud jika dokumen belum ada
+            const initialVal = safeStorageLoad(col.key, null);
+            if (initialVal) syncToCloud(col.key, initialVal);
+          }
+        }, err => {
+          console.warn("Firestore snapshot error:", err);
+        });
+      });
+    }
 
     // ================= UNIVERSAL ALERT DIALOG =================
     function showCustomAlert(title, message, isError = false) {
@@ -1342,21 +1367,8 @@
       document.getElementById('btnExportExcel').classList.toggle('hidden', !isLead);
       document.getElementById('btnMonthlyReset').classList.toggle('hidden', !isLead);
 
-      // Inisialisasi Tampilan & Dropdown
       populateMasterDropdownOptions();
       setupRoleNavigation();
-    }
-
-    function presetLogin(roleType) {
-      let targetUser = systemUsers.find(u => u.role === roleType);
-      if (!targetUser) {
-        if (roleType === 'teknisi') targetUser = systemUsers[0];
-        else if (roleType === 'logistik') targetUser = systemUsers[1];
-        else targetUser = systemUsers[2];
-      }
-      document.getElementById('loginUserId').value = targetUser.id;
-      document.getElementById('loginPassword').value = targetUser.password;
-      handleLoginSubmit();
     }
 
     function logout() {
@@ -1368,9 +1380,7 @@
       document.getElementById('loginPassword').value = '';
     }
 
-    // ================= NAVIGASI & HAK AKSES ROLE =================
-    let mobileNavOpen = false;
-
+    // ================= NAVIGASI & HAK AKSES =================
     function toggleMobileNavMenu() {
       const dropdown = document.getElementById('mobileNavDropdown');
       const icon = document.getElementById('mobileMenuIcon');
@@ -1398,51 +1408,42 @@
       const isLogistik = currentUser.role === 'logistik';
       const tabs = [];
 
-      // 1. Management Akses (Team Leader)
       if (isLead || perms.includes('perm_mgmtAkses')) {
         tabs.push({ id: 'tab_mgmtAkses', label: 'Management Akses', icon: 'fa-users-gear', view: 'viewManagementAkses' });
       }
 
-      // 2. Manajemen Stok Gudang (Team Leader)
       if (isLead || perms.includes('perm_stockMgmt')) {
         tabs.push({ id: 'tab_stockMgmt', label: 'Manajemen Stok Gudang', icon: 'fa-boxes-stacked', view: 'viewManajemenStok' });
       }
 
-      // 3. Edit Katalog Barang (TL) ATAU Checkout Barang (Teknisi)
       if (isLead || perms.includes('perm_catalogEdit')) {
         tabs.push({ id: 'tab_checkoutCatalog', label: 'Edit Katalog Barang', icon: 'fa-pen-to-square', view: 'viewCheckoutTeknisi' });
       } else if (perms.includes('perm_checkout')) {
         tabs.push({ id: 'tab_checkoutCatalog', label: 'Checkout Barang', icon: 'fa-cart-shopping', view: 'viewCheckoutTeknisi' });
       }
 
-      // 4. History Checkout (Teknisi)
       if (perms.includes('perm_historyCheckout')) {
         tabs.push({ id: 'tab_historyCheckout', label: 'History Checkout', icon: 'fa-clock-rotate-left', view: 'viewHistoryTeknisi' });
       }
 
-      // 5. Scan & Verifikasi Nota (Bisa diakses Logistik, Team Leader, dan akun yang diberi izin)
       if (isLead || isLogistik || perms.includes('perm_scanNota')) {
         tabs.push({ id: 'tab_scanNota', label: 'Scan & Verifikasi Nota', icon: 'fa-barcode', view: 'viewLogistikScanner' });
       }
 
-      // 6. Monitoring Retur (Logistik/TL) ATAU Pengembalian Barang (Teknisi)
       if (isLead || isLogistik || perms.includes('perm_returMonitoring')) {
         tabs.push({ id: 'tab_retur', label: 'Monitoring Retur', icon: 'fa-clipboard-check', view: 'viewPengembalianTeknisi' });
       } else if (perms.includes('perm_returTeknisi')) {
         tabs.push({ id: 'tab_retur', label: 'Pengembalian Barang (Retur)', icon: 'fa-rotate-left', view: 'viewPengembalianTeknisi' });
       }
 
-      // 7. Profiling BNI
       if (isLead || perms.includes('perm_profilingBNI')) {
         tabs.push({ id: 'tab_profilingBNI', label: 'Profiling BNI', icon: 'fa-id-card', view: 'viewProfilingBNI' });
       }
 
-      // 8. Permintaan Barang HUB
       if (isLead || isLogistik || perms.includes('perm_hubRequest')) {
         tabs.push({ id: 'tab_hubRequest', label: 'Permintaan Barang HUB', icon: 'fa-paper-plane', view: 'viewRequestHUB' });
       }
 
-      // Render Desktop Tabs
       tabs.forEach((tab, index) => {
         const btn = document.createElement('button');
         btn.id = tab.id;
@@ -1451,7 +1452,6 @@
         btn.onclick = () => switchTab(tab.view, btn, tab.label, tab.icon);
         navContainer.appendChild(btn);
 
-        // Render Mobile Menu Items
         if (mobileNavContainer) {
           const mBtn = document.createElement('button');
           mBtn.className = "w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-between text-slate-700 hover:bg-blue-50 hover:text-blue-700 bg-white border border-slate-100";
@@ -1496,7 +1496,6 @@
       const target = document.getElementById(viewId);
       if (target) target.classList.remove('hidden');
 
-      // Update Desktop Active Tab
       const navContainer = document.getElementById('roleNavTabs');
       if (navContainer && activeBtn) {
         Array.from(navContainer.children).forEach(btn => {
@@ -1505,7 +1504,6 @@
         activeBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 bg-blue-600 text-white shadow-xs';
       }
 
-      // Update Mobile Active Indicator
       if (tabLabel) {
         const lbl = document.getElementById('mobileActiveTabText');
         const ico = document.getElementById('mobileActiveTabIcon');
@@ -1514,7 +1512,6 @@
       }
     }
 
-    // Toggle Ciutkan Accordion Formulir Profiling BNI (Teknisi)
     function toggleProfilingFormAccordion() {
       const card = document.getElementById('profilingFormCard');
       const inner = document.getElementById('innerProfilingForm');
@@ -1537,13 +1534,10 @@
       }
     }
 
-    // Refresh UI sesuai role dan state
     function refreshUI() {
       const isLead = currentUser.role === 'lead';
       const isLogistik = currentUser.role === 'logistik';
-      const isTeknisi = currentUser.role === 'teknisi';
 
-      // Judul Katalog & Visibility Keranjang
       const catalogTitle = document.getElementById('checkoutCatalogTitle');
       const cartCont = document.getElementById('cartCheckoutContainer');
       const catalogGridCont = document.getElementById('catalogGridContainer');
@@ -1567,7 +1561,6 @@
         }
       }
 
-      // Visibility Form Pengembalian Retur
       const returFormCard = document.getElementById('returFormCard');
       const returSectionTitle = document.getElementById('returSectionTitle');
       const thActionLogistikRetur = document.getElementById('thActionLogistikRetur');
@@ -1582,7 +1575,6 @@
         if (thActionLogistikRetur) thActionLogistikRetur.classList.add('hidden');
       }
 
-      // Visibility Form Profiling BNI (Sembunyikan untuk Lead & Logistik)
       const profilingFormCard = document.getElementById('profilingFormCard');
       const btnToggleProfilingForm = document.getElementById('btnToggleProfilingForm');
       if (isLead || isLogistik) {
@@ -1593,7 +1585,6 @@
         if (btnToggleProfilingForm) btnToggleProfilingForm.classList.remove('hidden');
       }
 
-      // Render Semua Komponen
       renderStockCatalog();
       renderCartUI();
       renderHistoryTeknisi();
@@ -1604,7 +1595,7 @@
       renderUserManagementTable();
     }
 
-    // ================= KATALOG BARANG & KERANJANG CHECKOUT =================
+    // ================= KATALOG BARANG & CHECKOUT =================
     function renderStockCatalog() {
       const grid = document.getElementById('stockGrid');
       if (!grid) return;
@@ -1777,16 +1768,14 @@
       };
 
       checkoutHistory.unshift(newReceipt);
-      safeStorageSave('app_checkout_history', checkoutHistory);
+      syncToCloud('app_checkout_history', checkoutHistory);
 
-      // Reset keranjang
       cart = {};
       document.getElementById('checkoutNotes').value = '';
       renderCartUI();
       renderStockCatalog();
       renderHistoryTeknisi();
 
-      // Buka Modal Kwitansi & Barcode
       showReceiptModal(newReceipt);
     }
 
@@ -1805,7 +1794,6 @@
         listCont.appendChild(d);
       });
 
-      // Render Barcode menggunakan pustaka JsBarcode
       if (typeof JsBarcode !== 'undefined') {
         try {
           JsBarcode("#receiptBarcodeSvg", rcpt.ticketNo, {
@@ -1817,9 +1805,7 @@
             fontSize: 12,
             font: "monospace"
           });
-        } catch (e) {
-          console.warn('Barcode render error:', e);
-        }
+        } catch (e) {}
       }
 
       document.getElementById('modalReceipt').classList.remove('hidden');
@@ -1829,7 +1815,6 @@
       document.getElementById('modalReceipt').classList.add('hidden');
     }
 
-    // ================= RIWAYAT CHECKOUT TEKNISI =================
     function renderHistoryTeknisi() {
       const tbody = document.getElementById('historyTableBody');
       if (!tbody) return;
@@ -1873,7 +1858,7 @@
       });
     }
 
-    // ================= SCANNER & VERIFIKASI PENGELUARAN (LOGISTIK & TL) =================
+    // ================= SCANNER & VERIFIKASI PENGELUARAN =================
     function handleScanTicket(e) {
       if (e) e.preventDefault();
       const code = document.getElementById('scanTicketInput').value.trim().toUpperCase();
@@ -1941,7 +1926,6 @@
       const found = checkoutHistory.find(h => h.ticketNo === ticketNo);
       if (!found || found.status === 'Sudah Diambil') return;
 
-      // Cek ketersediaan stok fisik gudang
       for (let it of found.items) {
         const stockItem = warehouseStock.find(s => s.id === it.id);
         if (!stockItem || stockItem.stock < it.qty) {
@@ -1950,7 +1934,6 @@
         }
       }
 
-      // Potong stok fisik gudang secara otomatis
       found.items.forEach(it => {
         const stockItem = warehouseStock.find(s => s.id === it.id);
         if (stockItem) {
@@ -1959,8 +1942,8 @@
       });
 
       found.status = 'Sudah Diambil';
-      safeStorageSave('app_stock_cirebon', warehouseStock);
-      safeStorageSave('app_checkout_history', checkoutHistory);
+      syncToCloud('app_stock_cirebon', warehouseStock);
+      syncToCloud('app_checkout_history', checkoutHistory);
 
       showCustomAlert('Berhasil!', `Barang untuk tiket ${ticketNo} telah diverifikasi dan stok gudang otomatis terpotong.`);
       document.getElementById('scanTicketInput').value = '';
@@ -1974,13 +1957,8 @@
     function pasteFromClipboard() {
       if (checkoutHistory.length > 0) {
         const pending = checkoutHistory.find(h => h.status === 'Menunggu Ambil');
-        if (pending) {
-          document.getElementById('scanTicketInput').value = pending.ticketNo;
-          handleScanTicket();
-        } else {
-          document.getElementById('scanTicketInput').value = checkoutHistory[0].ticketNo;
-          handleScanTicket();
-        }
+        document.getElementById('scanTicketInput').value = pending ? pending.ticketNo : checkoutHistory[0].ticketNo;
+        handleScanTicket();
       } else {
         showCustomAlert('Info', 'Belum ada tiket checkout dalam riwayat.');
       }
@@ -2010,12 +1988,12 @@
       };
 
       returHistory.unshift(newRetur);
-      safeStorageSave('app_retur_history', returHistory);
+      syncToCloud('app_retur_history', returHistory);
 
       document.getElementById('returSerialNumber').value = '';
       document.getElementById('returReason').value = '';
 
-      showCustomAlert('Retur Terkirim', `Data retur ${newRetur.returNo} berhasil disimpan. Silakan serahkan unit fisik ke logistik untuk dicek.`);
+      showCustomAlert('Retur Terkirim', `Data retur ${newRetur.returNo} berhasil disimpan. Silakan serahkan unit fisik ke logistik.`);
       renderReturTable();
     }
 
@@ -2025,9 +2003,7 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      const isTeknisi = currentUser.role === 'teknisi';
       const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-
       if (counter) counter.innerText = `${returHistory.length} Data Retur`;
 
       if (returHistory.length === 0) {
@@ -2092,7 +2068,6 @@
         <div class="flex justify-between"><span class="text-slate-500">Kendala:</span> <span class="italic text-slate-700">${item.reason}</span></div>
       `;
 
-      // Reset checkboxes
       document.getElementById('chkReturSN').checked = false;
       document.getElementById('chkReturKelengkapan').checked = false;
       document.getElementById('chkReturKondisi').checked = false;
@@ -2119,9 +2094,9 @@
       item.status = 'Diterima Gudang';
       item.receivedBy = currentUser.name;
 
-      safeStorageSave('app_retur_history', returHistory);
+      syncToCloud('app_retur_history', returHistory);
       closeModalVerifyRetur();
-      showCustomAlert('Validasi Selesai', `Barang retur ${item.returNo} berhasil diverifikasi dan diterima di gudang.`);
+      showCustomAlert('Validasi Selesai', `Barang retur ${item.returNo} berhasil diterima.`);
       renderReturTable();
     }
 
@@ -2130,7 +2105,6 @@
       if (e) e.preventDefault();
       const tid = document.getElementById('profTID').value.trim();
 
-      // Kategori JO
       let katJO = '';
       const katRadios = document.getElementsByName('kategoriJO');
       for (let r of katRadios) {
@@ -2144,7 +2118,6 @@
         katJO = lainText ? `Lain: ${lainText}` : 'Yang lain';
       }
 
-      // Kebutuhan (Multiple checkboxes)
       const kebutuhanArr = [];
       const kebBoxes = document.getElementsByName('kebutuhan');
       for (let b of kebBoxes) {
@@ -2156,7 +2129,6 @@
       const snBaru = document.getElementById('profSNBaru').value.trim() || '0';
       const iccidBaru = document.getElementById('profICCIDBaru').value.trim() || '0';
 
-      // APN Radio
       let apnVal = 'EDCINGENICO - TELKOMSEL';
       const apnRadios = document.getElementsByName('apnOption');
       for (let a of apnRadios) {
@@ -2182,9 +2154,8 @@
       };
 
       profilingBNIList.unshift(newRecord);
-      safeStorageSave('app_profiling_bni', profilingBNIList);
+      syncToCloud('app_profiling_bni', profilingBNIList);
 
-      // Reset form
       document.getElementById('profTID').value = '';
       document.getElementById('profKendala').value = '';
       document.getElementById('profSNBaru').value = '';
@@ -2273,13 +2244,13 @@
       found.apn = document.getElementById('editProfAPN').value;
       found.status = document.getElementById('editProfStatus').value;
 
-      safeStorageSave('app_profiling_bni', profilingBNIList);
+      syncToCloud('app_profiling_bni', profilingBNIList);
       closeModalEditProfiling();
       showCustomAlert('Berhasil', 'Data Profiling BNI berhasil diperbarui.');
       renderProfilingBNITable();
     }
 
-    // ================= PERMINTAAN BARANG HUB KE WH PUSAT =================
+    // ================= PERMINTAAN RESTOCK HUB =================
     function renderHubRestockInputs() {
       const container = document.getElementById('hubRestockInputsContainer');
       if (!container) return;
@@ -2296,8 +2267,6 @@
 
     function openModalRequestHUB() {
       renderHubRestockInputs();
-
-      // Cek hak akses Team Leader untuk menampilkan tombol edit nama barang
       const isLead = currentUser && currentUser.role === 'lead';
       const btnEdit = document.getElementById('btnEditHubItems');
       if (btnEdit) btnEdit.classList.toggle('hidden', !isLead);
@@ -2310,7 +2279,6 @@
       document.getElementById('modalRequestHUB').classList.add('hidden');
     }
 
-    // Modal Edit Nama & Satuan Barang Restock (Khusus Team Leader)
     function openModalEditHubItems() {
       const list = document.getElementById('editHubItemsList');
       if (!list) return;
@@ -2351,11 +2319,7 @@
 
     function addNewHubRestockItem() {
       const newId = 'item_' + Date.now().toString().slice(-4);
-      hubRestockItems.push({
-        id: newId,
-        name: 'Item Restock Baru',
-        unit: 'Pcs'
-      });
+      hubRestockItems.push({ id: newId, name: 'Item Restock Baru', unit: 'Pcs' });
       openModalEditHubItems();
     }
 
@@ -2373,7 +2337,7 @@
         if (unitEl && unitEl.value.trim()) item.unit = unitEl.value.trim();
       });
 
-      safeStorageSave('app_hub_items', hubRestockItems);
+      syncToCloud('app_hub_items', hubRestockItems);
       closeModalEditHubItems();
       renderHubRestockInputs();
       showCustomAlert('Berhasil', 'Daftar nama dan satuan barang restock HUB berhasil diperbarui.');
@@ -2384,7 +2348,6 @@
       const requester = document.getElementById('hubRequesterSelect').value;
       const notes = document.getElementById('hubRequestNotes').value.trim() || '-';
 
-      // Kumpulkan item dari daftar dinamis
       const itemsArr = [];
       hubRestockItems.forEach(item => {
         const input = document.getElementById(`hubQty_${item.id}`);
@@ -2413,7 +2376,7 @@
       };
 
       hubRequests.unshift(newReq);
-      safeStorageSave('app_hub_requests', hubRequests);
+      syncToCloud('app_hub_requests', hubRequests);
 
       closeModalRequestHUB();
       showCustomAlert('Terkirim', `Surat permintaan restock ${newReq.reqNo} berhasil dibuat.`);
@@ -2466,7 +2429,7 @@
             `}
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick="printHubLetter('${req.reqNo}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+            <button onclick="window.print()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
               <i class="fa-solid fa-print"></i>
               <span>Cetak</span>
             </button>
@@ -2480,18 +2443,12 @@
       const found = hubRequests.find(r => r.reqNo === reqNo);
       if (found) {
         found.status = newStatus;
-        safeStorageSave('app_hub_requests', hubRequests);
+        syncToCloud('app_hub_requests', hubRequests);
         renderHubRequestTable();
       }
     }
 
-    function printHubLetter(reqNo) {
-      const found = hubRequests.find(r => r.reqNo === reqNo);
-      if (!found) return;
-      window.print();
-    }
-
-    // ================= MANAJEMEN STOK GUDANG (TEAM LEADER) =================
+    // ================= MANAJEMEN STOK FISIK (TEAM LEADER) =================
     function renderStockManagementTable() {
       const tbody = document.getElementById('stockManagementTableBody');
       if (!tbody) return;
@@ -2544,8 +2501,8 @@
       const item = warehouseStock.find(i => i.id === itemId);
       if (item) {
         item.stock = val;
-        safeStorageSave('app_stock_cirebon', warehouseStock);
-        showCustomAlert('Stok Diperbarui', `Stok ${item.name} berhasil diubah menjadi ${val} ${item.unit}.`);
+        syncToCloud('app_stock_cirebon', warehouseStock);
+        showCustomAlert('Stok Diperbarui', `Stok ${item.name} berhasil diubah.`);
         renderStockManagementTable();
         renderStockCatalog();
       }
@@ -2577,14 +2534,13 @@
       warehouseStock.splice(index, 1);
       delete cart[id];
 
-      safeStorageSave('app_stock_cirebon', warehouseStock);
+      syncToCloud('app_stock_cirebon', warehouseStock);
       closeEditItemModal();
-      showCustomAlert('Barang Dihapus', `${itemName} berhasil dihapus dari katalog gudang.`);
+      showCustomAlert('Barang Dihapus', `${itemName} berhasil dihapus dari katalog.`);
       renderStockCatalog();
       renderStockManagementTable();
     }
 
-    // Modal Tambah Barang Baru ke Katalog (Khusus Team Leader)
     function openModalAddNewItem() {
       document.getElementById('newItemName').value = '';
       document.getElementById('newItemCategory').value = 'CONSUMABLE';
@@ -2605,14 +2561,7 @@
       const stock = parseInt(document.getElementById('newItemStock').value) || 0;
 
       const newId = 'item-' + Date.now().toString().slice(-6);
-      const colorPresets = [
-        'bg-blue-100 text-blue-700',
-        'bg-emerald-100 text-emerald-700',
-        'bg-amber-100 text-amber-700',
-        'bg-purple-100 text-purple-700',
-        'bg-teal-100 text-teal-700',
-        'bg-rose-100 text-rose-700'
-      ];
+      const colorPresets = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-purple-100 text-purple-700'];
       const randomColor = colorPresets[Math.floor(Math.random() * colorPresets.length)];
 
       const newItem = {
@@ -2626,10 +2575,10 @@
       };
 
       warehouseStock.push(newItem);
-      safeStorageSave('app_stock_cirebon', warehouseStock);
+      syncToCloud('app_stock_cirebon', warehouseStock);
 
       closeModalAddNewItem();
-      showCustomAlert('Berhasil!', `Barang "${name}" berhasil ditambahkan ke katalog & master gudang.`);
+      showCustomAlert('Berhasil!', `Barang "${name}" berhasil ditambahkan ke katalog.`);
       renderStockCatalog();
       renderStockManagementTable();
     }
@@ -2645,14 +2594,14 @@
       item.unit = document.getElementById('editItemUnit').value.trim();
       item.stock = parseInt(document.getElementById('editItemStock').value) || 0;
 
-      safeStorageSave('app_stock_cirebon', warehouseStock);
+      syncToCloud('app_stock_cirebon', warehouseStock);
       closeEditItemModal();
       showCustomAlert('Berhasil', 'Detail barang berhasil diperbarui.');
       renderStockCatalog();
       renderStockManagementTable();
     }
 
-    // ================= MANAGEMENT AKSES & USER (TEAM LEADER) =================
+    // ================= MANAGEMENT USER & AKSES (TEAM LEADER) =================
     function renderUserManagementTable() {
       const tbody = document.getElementById('userManagementTableBody');
       if (!tbody) return;
@@ -2747,7 +2696,6 @@
         return;
       }
 
-      // Kumpulkan permissions dari ceklis
       const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
       const perms = [];
       permIds.forEach(p => {
@@ -2766,7 +2714,7 @@
       };
 
       systemUsers.push(newUser);
-      safeStorageSave('app_system_users', systemUsers);
+      syncToCloud('app_system_users', systemUsers);
       closeModalCreateUser();
       showCustomAlert('Berhasil', `Pengguna baru ${name} (${uid}) berhasil ditambahkan.`);
       renderUserManagementTable();
@@ -2809,12 +2757,11 @@
       });
       user.permissions = newPerms;
 
-      safeStorageSave('app_system_users', systemUsers);
+      syncToCloud('app_system_users', systemUsers);
       closeModalEditPermissions();
       showCustomAlert('Hak Akses Diperbarui', `Hak akses untuk ${user.name} (${user.id}) berhasil disimpan.`);
       renderUserManagementTable();
 
-      // Jika yang diedit adalah user saat ini, perbarui navigasinya
       if (currentUser && currentUser.id === user.id) {
         currentUser = user;
         document.getElementById('labelUserSp').innerText = user.servicePoint;
@@ -2826,7 +2773,7 @@
       const user = systemUsers.find(u => u.id === userId);
       if (!user) return;
       user.active = !(user.active !== false);
-      safeStorageSave('app_system_users', systemUsers);
+      syncToCloud('app_system_users', systemUsers);
       renderUserManagementTable();
     }
 
@@ -2848,15 +2795,14 @@
 
       if (user && newPass) {
         user.password = newPass;
-        safeStorageSave('app_system_users', systemUsers);
+        syncToCloud('app_system_users', systemUsers);
         closeModalResetPassword();
         showCustomAlert('Password Berhasil Diubah', `Password untuk user ${uid} telah diperbarui.`);
       }
     }
 
-    // ================= MASTER DROPDOWN (TEAM LEADER) =================
+    // ================= MASTER DROPDOWN =================
     function populateMasterDropdownOptions() {
-      // 1. Dropdown HUB Pemohon di Form Surat HUB
       const hubSelect = document.getElementById('hubRequesterSelect');
       if (hubSelect) {
         hubSelect.innerHTML = '';
@@ -2868,7 +2814,6 @@
         });
       }
 
-      // 2. Datalist Service Point
       const spDatalist = document.getElementById('spOptionsList');
       if (spDatalist) {
         spDatalist.innerHTML = '';
@@ -2879,7 +2824,6 @@
         });
       }
 
-      // 3. Dropdown Retur Customer
       const custSelect = document.getElementById('returCustomerSelect');
       if (custSelect) {
         custSelect.innerHTML = '';
@@ -2891,7 +2835,6 @@
         });
       }
 
-      // 4. Dropdown Retur Kelengkapan
       const kelSelect = document.getElementById('returKelengkapanSelect');
       if (kelSelect) {
         kelSelect.innerHTML = '';
@@ -2904,73 +2847,7 @@
       }
     }
 
-    function openModalMasterDropdown() {
-      renderMasterBadges();
-      document.getElementById('modalMasterDropdown').classList.remove('hidden');
-    }
-
-    function closeModalMasterDropdown() {
-      document.getElementById('modalMasterDropdown').classList.add('hidden');
-      populateMasterDropdownOptions();
-    }
-
-    function renderMasterBadges() {
-      // Render HUB
-      const hCont = document.getElementById('masterListHUB');
-      hCont.innerHTML = masterDropdown.hubList.map((h, i) => `
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
-          ${h}
-          <button onclick="removeMasterItem('hub', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
-        </span>
-      `).join('');
-
-      // Render Kelengkapan
-      const kCont = document.getElementById('masterListKelengkapan');
-      kCont.innerHTML = masterDropdown.kelengkapanList.map((k, i) => `
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
-          ${k}
-          <button onclick="removeMasterItem('kelengkapan', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
-        </span>
-      `).join('');
-
-      // Render Customer
-      const cCont = document.getElementById('masterListCustomer');
-      cCont.innerHTML = masterDropdown.customerList.map((c, i) => `
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-semibold text-slate-800">
-          ${c}
-          <button onclick="removeMasterItem('customer', ${i})" class="text-rose-500 hover:text-rose-700 ml-1"><i class="fa-solid fa-xmark"></i></button>
-        </span>
-      `).join('');
-    }
-
-    function addNewMasterItem(type) {
-      let label = type === 'hub' ? 'Nama Service Point / HUB' : type === 'kelengkapan' ? 'Opsi Kelengkapan Retur' : 'Nama Customer / Bank';
-      let defaultPrompt = type === 'hub' ? '01 HUB Baru' : type === 'kelengkapan' ? 'Unit + Kabel' : 'Bank Mandiri';
-      
-      const val = window.prompt(`Masukkan ${label}:`, defaultPrompt);
-      if (!val || !val.trim()) return;
-
-      const trimmed = val.trim();
-      if (type === 'hub' && !masterDropdown.hubList.includes(trimmed)) masterDropdown.hubList.push(trimmed);
-      if (type === 'kelengkapan' && !masterDropdown.kelengkapanList.includes(trimmed)) masterDropdown.kelengkapanList.push(trimmed);
-      if (type === 'customer' && !masterDropdown.customerList.includes(trimmed)) masterDropdown.customerList.push(trimmed);
-
-      safeStorageSave('app_master_dropdown', masterDropdown);
-      renderMasterBadges();
-      populateMasterDropdownOptions();
-    }
-
-    function removeMasterItem(type, index) {
-      if (type === 'hub') masterDropdown.hubList.splice(index, 1);
-      if (type === 'kelengkapan') masterDropdown.kelengkapanList.splice(index, 1);
-      if (type === 'customer') masterDropdown.customerList.splice(index, 1);
-
-      safeStorageSave('app_master_dropdown', masterDropdown);
-      renderMasterBadges();
-      populateMasterDropdownOptions();
-    }
-
-    // ================= RESET DATA BULANAN (TEAM LEADER) =================
+    // ================= RESET BULANAN =================
     function openModalMonthlyReset() {
       document.getElementById('modalMonthlyReset').classList.remove('hidden');
     }
@@ -2988,40 +2865,39 @@
       let msg = [];
       if (rCheckout) {
         checkoutHistory = [];
-        safeStorageSave('app_checkout_history', []);
+        syncToCloud('app_checkout_history', []);
         msg.push('Riwayat Checkout');
       }
       if (rRetur) {
         returHistory = [];
-        safeStorageSave('app_retur_history', []);
+        syncToCloud('app_retur_history', []);
         msg.push('Riwayat Retur');
       }
       if (rHub) {
         hubRequests = [];
-        safeStorageSave('app_hub_requests', []);
+        syncToCloud('app_hub_requests', []);
         msg.push('Permintaan HUB');
       }
       if (rProf) {
         profilingBNIList = [];
-        safeStorageSave('app_profiling_bni', []);
+        syncToCloud('app_profiling_bni', []);
         msg.push('Profiling BNI');
       }
 
       closeModalMonthlyReset();
-      showCustomAlert('Reset Berhasil', `Data berikut telah direset: ${msg.join(', ') || 'Tidak ada data dipilih'}. Master stok tetap aman.`);
+      showCustomAlert('Reset Berhasil', `Data berikut telah dibersihkan: ${msg.join(', ') || 'Tidak ada data dipilih'}. Master stok tetap aman.`);
       refreshUI();
     }
 
-    // ================= EKSPOR EXCEL (TEAM LEADER) =================
+    // ================= EKSPOR EXCEL (.XLSX) =================
     function exportAllDataToExcel() {
       if (typeof XLSX === 'undefined') {
-        showCustomAlert('Error', 'Pustaka Excel belum siap. Cek koneksi internet Anda.', true);
+        showCustomAlert('Error', 'Pustaka Excel belum siap.', true);
         return;
       }
 
       const wb = XLSX.utils.book_new();
 
-      // Sheet 1: Master Stok
       const wsStock = XLSX.utils.json_to_sheet(warehouseStock.map(s => ({
         ID: s.id,
         "Nama Barang": s.name,
@@ -3031,7 +2907,6 @@
       })));
       XLSX.utils.book_append_sheet(wb, wsStock, "Stok Gudang");
 
-      // Sheet 2: Riwayat Checkout
       const wsCheckout = XLSX.utils.json_to_sheet(checkoutHistory.map(c => ({
         "No Tiket": c.ticketNo,
         Waktu: c.date,
@@ -3044,7 +2919,6 @@
       })));
       XLSX.utils.book_append_sheet(wb, wsCheckout, "Riwayat Checkout");
 
-      // Sheet 3: Pengembalian Retur
       const wsRetur = XLSX.utils.json_to_sheet(returHistory.map(r => ({
         "No Retur": r.returNo,
         Waktu: r.date,
@@ -3059,7 +2933,6 @@
       })));
       XLSX.utils.book_append_sheet(wb, wsRetur, "Monitoring Retur");
 
-      // Sheet 4: Profiling BNI
       const wsProf = XLSX.utils.json_to_sheet(profilingBNIList.map(p => ({
         TID: p.tid,
         Waktu: p.date,
@@ -3074,7 +2947,6 @@
       })));
       XLSX.utils.book_append_sheet(wb, wsProf, "Profiling BNI");
 
-      // Sheet 5: Permintaan HUB
       const wsHub = XLSX.utils.json_to_sheet(hubRequests.map(h => ({
         "No Pengajuan": h.reqNo,
         Waktu: h.date,
@@ -3095,6 +2967,7 @@
     // ================= INITIAL LOAD =================
     window.addEventListener('DOMContentLoaded', () => {
       populateMasterDropdownOptions();
+      initFirestoreLiveListeners();
     });
   </script>
 </body>
