@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Si Paling Logistik - Sistem Operasional EDC & HUB</title>
   
   <!-- Tailwind CSS CDN -->
@@ -27,6 +27,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+    }
     body {
       font-family: 'Inter', sans-serif;
       background-color: #f8fafc;
@@ -37,6 +44,12 @@
     .no-scrollbar {
       -ms-overflow-style: none;
       scrollbar-width: none;
+    }
+    /* Mencegah iOS Safari & Android Auto-Zoom saat mengetik yang memicu layar bergeser */
+    @media (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
     }
     @media print {
       body * {
@@ -54,20 +67,19 @@
     }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+<body class="min-h-screen text-slate-800 antialiased selection:bg-blue-600 selection:text-white w-full overflow-x-hidden">
 
   <!-- ================= LAYAR LOGIN ================= -->
-  <div id="loginShell" class="min-h-screen flex items-center justify-center p-4 bg-slate-900 bg-radial from-slate-800 to-slate-950">
-    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100">
+  <div id="loginShell" class="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-xl border border-slate-200/80">
       <div class="text-center mb-6">
-        <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30 text-2xl">
+        <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto shadow-lg shadow-blue-500/25 mb-3">
           <i class="fa-solid fa-boxes-packing"></i>
         </div>
-        <h1 class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">Si Paling Logistik</h1>
-        <p class="text-xs text-slate-400 font-semibold mt-1">Portal Operasional EDC & Sparepart</p>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Si Paling Logistik</h2>
+        <p class="text-xs text-slate-500 font-medium mt-1">Sistem Operasional Logistik & EDC</p>
       </div>
 
-      <!-- Pesan Notifikasi Login -->
       <div id="loginAlert" class="hidden mb-4 p-3 rounded-xl text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-2">
         <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
         <span id="loginAlertText">User ID atau password tidak valid!</span>
@@ -1271,7 +1283,19 @@
       if (!db || !isCloudOnline) return;
 
       const collectionsToListen = [
-        { key: 'app_system_users', setter: (d) => { systemUsers = d; if (currentUser) { const me = systemUsers.find(u => u.id === currentUser.id); if (me) currentUser = me; } } },
+        { 
+          key: 'app_system_users', 
+          setter: (d) => { 
+            systemUsers = d; 
+            if (currentUser) { 
+              const me = systemUsers.find(u => u.id.toLowerCase() === currentUser.id.toLowerCase()); 
+              if (me) {
+                currentUser = me; 
+                safeStorageSave('spl_active_user', me);
+              }
+            } 
+          } 
+        },
         { key: 'app_stock_cirebon', setter: (d) => { warehouseStock = d; } },
         { key: 'app_checkout_history', setter: (d) => { checkoutHistory = d; } },
         { key: 'app_retur_history', setter: (d) => { returHistory = d; } },
@@ -1299,6 +1323,69 @@
           console.warn("Firestore snapshot error:", err);
         });
       });
+    }
+
+    // ================= RESTORE ACTIVE SESSION ON LOAD / REFRESH =================
+    function restoreUserSession() {
+      const savedUser = safeStorageLoad('spl_active_user', null);
+      if (savedUser && savedUser.id) {
+        // Cek apakah akun masih terdaftar di sistemUsers
+        const matched = systemUsers.find(u => u.id.toLowerCase() === savedUser.id.toLowerCase());
+        currentUser = matched || savedUser;
+        if (currentUser.active === false) {
+          logout();
+          return;
+        }
+        applySessionToUI(currentUser);
+      }
+    }
+
+    function applySessionToUI(user) {
+      const loginAlert = document.getElementById('loginAlert');
+      if (loginAlert) loginAlert.classList.add('hidden');
+
+      const loginShell = document.getElementById('loginShell');
+      if (loginShell) loginShell.classList.add('hidden');
+
+      const appShell = document.getElementById('appShell');
+      if (appShell) appShell.classList.remove('hidden');
+
+      // Update Info Header
+      const userNameEl = document.getElementById('loggedUserName');
+      if (userNameEl) userNameEl.innerText = user.name;
+
+      const userBadgeEl = document.getElementById('loggedUserRoleBadge');
+      if (userBadgeEl) userBadgeEl.innerText = (user.role || '').toUpperCase();
+
+      const userSpEl = document.getElementById('labelUserSp');
+      if (userSpEl) userSpEl.innerText = user.servicePoint || '01 Cirebon';
+
+      // Kontrol Tombol Khusus Team Leader di Header
+      const isLead = user.role === 'lead';
+      const btnExport = document.getElementById('btnExportExcel');
+      if (btnExport) btnExport.classList.toggle('hidden', !isLead);
+
+      const btnReset = document.getElementById('btnMonthlyReset');
+      if (btnReset) btnReset.classList.toggle('hidden', !isLead);
+
+      populateMasterDropdownOptions();
+      setupRoleNavigation();
+    }
+
+    function logout() {
+      currentUser = null;
+      try {
+        localStorage.removeItem('spl_active_user');
+      } catch (e) {}
+      cart = {};
+      const appShell = document.getElementById('appShell');
+      if (appShell) appShell.classList.add('hidden');
+      const loginShell = document.getElementById('loginShell');
+      if (loginShell) loginShell.classList.remove('hidden');
+      const uidInput = document.getElementById('loginUserId');
+      if (uidInput) uidInput.value = '';
+      const passInput = document.getElementById('loginPassword');
+      if (passInput) passInput.value = '';
     }
 
     // ================= UNIVERSAL ALERT DIALOG =================
@@ -1353,26 +1440,15 @@
       }
 
       currentUser = user;
-      document.getElementById('loginAlert').classList.add('hidden');
-      document.getElementById('loginShell').classList.add('hidden');
-      document.getElementById('appShell').classList.remove('hidden');
-
-      // Update Info Header
-      document.getElementById('loggedUserName').innerText = currentUser.name;
-      document.getElementById('loggedUserRoleBadge').innerText = currentUser.role.toUpperCase();
-      document.getElementById('labelUserSp').innerText = currentUser.servicePoint || '01 Cirebon';
-
-      // Kontrol Tombol Khusus Team Leader di Header
-      const isLead = currentUser.role === 'lead';
-      document.getElementById('btnExportExcel').classList.toggle('hidden', !isLead);
-      document.getElementById('btnMonthlyReset').classList.toggle('hidden', !isLead);
-
-      populateMasterDropdownOptions();
-      setupRoleNavigation();
+      safeStorageSave('spl_active_user', currentUser);
+      applySessionToUI(currentUser);
     }
 
     function logout() {
       currentUser = null;
+      try {
+        localStorage.removeItem('spl_active_user');
+      } catch (e) {}
       cart = {};
       document.getElementById('appShell').classList.add('hidden');
       document.getElementById('loginShell').classList.remove('hidden');
@@ -2967,6 +3043,7 @@
     // ================= INITIAL LOAD =================
     window.addEventListener('DOMContentLoaded', () => {
       populateMasterDropdownOptions();
+      restoreUserSession();
       initFirestoreLiveListeners();
     });
   </script>
