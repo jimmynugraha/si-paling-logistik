@@ -1263,6 +1263,46 @@
     </div>
   </div>
 
+  <!-- Modal Konfirmasi Hapus Universal (Pengganti window.confirm) -->
+  <div id="customConfirmModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto text-xl bg-rose-50 text-rose-600">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h4 id="confirmModalTitle" class="font-bold text-slate-800 text-sm">Konfirmasi Hapus</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-600 leading-relaxed font-medium"></p>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeCustomConfirm()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Batal</button>
+        <button type="button" id="btnExecuteConfirmAction" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-md shadow-rose-500/20 transition">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 12: Audit Trail / History Respon Pemroses & Timestamp -->
+  <div id="modalAuditTrail" class="hidden fixed inset-0 z-[75] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+        <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+          Riwayat Pemrosesan & Timestamp
+        </h3>
+        <button onclick="closeAuditTrailModal()" class="text-slate-400 hover:text-slate-600 text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="auditTrailContent" class="space-y-3">
+        <!-- Render dinamis via JS -->
+      </div>
+
+      <div class="pt-2">
+        <button type="button" onclick="closeAuditTrailModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= JAVASCRIPT LOGIC LENGKAP & FIREBASE FIRESTORE SYNC ================= -->
   <script>
     // 1. KONFIGURASI FIREBASE RESMI ANDA
@@ -1419,9 +1459,8 @@
         { 
           key: 'app_notifications', 
           setter: (d) => { 
-            const prevLen = systemNotifications.length;
             systemNotifications = d;
-            handleIncomingNotificationsLive(prevLen);
+            handleIncomingNotificationsLive();
           } 
         }
       ];
@@ -1609,6 +1648,36 @@
     function closeCustomAlert() {
       const modal = document.getElementById('customAlertModal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    // ================= CUSTOM CONFIRM DIALOG =================
+    let pendingConfirmAction = null;
+    function showCustomConfirm(title, message, onConfirmCallback) {
+      const modal = document.getElementById('customConfirmModal');
+      const titleEl = document.getElementById('confirmModalTitle');
+      const msgEl = document.getElementById('confirmModalMessage');
+      const btnExec = document.getElementById('btnExecuteConfirmAction');
+      if (!modal) return;
+      if (titleEl) titleEl.innerText = title;
+      if (msgEl) msgEl.innerText = message;
+      pendingConfirmAction = onConfirmCallback;
+      if (btnExec) {
+        btnExec.onclick = () => {
+          if (typeof pendingConfirmAction === 'function') pendingConfirmAction();
+          closeCustomConfirm();
+        };
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeCustomConfirm() {
+      const modal = document.getElementById('customConfirmModal');
+      if (modal) modal.classList.add('hidden');
+      pendingConfirmAction = null;
+    }
+
+    function isUserAdminOrLead() {
+      return currentUser && (currentUser.role === 'lead' || (currentUser.id || '').toLowerCase() === 'admin');
     }
 
     // ================= LOGIN & AUTHENTICATION =================
@@ -2170,7 +2239,13 @@
         servicePoint: currentUser.servicePoint || '01 Cirebon',
         items: itemsDetail,
         notes: notes,
-        status: 'Menunggu Ambil'
+        status: 'Proses',
+        processedBy: null,
+        processorRole: null,
+        processedAt: null,
+        historyLog: [
+          { action: 'Pembuatan Kwitansi (Checkout)', by: currentUser.name, role: 'Teknisi', timestamp: nowStr }
+        ]
       };
 
       checkoutHistory.unshift(newReceipt);
@@ -2183,6 +2258,7 @@
         message: `${currentUser.name} membuat kwitansi ${newReceipt.ticketNo} (${itemsDetail.map(i => `${i.name} x${i.qty}`).join(', ')})`,
         linkTab: 'viewLogistikScanner',
         dataId: newReceipt.ticketNo,
+        senderId: currentUser.id,
         senderName: currentUser.name
       });
 
@@ -2238,9 +2314,14 @@
       tbody.innerHTML = '';
 
       const isTeknisi = currentUser.role === 'teknisi';
-      const isLead = currentUser.role === 'lead';
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik' || (currentUser.id || '').toLowerCase() === 'admin';
+      const isLeadOrAdmin = isUserAdminOrLead();
+      const myId = (currentUser.id || '').toLowerCase();
+      const myName = (currentUser.name || '').toLowerCase();
+
+      // Isolasi data: Teknisi hanya melihat checkout miliknya sendiri
       const filtered = isTeknisi 
-        ? checkoutHistory.filter(h => h.techId === currentUser.id)
+        ? checkoutHistory.filter(h => (h.techId && h.techId.toLowerCase() === myId) || (h.techName && h.techName.toLowerCase() === myName))
         : checkoutHistory;
 
       if (filtered.length === 0) {
@@ -2249,7 +2330,22 @@
       }
 
       filtered.forEach(h => {
-        const isDone = h.status === 'Sudah Diambil';
+        // Normalisasi status lama ke tahapan baru
+        let st = h.status;
+        if (st === 'Menunggu Ambil') st = 'Proses';
+        if (st === 'Sudah Diambil') st = 'Done Pickup';
+
+        let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        let dotColor = 'bg-amber-500';
+
+        if (st === 'Ready Pickup') {
+          badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+          dotColor = 'bg-blue-500';
+        } else if (st === 'Done Pickup') {
+          badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          dotColor = 'bg-emerald-500';
+        }
+
         const itemsStr = h.items.map(it => `${it.name} (${it.qty} ${it.unit})`).join(', ');
 
         const tr = document.createElement('tr');
@@ -2260,19 +2356,29 @@
           <td class="py-3 px-4 font-bold text-slate-800">${h.techName}</td>
           <td class="py-3 px-4 text-slate-600 max-w-xs truncate" title="${itemsStr}">${itemsStr}</td>
           <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[110px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
-              ${h.status}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[110px] justify-center ${badgeClass} border">
+              <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+              ${st}
             </span>
           </td>
           <td class="py-3 px-4 text-center">
             <div class="inline-flex items-center gap-1.5 justify-center">
+              ${isLeadOrLogistik && st === 'Proses' ? `
+                <button onclick="setCheckoutReadyPickup('${h.ticketNo}')" title="Set Ready Pickup" class="px-2 py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                  <i class="fa-solid fa-box-check"></i>
+                  <span>Ready</span>
+                </button>
+              ` : ''}
               <button onclick='showReceiptModal(${JSON.stringify(h)})' class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
                 <i class="fa-solid fa-barcode"></i>
                 <span>Nota</span>
               </button>
-              ${isLead ? `
-                <button onclick="deleteCheckoutEntry('${h.ticketNo}')" title="Hapus Riwayat Checkout" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+              <!-- Tombol Logo History Audit Trail -->
+              <button onclick="showAuditTrail('checkout', '${h.ticketNo}')" title="Lihat Riwayat & Pemroses" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs transition active:scale-95">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              </button>
+              ${isLeadOrAdmin ? `
+                <button onclick="deleteCheckoutEntry('${h.ticketNo}')" title="Hapus Riwayat Checkout" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition active:scale-95">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
@@ -2283,17 +2389,57 @@
       });
     }
 
-    function deleteCheckoutEntry(ticketNo) {
-      if (currentUser.role !== 'lead') return;
-      if (!window.confirm(`Yakin ingin menghapus riwayat checkout ${ticketNo}?`)) return;
+    function setCheckoutReadyPickup(ticketNo) {
+      const ticket = checkoutHistory.find(t => t.ticketNo === ticketNo);
+      if (!ticket) return;
 
-      const idx = checkoutHistory.findIndex(h => h.ticketNo === ticketNo);
-      if (idx !== -1) {
-        checkoutHistory.splice(idx, 1);
-        syncToCloud('app_checkout_history', checkoutHistory);
-        showCustomAlert('Terhapus', `Data checkout ${ticketNo} berhasil dihapus.`);
-        renderHistoryTeknisi();
-      }
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const roleLabel = currentUser.role === 'lead' ? 'Team Leader' : 'Logistik';
+
+      ticket.status = 'Ready Pickup';
+      ticket.processedBy = currentUser.name;
+      ticket.processorRole = roleLabel;
+      ticket.processedAt = nowStr;
+
+      if (!ticket.historyLog) ticket.historyLog = [];
+      ticket.historyLog.push({
+        action: 'Disiapkan (Ready Pickup)',
+        by: currentUser.name,
+        role: roleLabel,
+        timestamp: nowStr
+      });
+
+      syncToCloud('app_checkout_history', checkoutHistory);
+
+      // Kirim Notifikasi ke Teknisi bahwa barang sudah siap diambil
+      const targetTechId = ticket.techId || (systemUsers.find(u => u.name && u.name.toLowerCase() === (ticket.techName || '').toLowerCase())?.id) || '';
+      createAppNotification({
+        type: 'checkout',
+        title: 'Barang Siap Diambil (Ready Pickup)',
+        message: `Kwitansi ${ticket.ticketNo} telah disiapkan oleh ${roleLabel} (${currentUser.name}) dan siap Anda ambil di gudang.`,
+        linkTab: 'viewHistoryTeknisi',
+        dataId: ticket.ticketNo,
+        senderId: currentUser.id,
+        senderName: currentUser.name,
+        targetUserId: targetTechId,
+        targetUserName: ticket.techName
+      });
+
+      showCustomAlert('Ready Pickup', `Kwitansi ${ticketNo} berstatus Ready Pickup. Teknisi menerima notifikasi.`);
+      renderHistoryTeknisi();
+    }
+
+    function deleteCheckoutEntry(ticketNo) {
+      if (!isUserAdminOrLead()) return;
+      showCustomConfirm('Hapus Riwayat Checkout', `Yakin ingin menghapus data kwitansi ${ticketNo}?`, () => {
+        const idx = checkoutHistory.findIndex(h => h.ticketNo === ticketNo);
+        if (idx !== -1) {
+          checkoutHistory.splice(idx, 1);
+          syncToCloud('app_checkout_history', checkoutHistory);
+          showCustomAlert('Terhapus', `Data checkout ${ticketNo} berhasil dihapus.`);
+          renderHistoryTeknisi();
+        }
+      });
     }
 
     // ================= PENGEMBALIAN BARANG RETUR =================
@@ -2304,10 +2450,11 @@
       const customer = document.getElementById('returCustomerSelect').value;
       const kelengkapan = document.getElementById('returKelengkapanSelect').value;
       const reason = document.getElementById('returReason').value.trim();
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 
       const newRetur = {
         returNo: 'RET-CRB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
-        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        date: nowStr,
         itemType: itemType,
         sn: sn,
         customer: customer,
@@ -2316,7 +2463,13 @@
         techId: currentUser.id,
         techName: currentUser.name,
         status: 'Menunggu Ceklis',
-        receivedBy: '-'
+        receivedBy: '-',
+        processedBy: null,
+        processorRole: null,
+        processedAt: null,
+        historyLog: [
+          { action: 'Pengajuan Retur oleh Teknisi', by: currentUser.name, role: 'Teknisi', timestamp: nowStr }
+        ]
       };
 
       returHistory.unshift(newRetur);
@@ -2329,6 +2482,7 @@
         message: `${currentUser.name} mengajukan retur ${newRetur.returNo} (${itemType} - SN: ${sn})`,
         linkTab: 'viewPengembalianTeknisi',
         dataId: newRetur.returNo,
+        senderId: currentUser.id,
         senderName: currentUser.name
       });
 
@@ -2345,42 +2499,53 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      if (counter) counter.innerText = `${returHistory.length} Data Retur`;
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik' || (currentUser.id || '').toLowerCase() === 'admin';
+      const isLeadOrAdmin = isUserAdminOrLead();
+      const isTeknisi = currentUser.role === 'teknisi';
+      const myId = (currentUser.id || '').toLowerCase();
+      const myName = (currentUser.name || '').toLowerCase();
 
-      if (returHistory.length === 0) {
+      // Isolasi data: Teknisi hanya melihat data retur miliknya sendiri
+      const displayedReturs = isTeknisi 
+        ? returHistory.filter(r => (r.techId && r.techId.toLowerCase() === myId) || (r.techName && r.techName.toLowerCase() === myName))
+        : returHistory;
+
+      if (counter) counter.innerText = `${displayedReturs.length} Data Retur`;
+
+      if (displayedReturs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400 font-semibold">Belum ada data pengembalian retur</td></tr>`;
         return;
       }
 
-      returHistory.forEach((r, idx) => {
+      displayedReturs.forEach((r, idx) => {
         const isDone = r.status === 'Diterima Gudang';
-        const isLead = currentUser.role === 'lead';
 
         let actionCell = '';
-        if (isLeadOrLogistik) {
-          actionCell = `
-            <td class="py-3 px-4 text-center">
-              <div class="inline-flex items-center gap-1.5 justify-center">
-                ${isDone ? `
-                  <span class="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-check"></i> Diterima (${r.receivedBy})
-                  </span>
-                ` : `
-                  <button onclick="openModalVerifyRetur(${idx})" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-                    <i class="fa-solid fa-clipboard-check"></i>
-                    <span>Ceklis</span>
-                  </button>
-                `}
-                ${isLead ? `
-                  <button onclick="deleteReturEntry('${r.returNo}')" title="Hapus Data Retur" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                ` : ''}
-              </div>
-            </td>
-          `;
-        }
+        actionCell = `
+          <td class="py-3 px-4 text-center">
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              ${isLeadOrLogistik ? (!isDone ? `
+                <button onclick="openModalVerifyRetur(${idx})" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                  <i class="fa-solid fa-clipboard-check"></i>
+                  <span>Ceklis</span>
+                </button>
+              ` : `
+                <span class="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-check"></i> Diterima
+                </span>
+              `) : ''}
+              <!-- Tombol Logo History Audit Trail -->
+              <button onclick="showAuditTrail('retur', '${r.returNo}')" title="Lihat Riwayat & Pemroses" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs transition active:scale-95">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              </button>
+              ${isLeadOrAdmin ? `
+                <button onclick="deleteReturEntry('${r.returNo}')" title="Hapus Data Retur" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition active:scale-95">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        `;
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition";
@@ -2404,35 +2569,52 @@
     }
 
     function deleteReturEntry(returNo) {
-      if (currentUser.role !== 'lead') return;
-      if (!window.confirm(`Yakin ingin menghapus data retur ${returNo}?`)) return;
-
-      const idx = returHistory.findIndex(r => r.returNo === returNo);
-      if (idx !== -1) {
-        returHistory.splice(idx, 1);
-        syncToCloud('app_retur_history', returHistory);
-        showCustomAlert('Terhapus', `Data retur ${returNo} berhasil dihapus.`);
-        renderReturTable();
-      }
+      if (!isUserAdminOrLead()) return;
+      showCustomConfirm('Hapus Data Retur', `Yakin ingin menghapus data pengembalian retur ${returNo}?`, () => {
+        const idx = returHistory.findIndex(r => r.returNo === returNo);
+        if (idx !== -1) {
+          returHistory.splice(idx, 1);
+          syncToCloud('app_retur_history', returHistory);
+          showCustomAlert('Terhapus', `Data retur ${returNo} berhasil dihapus.`);
+          renderReturTable();
+        }
+      });
     }
 
     function executeConfirmRetur() {
       if (pendingVerifyReturIndex < 0 || !returHistory[pendingVerifyReturIndex]) return;
       const item = returHistory[pendingVerifyReturIndex];
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const roleLabel = currentUser.role === 'lead' ? 'Team Leader' : 'Logistik';
+
       item.status = 'Diterima Gudang';
       item.receivedBy = currentUser.name;
+      item.processedBy = currentUser.name;
+      item.processorRole = roleLabel;
+      item.processedAt = nowStr;
+
+      if (!item.historyLog) item.historyLog = [];
+      item.historyLog.push({
+        action: 'Verifikasi Fisik Retur & Diterima',
+        by: currentUser.name,
+        role: roleLabel,
+        timestamp: nowStr
+      });
 
       syncToCloud('app_retur_history', returHistory);
 
       // Notifikasi otomatis ke teknisi pengaju
+      const targetTechId = item.techId || (systemUsers.find(u => u.name && u.name.toLowerCase() === (item.techName || '').toLowerCase())?.id) || '';
       createAppNotification({
         type: 'retur',
-        title: 'Retur Diterima Gudang',
-        message: `Retur ${item.returNo} (${item.itemType} - SN: ${item.sn}) telah diverifikasi & diterima fisik oleh ${currentUser.name}.`,
+        title: 'Retur Diterima Fisik Gudang',
+        message: `Retur ${item.returNo} (${item.itemType} - SN: ${item.sn}) telah diverifikasi & diterima fisik oleh ${roleLabel} (${currentUser.name}).`,
         linkTab: 'viewPengembalianTeknisi',
         dataId: item.returNo,
+        senderId: currentUser.id,
         senderName: currentUser.name,
-        targetUserId: item.techId
+        targetUserId: targetTechId,
+        targetUserName: item.techName
       });
 
       closeModalVerifyRetur();
@@ -2478,9 +2660,11 @@
         }
       }
 
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
       const newRecord = {
         id: 'PROF-' + Date.now().toString().slice(-6),
-        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        date: nowStr,
         tid: tid,
         kategoriJO: katJO,
         kebutuhan: kebutuhanStr,
@@ -2490,7 +2674,13 @@
         apn: apnVal,
         techId: currentUser.id,
         techName: currentUser.name,
-        status: 'Proses'
+        status: 'Proses',
+        processedBy: null,
+        processorRole: null,
+        processedAt: null,
+        historyLog: [
+          { action: 'Pengajuan Profiling oleh Teknisi', by: currentUser.name, role: 'Teknisi', timestamp: nowStr }
+        ]
       };
 
       profilingBNIList.unshift(newRecord);
@@ -2503,6 +2693,7 @@
         message: `${currentUser.name} mengajukan profiling TID ${tid} (${katJO} - ${kebutuhanStr})`,
         linkTab: 'viewProfilingBNI',
         dataId: tid,
+        senderId: currentUser.id,
         senderName: currentUser.name
       });
 
@@ -2522,231 +2713,25 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      if (counter) counter.innerText = `${profilingBNIList.length} Tiket`;
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik' || (currentUser.id || '').toLowerCase() === 'admin';
+      const isLeadOrAdmin = isUserAdminOrLead();
+      const isTeknisi = currentUser.role === 'teknisi';
+      const myId = (currentUser.id || '').toLowerCase();
+      const myName = (currentUser.name || '').toLowerCase();
 
-      if (profilingBNIList.length === 0) {
+      // Isolasi data: Teknisi hanya melihat tiket profiling miliknya sendiri
+      const displayedProfiling = isTeknisi 
+        ? profilingBNIList.filter(p => (p.techId && p.techId.toLowerCase() === myId) || (p.techName && p.techName.toLowerCase() === myName))
+        : profilingBNIList;
+
+      if (counter) counter.innerText = `${displayedProfiling.length} Tiket`;
+
+      if (displayedProfiling.length === 0) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400 font-semibold">Belum ada pengajuan profiling BNI</td></tr>`;
         return;
       }
 
-      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-
-      profilingBNIList.forEach(p => {
-        const isDone = p.status === 'Done';
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-mono font-bold text-blue-600">${p.tid}</td>
-          <td class="py-3 px-4 font-semibold text-slate-800">${p.kategoriJO}</td>
-          <td class="py-3 px-4 font-bold text-slate-700">${p.kebutuhan}</td>
-          <td class="py-3 px-4 text-slate-600 max-w-xs font-medium" title="${p.kendala}">${p.kendala}</td>
-          <td class="py-3 px-4 font-mono font-bold text-slate-800">${p.snBaru}</td>
-          <td class="py-3 px-4 font-mono text-slate-700">${p.iccidBaru}</td>
-          <td class="py-3 px-4 text-[11px] font-semibold text-slate-600">${p.apn}</td>
-          <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[95px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
-              ${p.status}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-center">
-            ${isLeadOrLogistik ? `
-              <button onclick="openModalEditProfiling('${p.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-                <i class="fa-solid fa-pen"></i>
-                <span>Edit</span>
-              </button>
-            ` : `
-              <span class="text-xs text-slate-400 font-semibold">${p.techName}</span>
-            `}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function openModalEditProfiling(id) {
-      const found = profilingBNIList.find(p => p.id === id);
-      if (!found) return;
-
-      document.getElementById('editProfId').value = found.id;
-      document.getElementById('editProfTID').value = found.tid;
-      document.getElementById('editProfSN').value = found.snBaru;
-      document.getElementById('editProfICCID').value = found.iccidBaru;
-      document.getElementById('editProfAPN').value = found.apn;
-      document.getElementById('editProfStatus').value = found.status;
-
-      document.getElementById('modalEditProfiling').classList.remove('hidden');
-    }
-
-    function closeModalEditProfiling() {
-      document.getElementById('modalEditProfiling').classList.add('hidden');
-    }
-
-    function handleSaveProfilingEdit(e) {
-      if (e) e.preventDefault();
-      const id = document.getElementById('editProfId').value;
-      const found = profilingBNIList.find(p => p.id === id);
-      if (!found) return;
-
-      found.snBaru = document.getElementById('editProfSN').value.trim();
-      found.iccidBaru = document.getElementById('editProfICCID').value.trim();
-      found.apn = document.getElementById('editProfAPN').value;
-      found.status = document.getElementById('editProfStatus').value;
-
-      syncToCloud('app_profiling_bni', profilingBNIList);
-      closeModalEditProfiling();
-      showCustomAlert('Berhasil', 'Data Profiling BNI berhasil diperbarui.');
-      renderProfilingBNITable();
-    }
-
-    // ================= PERMINTAAN RESTOCK HUB =================
-    function renderHubRestockInputs() {
-      const container = document.getElementById('hubRestockInputsContainer');
-      if (!container) return;
-      container.innerHTML = '';
-      hubRestockItems.forEach(item => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <label class="block font-bold text-slate-700 mb-1">${item.name} (${item.unit})</label>
-          <input type="number" id="hubQty_${item.id}" min="0" placeholder="0" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono font-bold">
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function openModalRequestHUB() {
-      renderHubRestockInputs();
-      const isLead = currentUser && currentUser.role === 'lead';
-      const btnEdit = document.getElementById('btnEditHubItems');
-      if (btnEdit) btnEdit.classList.toggle('hidden', !isLead);
-
-      document.getElementById('hubRequestNotes').value = '';
-      document.getElementById('modalRequestHUB').classList.remove('hidden');
-    }
-
-    function closeModalRequestHUB() {
-      document.getElementById('modalRequestHUB').classList.add('hidden');
-    }
-
-    function openModalEditHubItems() {
-      const list = document.getElementById('editHubItemsList');
-      if (!list) return;
-      list.innerHTML = '';
-
-      hubRestockItems.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2";
-        row.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-700 text-xs">Item #${index + 1}</span>
-            ${hubRestockItems.length > 1 ? `
-              <button type="button" onclick="deleteHubRestockItem(${index})" class="text-rose-500 hover:text-rose-700 text-xs font-semibold">
-                <i class="fa-solid fa-trash"></i> Hapus
-              </button>
-            ` : ''}
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div class="col-span-2">
-              <label class="block text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
-              <input type="text" id="editHubName_${index}" value="${item.name}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
-              <input type="text" id="editHubUnit_${index}" value="${item.unit}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
-            </div>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-
-      document.getElementById('modalEditHubItems').classList.remove('hidden');
-    }
-
-    function closeModalEditHubItems() {
-      document.getElementById('modalEditHubItems').classList.add('hidden');
-    }
-
-    function addNewHubRestockItem() {
-      const newId = 'item_' + Date.now().toString().slice(-4);
-      hubRestockItems.push({ id: newId, name: 'Item Restock Baru', unit: 'Pcs' });
-      openModalEditHubItems();
-    }
-
-    function deleteHubRestockItem(index) {
-      if (hubRestockItems.length <= 1) return;
-      hubRestockItems.splice(index, 1);
-      openModalEditHubItems();
-    }
-
-    function saveHubRestockItems() {
-      hubRestockItems.forEach((item, index) => {
-        const nameEl = document.getElementById(`editHubName_${index}`);
-        const unitEl = document.getElementById(`editHubUnit_${index}`);
-        if (nameEl && nameEl.value.trim()) item.name = nameEl.value.trim();
-        if (unitEl && unitEl.value.trim()) item.unit = unitEl.value.trim();
-      });
-
-      syncToCloud('app_hub_items', hubRestockItems);
-      closeModalEditHubItems();
-      renderHubRestockInputs();
-      showCustomAlert('Berhasil', 'Daftar nama dan satuan barang restock HUB berhasil diperbarui.');
-    }
-
-    function handleHubRequestSubmit(e) {
-      if (e) e.preventDefault();
-      const requester = document.getElementById('hubRequesterSelect').value;
-      const notes = document.getElementById('hubRequestNotes').value.trim() || '-';
-
-      const itemsArr = [];
-      hubRestockItems.forEach(item => {
-        const input = document.getElementById(`hubQty_${item.id}`);
-        const val = input ? parseInt(input.value) || 0 : 0;
-        if (val > 0) {
-          itemsArr.push(`- ${item.name}: ${val} ${item.unit}`);
-        }
-      });
-
-      if (itemsArr.length === 0) {
-        showCustomAlert('Perhatian', 'Harap isi jumlah minimal untuk 1 jenis barang.', true);
-        return;
-      }
-
-      const itemsFormatted = itemsArr.join('\n');
-
-      const newReq = {
-        reqNo: 'REQ-HUB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
-        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
-        hub: requester,
-        destination: 'Warehouse Pusat (Jakarta)',
-        items: itemsFormatted,
-        notes: notes,
-        status: 'Proses Email',
-        createdBy: currentUser.name
-      };
-
-      hubRequests.unshift(newReq);
-      syncToCloud('app_hub_requests', hubRequests);
-
-      closeModalRequestHUB();
-      showCustomAlert('Terkirim', `Surat permintaan restock ${newReq.reqNo} berhasil dibuat.`);
-      renderHubRequestTable();
-    }
-
-    function renderHubRequestTable() {
-      const tbody = document.getElementById('hubRequestTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      if (hubRequests.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-semibold">Belum ada surat permintaan barang HUB</td></tr>`;
-        return;
-      }
-
-      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      const isLead = currentUser.role === 'lead';
-
-      profilingBNIList.forEach(p => {
+      displayedProfiling.forEach(p => {
         const isDone = p.status === 'Done';
 
         const tr = document.createElement('tr');
@@ -2775,8 +2760,12 @@
               ` : `
                 <span class="text-xs text-slate-400 font-semibold">${p.techName}</span>
               `}
-              ${isLead ? `
-                <button onclick="deleteProfilingEntry('${p.id}')" title="Hapus Tiket Profiling" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+              <!-- Tombol Logo History Audit Trail -->
+              <button onclick="showAuditTrail('profiling', '${p.id}')" title="Lihat Riwayat & Pemroses" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs transition active:scale-95">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              </button>
+              ${isLeadOrAdmin ? `
+                <button onclick="deleteProfilingEntry('${p.id}')" title="Hapus Tiket Profiling" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition active:scale-95">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
@@ -2788,18 +2777,37 @@
     }
 
     function deleteProfilingEntry(id) {
-      if (currentUser.role !== 'lead') return;
+      if (!isUserAdminOrLead()) return;
       const found = profilingBNIList.find(p => p.id === id);
       if (!found) return;
-      if (!window.confirm(`Yakin ingin menghapus tiket profiling TID ${found.tid}?`)) return;
 
-      const idx = profilingBNIList.findIndex(p => p.id === id);
-      if (idx !== -1) {
-        profilingBNIList.splice(idx, 1);
-        syncToCloud('app_profiling_bni', profilingBNIList);
-        showCustomAlert('Terhapus', `Tiket Profiling TID ${found.tid} berhasil dihapus.`);
-        renderProfilingBNITable();
-      }
+      showCustomConfirm('Hapus Tiket Profiling', `Yakin ingin menghapus tiket profiling TID ${found.tid}?`, () => {
+        const idx = profilingBNIList.findIndex(p => p.id === id);
+        if (idx !== -1) {
+          profilingBNIList.splice(idx, 1);
+          syncToCloud('app_profiling_bni', profilingBNIList);
+          showCustomAlert('Terhapus', `Tiket Profiling TID ${found.tid} berhasil dihapus.`);
+          renderProfilingBNITable();
+        }
+      });
+    }
+
+    function openModalEditProfiling(id) {
+      const found = profilingBNIList.find(p => p.id === id);
+      if (!found) return;
+
+      document.getElementById('editProfId').value = found.id;
+      document.getElementById('editProfTID').value = found.tid;
+      document.getElementById('editProfSN').value = found.snBaru;
+      document.getElementById('editProfICCID').value = found.iccidBaru;
+      document.getElementById('editProfAPN').value = found.apn;
+      document.getElementById('editProfStatus').value = found.status;
+
+      document.getElementById('modalEditProfiling').classList.remove('hidden');
+    }
+
+    function closeModalEditProfiling() {
+      document.getElementById('modalEditProfiling').classList.add('hidden');
     }
 
     function handleSaveProfilingEdit(e) {
@@ -2809,25 +2817,41 @@
       if (!found) return;
 
       const oldStatus = found.status;
+      const newStatus = document.getElementById('editProfStatus').value;
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const roleLabel = currentUser.role === 'lead' ? 'Team Leader' : 'Logistik';
+
       found.snBaru = document.getElementById('editProfSN').value.trim();
       found.iccidBaru = document.getElementById('editProfICCID').value.trim();
       found.apn = document.getElementById('editProfAPN').value;
-      found.status = document.getElementById('editProfStatus').value;
+      found.status = newStatus;
+      found.processedBy = currentUser.name;
+      found.processorRole = roleLabel;
+      found.processedAt = nowStr;
+
+      if (!found.historyLog) found.historyLog = [];
+      found.historyLog.push({
+        action: `Update Tiket (${oldStatus} -> ${newStatus})`,
+        by: currentUser.name,
+        role: roleLabel,
+        timestamp: nowStr
+      });
 
       syncToCloud('app_profiling_bni', profilingBNIList);
 
-      // Notifikasi ke teknisi ketika status berubah menjadi DONE
-      if (oldStatus !== 'Done' && found.status === 'Done') {
-        createAppNotification({
-          type: 'profiling',
-          title: 'Profiling BNI Telah SELESAI (DONE)',
-          message: `Tiket TID ${found.tid} (${found.kebutuhan}) telah selesai diproses oleh ${currentUser.name}. SN: ${found.snBaru}`,
-          linkTab: 'viewProfilingBNI',
-          dataId: found.tid,
-          senderName: currentUser.name,
-          targetUserId: found.techId
-        });
-      }
+      // Kirim Notifikasi ke Teknisi Pengaju Tiket
+      const targetTechId = found.techId || (systemUsers.find(u => u.name && u.name.toLowerCase() === (found.techName || '').toLowerCase())?.id) || '';
+      createAppNotification({
+        type: 'profiling',
+        title: found.status === 'Done' ? 'Profiling BNI Telah SELESAI (DONE)' : `Update Tiket Profiling (${found.status})`,
+        message: `Tiket TID ${found.tid} (${found.kebutuhan}) status: ${found.status} oleh ${roleLabel} (${currentUser.name}). SN: ${found.snBaru}, APN: ${found.apn}`,
+        linkTab: 'viewProfilingBNI',
+        dataId: found.tid,
+        senderId: currentUser.id,
+        senderName: currentUser.name,
+        targetUserId: targetTechId,
+        targetUserName: found.techName
+      });
 
       closeModalEditProfiling();
       showCustomAlert('Berhasil', 'Data Profiling BNI berhasil diperbarui.');
@@ -2947,16 +2971,23 @@
       }
 
       const itemsFormatted = itemsArr.join('\n');
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 
       const newReq = {
         reqNo: 'REQ-HUB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
-        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        date: nowStr,
         hub: requester,
         destination: 'Warehouse Pusat (Jakarta)',
         items: itemsFormatted,
         notes: notes,
         status: 'Proses Email',
-        createdBy: currentUser.name
+        createdBy: currentUser.name,
+        processedBy: null,
+        processorRole: null,
+        processedAt: null,
+        historyLog: [
+          { action: 'Pengajuan Permintaan HUB', by: currentUser.name, role: currentUser.role === 'lead' ? 'Team Leader' : 'Staf/Teknisi', timestamp: nowStr }
+        ]
       };
 
       hubRequests.unshift(newReq);
@@ -2972,15 +3003,22 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      if (hubRequests.length === 0) {
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik' || (currentUser.id || '').toLowerCase() === 'admin';
+      const isLeadOrAdmin = isUserAdminOrLead();
+      const isTeknisi = currentUser.role === 'teknisi';
+      const myName = (currentUser.name || '').toLowerCase();
+
+      // Isolasi data: Teknisi hanya melihat pengajuan yang ia buat sendiri
+      const displayedHub = isTeknisi
+        ? hubRequests.filter(h => (h.createdBy && h.createdBy.toLowerCase() === myName))
+        : hubRequests;
+
+      if (displayedHub.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-semibold">Belum ada surat permintaan barang HUB</td></tr>`;
         return;
       }
 
-      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      const isLead = currentUser.role === 'lead';
-
-      hubRequests.forEach(req => {
+      displayedHub.forEach(req => {
         let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
         let dotColor = 'bg-amber-500';
 
@@ -3019,8 +3057,12 @@
                 <i class="fa-solid fa-print"></i>
                 <span>Cetak</span>
               </button>
-              ${isLead ? `
-                <button onclick="deleteHubRequestEntry('${req.reqNo}')" title="Hapus Pengajuan HUB" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+              <!-- Tombol Logo History Audit Trail -->
+              <button onclick="showAuditTrail('hub', '${req.reqNo}')" title="Lihat Riwayat & Pemroses" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-bold text-xs transition active:scale-95">
+                <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              </button>
+              ${isLeadOrAdmin ? `
+                <button onclick="deleteHubRequestEntry('${req.reqNo}')" title="Hapus Pengajuan HUB" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition active:scale-95">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
@@ -3034,26 +3076,42 @@
     function updateHubRequestStatus(reqNo, newStatus) {
       const req = hubRequests.find(r => r.reqNo === reqNo);
       if (!req) return;
+      const oldStatus = req.status;
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const roleLabel = currentUser.role === 'lead' ? 'Team Leader' : 'Logistik';
+
       req.status = newStatus;
+      req.processedBy = currentUser.name;
+      req.processorRole = roleLabel;
+      req.processedAt = nowStr;
+
+      if (!req.historyLog) req.historyLog = [];
+      req.historyLog.push({
+        action: `Perubahan Status (${oldStatus} -> ${newStatus})`,
+        by: currentUser.name,
+        role: roleLabel,
+        timestamp: nowStr
+      });
+
       syncToCloud('app_hub_requests', hubRequests);
       showCustomAlert('Status Diperbarui', `Status pengajuan ${reqNo} diubah menjadi ${newStatus}.`);
       renderHubRequestTable();
     }
 
     function deleteHubRequestEntry(reqNo) {
-      if (currentUser.role !== 'lead') return;
-      if (!window.confirm(`Yakin ingin menghapus pengajuan HUB ${reqNo}?`)) return;
-
-      const idx = hubRequests.findIndex(r => r.reqNo === reqNo);
-      if (idx !== -1) {
-        hubRequests.splice(idx, 1);
-        syncToCloud('app_hub_requests', hubRequests);
-        showCustomAlert('Terhapus', `Surat permintaan HUB ${reqNo} berhasil dihapus.`);
-        renderHubRequestTable();
-      }
+      if (!isUserAdminOrLead()) return;
+      showCustomConfirm('Hapus Permintaan HUB', `Yakin ingin menghapus pengajuan HUB ${reqNo}?`, () => {
+        const idx = hubRequests.findIndex(r => r.reqNo === reqNo);
+        if (idx !== -1) {
+          hubRequests.splice(idx, 1);
+          syncToCloud('app_hub_requests', hubRequests);
+          showCustomAlert('Terhapus', `Surat permintaan HUB ${reqNo} berhasil dihapus.`);
+          renderHubRequestTable();
+        }
+      });
     }
 
-    // ================= SCANNER & VERIFIKASI NOTA =================
+    // ================= SCANNER & VERIFIKASI NOTA (LOGISTIK & TEAM LEADER) =================
     function handleScanTicket(e) {
       if (e) e.preventDefault();
       const input = document.getElementById('scanTicketInput');
@@ -3076,38 +3134,96 @@
         return;
       }
 
-      const isTaken = ticket.status === 'Sudah Diambil';
+      // Normalisasi status lama ke tahapan baru
+      let st = ticket.status;
+      if (st === 'Menunggu Ambil') st = 'Proses';
+      if (st === 'Sudah Diambil') st = 'Done Pickup';
+
+      const isDone = st === 'Done Pickup';
+      const isReady = st === 'Ready Pickup';
+      const isProses = st === 'Proses';
+
+      let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+      if (isReady) badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+      if (isDone) badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
       const itemsHtml = ticket.items.map(it => `
-        <div class="flex justify-between py-1 border-b border-slate-100 last:border-0">
+        <div class="flex justify-between py-1.5 border-b border-slate-100 last:border-0">
           <span class="font-semibold text-slate-700">${it.name}</span>
           <span class="font-mono font-bold text-slate-900">${it.qty} ${it.unit}</span>
         </div>
       `).join('');
 
       resultArea.innerHTML = `
-        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5 text-xs">
+          <div class="flex items-start justify-between border-b border-slate-200 pb-2.5">
             <div>
-              <span class="font-mono font-black text-blue-600 text-sm">${ticket.ticketNo}</span>
-              <div class="text-[11px] text-slate-500">${ticket.techName} (${ticket.servicePoint})</div>
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-black text-blue-600 text-sm sm:text-base">${ticket.ticketNo}</span>
+                <button type="button" onclick="showAuditTrail('checkout', '${ticket.ticketNo}')" title="Lihat Riwayat & Pemroses" class="px-2 py-0.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold text-[11px] inline-flex items-center gap-1 transition">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>Riwayat</span>
+                </button>
+              </div>
+              <div class="text-[11px] text-slate-500 font-medium mt-0.5">Teknisi: <strong class="text-slate-700">${ticket.techName}</strong> (${ticket.servicePoint || '01 Cirebon'})</div>
+              <div class="text-[10px] text-slate-400">Dibuat: ${ticket.date}</div>
             </div>
-            <span class="px-2.5 py-1 rounded-full font-bold text-[11px] ${isTaken ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-              ${ticket.status}
+            <span class="px-3 py-1 rounded-full font-bold text-xs border ${badgeClass}">
+              ${st}
             </span>
           </div>
-          <div>${itemsHtml}</div>
-          ${!isTaken ? `
-            <button onclick="confirmPickupTicket('${ticket.ticketNo}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-check-double"></i>
-              <span>Konfirmasi Serah Terima & Potong Stok</span>
-            </button>
-          ` : `
-            <div class="text-center text-emerald-700 font-bold py-1">
-              <i class="fa-solid fa-circle-check"></i> Barang sudah diserahkan ke teknisi
+
+          <div class="space-y-1 bg-white p-3 rounded-xl border border-slate-100">
+            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rincian Barang Diminta:</span>
+            ${itemsHtml}
+            ${ticket.notes && ticket.notes !== '-' ? `
+              <div class="pt-2 mt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                <span class="font-bold text-slate-600">Catatan:</span> ${ticket.notes}
+              </div>
+            ` : ''}
+          </div>
+
+          ${ticket.processedBy ? `
+            <div class="p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800 flex items-center justify-between">
+              <div>
+                <span class="font-bold">Terakhir Diproses Oleh:</span> ${ticket.processedBy} (${ticket.processorRole || 'Logistik'})
+              </div>
+              <span class="font-mono text-[10px] text-emerald-600">${ticket.processedAt || '-'}</span>
             </div>
-          `}
+          ` : ''}
+
+          <!-- Pilihan Aksi Status -->
+          <div class="space-y-2 pt-1">
+            ${isProses ? `
+              <button type="button" onclick="setReadyPickupFromScanner('${ticket.ticketNo}')" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98">
+                <i class="fa-solid fa-box-open"></i>
+                <span>Set Status: Ready Pickup (Barang Siap Diambil)</span>
+              </button>
+            ` : ''}
+
+            ${!isDone ? `
+              <button type="button" onclick="confirmPickupTicket('${ticket.ticketNo}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98">
+                <i class="fa-solid fa-check-double"></i>
+                <span>Konfirmasi Serah Terima (Done Pickup) & Potong Stok</span>
+              </button>
+            ` : `
+              <div class="text-center text-emerald-700 font-bold py-2 bg-emerald-50 rounded-xl border border-emerald-200">
+                <i class="fa-solid fa-circle-check"></i> Status: Done Pickup (Barang telah diterima oleh teknisi)
+              </div>
+            `}
+          </div>
         </div>
       `;
+    }
+
+    function setReadyPickupFromScanner(ticketNo) {
+      setCheckoutReadyPickup(ticketNo);
+      // Refresh tampilan kartu scanner secara otomatis
+      const input = document.getElementById('scanTicketInput');
+      if (input) {
+        input.value = ticketNo;
+        handleScanTicket();
+      }
     }
 
     function pasteFromClipboard() {
@@ -3121,7 +3237,11 @@
 
     function confirmPickupTicket(ticketNo) {
       const ticket = checkoutHistory.find(t => t.ticketNo === ticketNo);
-      if (!ticket || ticket.status === 'Sudah Diambil') return;
+      if (!ticket) return;
+
+      let st = ticket.status;
+      if (st === 'Menunggu Ambil') st = 'Proses';
+      if (st === 'Sudah Diambil' || st === 'Done Pickup') return;
 
       // Potong stok fisik gudang
       ticket.items.forEach(reqItem => {
@@ -3131,13 +3251,128 @@
         }
       });
 
-      ticket.status = 'Sudah Diambil';
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+      const roleLabel = currentUser.role === 'lead' ? 'Team Leader' : 'Logistik';
+
+      ticket.status = 'Done Pickup';
+      ticket.processedBy = currentUser.name;
+      ticket.processorRole = roleLabel;
+      ticket.processedAt = nowStr;
+
+      if (!ticket.historyLog) ticket.historyLog = [];
+      ticket.historyLog.push({
+        action: 'Scan & Serah Terima Fisik (Done Pickup)',
+        by: currentUser.name,
+        role: roleLabel,
+        timestamp: nowStr
+      });
+
       syncToCloud('app_stock_cirebon', warehouseStock);
       syncToCloud('app_checkout_history', checkoutHistory);
 
-      showCustomAlert('Serah Terima Berhasil', `Kwitansi ${ticketNo} telah diverifikasi dan stok gudang telah dipotong.`);
-      handleScanTicket();
+      // Notifikasi ke teknisi penerima barang
+      const targetTechId = ticket.techId || (systemUsers.find(u => u.name && u.name.toLowerCase() === (ticket.techName || '').toLowerCase())?.id) || '';
+      createAppNotification({
+        type: 'checkout',
+        title: 'Barang Checkout: Done Pickup',
+        message: `Kwitansi ${ticket.ticketNo} telah diverifikasi fisik (Done Pickup) oleh ${roleLabel} (${currentUser.name}) dan stok telah dipotong.`,
+        linkTab: 'viewHistoryTeknisi',
+        dataId: ticket.ticketNo,
+        senderId: currentUser.id,
+        senderName: currentUser.name,
+        targetUserId: targetTechId,
+        targetUserName: ticket.techName
+      });
+
+      showCustomAlert('Serah Terima Berhasil', `Kwitansi ${ticketNo} telah berstatus Done Pickup dan stok gudang berhasil dipotong.`);
+      
+      const input = document.getElementById('scanTicketInput');
+      if (input) {
+        input.value = ticketNo;
+        handleScanTicket();
+      }
       refreshUI();
+    }
+
+    // ================= AUDIT TRAIL / RIWAYAT PEMROSES MODAL =================
+    function showAuditTrail(moduleType, recordId) {
+      const container = document.getElementById('auditTrailContent');
+      if (!container) return;
+
+      let item = null;
+      let titleHeader = '';
+      let subtitle = '';
+
+      if (moduleType === 'checkout') {
+        item = checkoutHistory.find(c => c.ticketNo === recordId);
+        titleHeader = `Kwitansi Checkout: ${recordId}`;
+        subtitle = item ? `Teknisi: ${item.techName} (${item.servicePoint || '01 Cirebon'})` : '';
+      } else if (moduleType === 'retur') {
+        item = returHistory.find(r => r.returNo === recordId);
+        titleHeader = `Pengembalian Retur: ${recordId}`;
+        subtitle = item ? `Barang: ${item.itemType} (SN: ${item.sn})` : '';
+      } else if (moduleType === 'profiling') {
+        item = profilingBNIList.find(p => p.id === recordId);
+        titleHeader = item ? `Profiling BNI TID: ${item.tid}` : `Tiket: ${recordId}`;
+        subtitle = item ? `Kategori: ${item.kategoriJO} | Teknisi: ${item.techName}` : '';
+      } else if (moduleType === 'hub') {
+        item = hubRequests.find(h => h.reqNo === recordId);
+        titleHeader = `Permintaan Restock: ${recordId}`;
+        subtitle = item ? `HUB: ${item.hub} | Pemohon: ${item.createdBy}` : '';
+      }
+
+      if (!item) {
+        showCustomAlert('Data Tidak Ditemukan', 'Riwayat audit trail tidak tersedia.', true);
+        return;
+      }
+
+      const logs = item.historyLog && item.historyLog.length > 0 
+        ? item.historyLog 
+        : [
+            { action: 'Pengajuan Awal', by: item.techName || item.createdBy || 'Teknisi', role: 'Pengaju', timestamp: item.date },
+            ...(item.processedBy ? [{ action: `Pemrosesan Status (${item.status})`, by: item.processedBy, role: item.processorRole || 'Logistik', timestamp: item.processedAt || item.date }] : [])
+          ];
+
+      const logsHtml = logs.map((lg, idx) => `
+        <div class="relative pl-6 pb-4 last:pb-0">
+          <div class="absolute left-1.5 top-1.5 -ml-px w-0.5 h-full bg-slate-200 ${idx === logs.length - 1 ? 'hidden' : ''}"></div>
+          <div class="absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full ${idx === 0 ? 'bg-blue-600' : 'bg-emerald-600'} ring-4 ring-white flex items-center justify-center"></div>
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800">${lg.action}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${lg.timestamp}</span>
+            </div>
+            <div class="mt-0.5 flex items-center gap-1.5">
+              <span class="font-semibold text-blue-700">${lg.by}</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${lg.role === 'Team Leader' ? 'bg-rose-50 text-rose-700 border border-rose-200' : lg.role === 'Logistik' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600'}">
+                ${lg.role}
+              </span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+          <h4 class="font-bold text-slate-800 text-xs">${titleHeader}</h4>
+          <p class="text-[11px] text-slate-500">${subtitle}</p>
+          <div class="pt-1 flex items-center gap-2">
+            <span class="text-[10px] font-bold text-slate-400 uppercase">Status Terkini:</span>
+            <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-blue-100 text-blue-800">${item.status}</span>
+          </div>
+        </div>
+        <div class="p-3 border border-slate-100 rounded-2xl bg-white space-y-2">
+          <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Riwayat Tindakan & Timestamp:</span>
+          ${logsHtml}
+        </div>
+      `;
+
+      document.getElementById('modalAuditTrail').classList.remove('hidden');
+    }
+
+    function closeAuditTrailModal() {
+      const modal = document.getElementById('modalAuditTrail');
+      if (modal) modal.classList.add('hidden');
     }
 
     // ================= VERIFIKASI MODAL RETUR =================
@@ -3335,7 +3570,7 @@
       }
     }
 
-    function createAppNotification({ type, title, message, linkTab, dataId, senderName, targetUserId }) {
+    function createAppNotification({ type, title, message, linkTab, dataId, senderId, senderName, targetUserId, targetUserName }) {
       const newNotif = {
         id: 'NOTIF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         type: type, // 'checkout', 'retur', 'profiling'
@@ -3343,8 +3578,10 @@
         message: message,
         linkTab: linkTab,
         dataId: dataId,
-        senderName: senderName || 'Sistem',
+        senderId: senderId || (currentUser ? currentUser.id : 'system'),
+        senderName: senderName || (currentUser ? currentUser.name : 'Sistem'),
         targetUserId: targetUserId || null,
+        targetUserName: targetUserName || null,
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
         timestamp: Date.now(),
@@ -3357,20 +3594,32 @@
       updateNotificationUI();
     }
 
-    function handleIncomingNotificationsLive(prevCount) {
+    let lastHandledNotifId = safeStorageLoad('spl_last_toast_id', null);
+
+    function handleIncomingNotificationsLive() {
       updateNotificationUI();
-      if (!currentUser) return;
+      if (!currentUser || !systemNotifications || systemNotifications.length === 0) return;
 
-      if (systemNotifications.length > 0 && systemNotifications.length > prevCount) {
-        const latest = systemNotifications[0];
-        const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
-        const isTargetTechnician = latest.targetUserId && latest.targetUserId.toLowerCase() === currentUser.id.toLowerCase();
-        const isGeneralForAdmin = !latest.targetUserId && isLeadOrLogistik;
+      const latest = systemNotifications[0];
+      if (!latest || latest.id === lastHandledNotifId) return;
 
-        if (latest.senderName !== currentUser.name && (isTargetTechnician || isGeneralForAdmin)) {
-          playNotificationSound();
-          showFloatingToast(latest);
-        }
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+      const myId = (currentUser.id || '').toLowerCase();
+      const myName = (currentUser.name || '').toLowerCase();
+
+      const isTargetTechnician = (latest.targetUserId && latest.targetUserId.toLowerCase() === myId) || 
+                                 (latest.targetUserName && latest.targetUserName.toLowerCase() === myName);
+      const isGeneralForAdmin = (!latest.targetUserId && !latest.targetUserName) && isLeadOrLogistik;
+
+      // Pastikan bukan pengirim sendiri yang mendapatkan toast
+      const senderIsMe = (latest.senderId && latest.senderId.toLowerCase() === myId) ||
+                         (latest.senderName && latest.senderName.toLowerCase() === myName);
+
+      if (!senderIsMe && (isTargetTechnician || isGeneralForAdmin)) {
+        lastHandledNotifId = latest.id;
+        safeStorageSave('spl_last_toast_id', latest.id);
+        playNotificationSound();
+        showFloatingToast(latest);
       }
     }
 
@@ -3417,9 +3666,14 @@
       if (!container || !currentUser) return;
 
       const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+      const myId = (currentUser.id || '').toLowerCase();
+      const myName = (currentUser.name || '').toLowerCase();
+
       const relevantNotifs = systemNotifications.filter(n => {
-        if (n.targetUserId) {
-          return n.targetUserId.toLowerCase() === currentUser.id.toLowerCase();
+        if (n.targetUserId || n.targetUserName) {
+          const matchId = n.targetUserId && n.targetUserId.toLowerCase() === myId;
+          const matchName = n.targetUserName && n.targetUserName.toLowerCase() === myName;
+          return matchId || matchName;
         }
         return isLeadOrLogistik;
       });
@@ -3666,13 +3920,14 @@
       const idx = warehouseStock.findIndex(i => i.id === id);
       if (idx === -1) return;
       const itemName = warehouseStock[idx].name;
-      if (!window.confirm(`Hapus barang "${itemName}" dari katalog gudang?`)) return;
 
-      warehouseStock.splice(idx, 1);
-      syncToCloud('app_stock_cirebon', warehouseStock);
-      closeEditItemModal();
-      showCustomAlert('Terhapus', `Barang ${itemName} telah dihapus dari katalog.`);
-      refreshUI();
+      showCustomConfirm('Hapus Barang Katalog', `Hapus barang "${itemName}" dari katalog gudang?`, () => {
+        warehouseStock.splice(idx, 1);
+        syncToCloud('app_stock_cirebon', warehouseStock);
+        closeEditItemModal();
+        showCustomAlert('Terhapus', `Barang ${itemName} telah dihapus dari katalog.`);
+        refreshUI();
+      });
     }
 
     function openModalAddNewItem() {
@@ -3856,12 +4111,13 @@
         return;
       }
       const userName = systemUsers[idx].name;
-      if (!window.confirm(`Hapus permanen akun nonaktif "${userName}" (${userId})?`)) return;
 
-      systemUsers.splice(idx, 1);
-      syncToCloud('app_system_users', systemUsers);
-      showCustomAlert('Akun Dihapus', `Akun nonaktif ${userName} (${userId}) berhasil dihapus permanen.`);
-      renderUserManagementTable();
+      showCustomConfirm('Hapus Akun Nonaktif', `Hapus permanen akun nonaktif "${userName}" (${userId})?`, () => {
+        systemUsers.splice(idx, 1);
+        syncToCloud('app_system_users', systemUsers);
+        showCustomAlert('Akun Dihapus', `Akun nonaktif ${userName} (${userId}) berhasil dihapus permanen.`);
+        renderUserManagementTable();
+      });
     }
 
     // ================= RESET BULANAN & EKSPOR EXCEL =================
@@ -3874,28 +4130,28 @@
     }
 
     function executeMonthlyReset() {
-      if (!window.confirm('Apakah Anda yakin ingin menghapus data riwayat yang dicentang untuk reset bulanan?')) return;
+      showCustomConfirm('Konfirmasi Reset Bulanan', 'Apakah Anda yakin ingin menghapus data riwayat yang dicentang untuk reset bulanan?', () => {
+        if (document.getElementById('resetChkCheckout').checked) {
+          checkoutHistory = [];
+          syncToCloud('app_checkout_history', checkoutHistory);
+        }
+        if (document.getElementById('resetChkRetur').checked) {
+          returHistory = [];
+          syncToCloud('app_retur_history', returHistory);
+        }
+        if (document.getElementById('resetChkHub').checked) {
+          hubRequests = [];
+          syncToCloud('app_hub_requests', hubRequests);
+        }
+        if (document.getElementById('resetChkProfiling').checked) {
+          profilingBNIList = [];
+          syncToCloud('app_profiling_bni', profilingBNIList);
+        }
 
-      if (document.getElementById('resetChkCheckout').checked) {
-        checkoutHistory = [];
-        syncToCloud('app_checkout_history', checkoutHistory);
-      }
-      if (document.getElementById('resetChkRetur').checked) {
-        returHistory = [];
-        syncToCloud('app_retur_history', returHistory);
-      }
-      if (document.getElementById('resetChkHub').checked) {
-        hubRequests = [];
-        syncToCloud('app_hub_requests', hubRequests);
-      }
-      if (document.getElementById('resetChkProfiling').checked) {
-        profilingBNIList = [];
-        syncToCloud('app_profiling_bni', profilingBNIList);
-      }
-
-      closeModalMonthlyReset();
-      showCustomAlert('Reset Bulanan Selesai', 'Data riwayat terpilih telah dibersihkan untuk periode bulan baru.');
-      refreshUI();
+        closeModalMonthlyReset();
+        showCustomAlert('Reset Bulanan Selesai', 'Data riwayat terpilih telah dibersihkan untuk periode bulan baru.');
+        refreshUI();
+      });
     }
 
     function exportAllDataToExcel() {
