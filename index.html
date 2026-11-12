@@ -61,11 +61,11 @@
       }
     }
     @keyframes popIn {
-      0% { opacity: 0; transform: scale(0.96) translateY(6px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
+      0% { opacity: 0; transform: translateY(4px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     .animate-pop {
-      animation: popIn 0.18s ease-out forwards;
+      animation: popIn 0.14s ease-out forwards;
     }
     @media print {
       body * { visibility: hidden; }
@@ -145,7 +145,7 @@
   <div id="appShell" class="hidden min-h-screen flex flex-col">
 
     <!-- TOP NAVBAR -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-2xs">
       <div class="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400"></div>
 
       <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
@@ -215,11 +215,8 @@
       </div>
 
       <!-- Bar Pil Navigasi Cepat Horizontal untuk Mobile / Tablet -->
-      <div class="lg:hidden bg-slate-50/95 border-t border-slate-200/70 px-3 py-2 flex items-center justify-between gap-2">
+      <div class="lg:hidden bg-slate-50/95 border-t border-slate-200/70 px-3 py-2 flex items-center">
         <div id="mobileQuickPills" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1"></div>
-        <button type="button" onclick="toggleMobileMenu()" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center shadow-2xs shrink-0" title="Semua Menu">
-          <i class="fa-solid fa-bars text-xs"></i>
-        </button>
       </div>
     </header>
 
@@ -249,19 +246,19 @@
     <!-- =================================================================== -->
     <!-- KONTEN UTAMA (VIEWS / TABS)                                         -->
     <!-- =================================================================== -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-7">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
 
-      <!-- TAB 0: BERANDA TEKNISI (tab-home) -->
-      <section id="tab-home" class="hidden space-y-5 animate-pop">
-        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-xs">
+      <!-- TAB 0: BERANDA (SEMUA ROLE: TEKNISI, TEAM LEADER, ADMIN & LOGISTIK) -->
+      <section id="tab-home" class="hidden space-y-5">
+        <div class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-2">
                 <i id="greetingTimeIcon" class="fa-solid fa-sun text-amber-500"></i>
                 <span id="greetingDateBadge">Kamis, 12 November 2026</span>
               </div>
-              <h2 id="greetingHeadline" class="text-xl sm:text-2xl font-extrabold text-slate-900">Selamat Siang, Teknisi!</h2>
-              <p id="greetingSubInfo" class="text-slate-500 text-xs mt-1 font-medium">Service Point: 01 Cirebon • User ID: tek01</p>
+              <h2 id="greetingHeadline" class="text-xl sm:text-2xl font-extrabold text-slate-900">Selamat Siang!</h2>
+              <p id="greetingSubInfo" class="text-slate-500 text-xs mt-1 font-medium">Service Point: 01 Cirebon • User ID: -</p>
             </div>
           </div>
 
@@ -272,22 +269,22 @@
                 <p id="dailyMotivationQuote" class="text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
                   "Ketelitian di lapangan adalah kunci kepuasan merchant. Tetap jaga keselamatan kerja dan semangat melayani!"
                 </p>
-                <p class="text-[10px] text-blue-600 mt-1 font-bold uppercase tracking-wider">— Semangat Tim Operasional Lapangan</p>
+                <p id="greetingQuoteFooter" class="text-[10px] text-blue-600 mt-1 font-bold uppercase tracking-wider">— Semangat Tim Operasional</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="tekHomeStatsGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"></div>
+        <div id="tekHomeStatsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"></div>
 
         <div>
-          <h3 class="text-sm font-extrabold text-slate-800 mb-3">Menu Operasional Teknisi</h3>
-          <div id="tekHomeMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5"></div>
+          <h3 id="homeQuickMenuTitle" class="text-sm font-extrabold text-slate-800 mb-3">Menu Operasional</h3>
+          <div id="tekHomeMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
         </div>
       </section>
 
       <!-- TAB 1: CHECKOUT BARANG (tab-checkout) -->
-      <section id="tab-checkout" class="hidden space-y-5 animate-pop">
+      <section id="tab-checkout" class="hidden space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 id="checkoutSectionTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900">Checkout Barang (01 Cirebon)</h2>
@@ -311,7 +308,7 @@
       </button>
 
       <!-- TAB 2: SCANNER & VERIFIKASI PENGELUARAN LOGISTIK (tab-scanner) -->
-      <section id="tab-scanner" class="hidden space-y-6 animate-pop">
+      <section id="tab-scanner" class="hidden space-y-6">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Scanner & Verifikasi Pengeluaran Logistik</h2>
           <p class="text-xs text-slate-500 mt-0.5">Scan barcode kwitansi teknisi untuk menetapkan status Ready Pickup (potong stok) atau Done Pickup.</p>
@@ -359,7 +356,7 @@
       </section>
 
       <!-- TAB 3: PENGEMBALIAN BARANG / RETUR (tab-retur) -->
-      <section id="tab-retur" class="hidden space-y-6 animate-pop">
+      <section id="tab-retur" class="hidden space-y-6">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Pengembalian Barang Retur ke Logistik</h2>
         </div>
@@ -442,97 +439,116 @@
       </section>
 
       <!-- TAB 4: PROFILING BNI (tab-profiling) -->
-      <section id="tab-profiling" class="hidden space-y-6 animate-pop">
-        <div class="border-b border-slate-200/80 pb-3">
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Profiling BNI</h2>
+      <section id="tab-profiling" class="hidden space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Profiling BNI</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Pengajuan tiket &amp; monitoring status profiling TID merchant BNI.</p>
+          </div>
         </div>
 
         <div class="max-w-3xl mx-auto">
-          <form onsubmit="handleProfilingSubmit(event)" class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-5 sm:p-7 space-y-6">
-            <h3 class="font-extrabold text-sm text-blue-700 uppercase tracking-wide flex items-center gap-2 pb-3 border-b border-slate-100">
-              <i class="fa-solid fa-credit-card text-blue-600"></i>
-              <span>FORMULIR PENGAJUAN TIKET &amp; PROFILING BNI</span>
-            </h3>
-
-            <!-- BAGIAN 1: DATA PENGAJUAN TIKET -->
-            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5 space-y-4">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-extrabold flex items-center justify-center shrink-0">1</span>
-                <h4 class="font-extrabold text-xs sm:text-sm text-slate-800 uppercase tracking-wide">DATA PENGAJUAN TIKET</h4>
+          <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <!-- Header Form dengan Tombol Ciutkan / Sematkan -->
+            <div class="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs shrink-0">
+                  <i class="fa-solid fa-credit-card"></i>
+                </span>
+                <h3 class="font-extrabold text-xs sm:text-sm text-slate-800 uppercase tracking-wide truncate">
+                  Formulir Pengajuan Tiket &amp; Profiling BNI
+                </h3>
               </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-800 mb-1.5">TID <span class="text-rose-500">*</span></label>
-                <input type="text" id="profTid" required placeholder="Teks jawaban singkat"
-                  class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between">
-                  <label class="block text-xs font-bold text-slate-800">Kategori JO <span class="text-rose-500">*</span></label>
-                  <button type="button" onclick="quickEditDropdown('kategoriJo')" class="team-lead-only-dropdown-btn hidden text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
-                    <i class="fa-solid fa-pen-to-square mr-1"></i>Edit Pilihan
-                  </button>
-                </div>
-                <p class="text-[11px] text-slate-500 mt-0.5 mb-2">Pergantian Simcard masuk kategori CM</p>
-                <div id="profKategoriJoContainer" class="space-y-2 text-xs font-medium text-slate-700"></div>
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-2">
-                  <label class="block text-xs font-bold text-slate-800">Kebutuhan <span class="text-rose-500">*</span></label>
-                  <button type="button" onclick="quickEditDropdown('kebutuhan')" class="team-lead-only-dropdown-btn hidden text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
-                    <i class="fa-solid fa-pen-to-square mr-1"></i>Edit Pilihan
-                  </button>
-                </div>
-                <div id="profKebutuhanContainer" class="space-y-2 text-xs font-medium text-slate-700"></div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-800">Jelaskan Kendala EDC <span class="text-rose-500">*</span></label>
-                <p class="text-[11px] text-slate-500 mt-0.5 mb-1.5">Contoh: EDC Mati Total, Port Charger EDC rusak, Printer EDC error, Replace Simcard</p>
-                <textarea id="profKendalaEdc" rows="3" required placeholder="Teks jawaban panjang"
-                  class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
-              </div>
+              <button type="button" id="btnToggleProfilingForm" onclick="toggleProfilingFormCollapse()"
+                class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 shrink-0 transition">
+                <i id="iconToggleProfilingForm" class="fa-solid fa-chevron-up text-[10px]"></i>
+                <span id="labelToggleProfilingForm">Ciutkan</span>
+              </button>
             </div>
 
-            <!-- BAGIAN 2: DATA PENGAJUAN PROFILING -->
-            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5 space-y-4">
-              <div class="flex items-center gap-2.5">
-                <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-extrabold flex items-center justify-center shrink-0">2</span>
-                <h4 class="font-extrabold text-xs sm:text-sm text-slate-800 uppercase tracking-wide">DATA PENGAJUAN PROFILING</h4>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-800">SN Baru <span class="text-rose-500">*</span></label>
-                <p class="text-[11px] text-slate-500 mt-0.5 mb-1.5">Isi angka 0 jika SN diajukan dari office</p>
-                <input type="text" id="profSnBaru" required placeholder="Teks jawaban singkat / 0"
-                  class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-800">ICCID Baru <span class="text-rose-500">*</span></label>
-                <p class="text-[11px] text-slate-500 mt-0.5 mb-1.5">Isi angka 0 jika SN diajukan dari office</p>
-                <input type="text" id="profIccidBaru" required placeholder="Teks jawaban singkat / 0"
-                  class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between">
-                  <label class="block text-xs font-bold text-slate-800">APN <span class="text-rose-500">*</span></label>
-                  <button type="button" onclick="quickEditDropdown('apn')" class="team-lead-only-dropdown-btn hidden text-[11px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
-                    <i class="fa-solid fa-pen-to-square mr-1"></i>Edit Pilihan
-                  </button>
+            <!-- Body Form Minimalis & Ringkas -->
+            <form id="profilingFormBody" onsubmit="handleProfilingSubmit(event)" class="p-4 sm:p-6 space-y-4">
+              <!-- BAGIAN 1: DATA PENGAJUAN TIKET -->
+              <div class="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 space-y-3.5">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-slate-200/60">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-extrabold flex items-center justify-center shrink-0">1</span>
+                  <h4 class="font-extrabold text-xs text-slate-800 uppercase tracking-wide">Data Pengajuan Tiket</h4>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5 mb-2">Pilih rekomendasi jaringan pengajuan (disesuaikan tergantung stok)</p>
-                <div id="profApnContainer" class="space-y-2 text-xs font-semibold text-slate-700"></div>
-              </div>
-            </div>
 
-            <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-sm shadow-sm transition">
-              Kirim Formulir Profiling BNI
-            </button>
-          </form>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-1">TID <span class="text-rose-500">*</span></label>
+                    <input type="text" id="profTid" required placeholder="Contoh: 71029384"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-xs font-bold text-slate-800">Kebutuhan <span class="text-rose-500">*</span></label>
+                      <button type="button" onclick="quickEditDropdown('kebutuhan')" class="team-lead-only-dropdown-btn hidden text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                      </button>
+                    </div>
+                    <div id="profKebutuhanContainer" class="flex flex-wrap gap-x-4 gap-y-1.5 pt-1 text-xs font-medium text-slate-700"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-800">Kategori JO <span class="text-rose-500">*</span> <span class="font-normal text-[11px] text-slate-400">(Pergantian Simcard masuk CM)</span></label>
+                    <button type="button" onclick="quickEditDropdown('kategoriJo')" class="team-lead-only-dropdown-btn hidden text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
+                      <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                    </button>
+                  </div>
+                  <div id="profKategoriJoContainer" class="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium text-slate-700"></div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-800 mb-1">Jelaskan Kendala EDC <span class="text-rose-500">*</span></label>
+                  <textarea id="profKendalaEdc" rows="2" required placeholder="Contoh: EDC Mati Total, Port Charger rusak, Printer error, Replace Simcard..."
+                    class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                </div>
+              </div>
+
+              <!-- BAGIAN 2: DATA PENGAJUAN PROFILING -->
+              <div class="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 space-y-3.5">
+                <div class="flex items-center gap-2 pb-1.5 border-b border-slate-200/60">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-extrabold flex items-center justify-center shrink-0">2</span>
+                  <h4 class="font-extrabold text-xs text-slate-800 uppercase tracking-wide">Data Pengajuan Profiling</h4>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-0.5">SN Baru <span class="text-rose-500">*</span></label>
+                    <p class="text-[10px] text-slate-500 mb-1">Isi angka 0 jika SN diajukan dari office</p>
+                    <input type="text" id="profSnBaru" required placeholder="SN Baru / 0"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-800 mb-0.5">ICCID Baru <span class="text-rose-500">*</span></label>
+                    <p class="text-[10px] text-slate-500 mb-1">Isi angka 0 jika SN diajukan dari office</p>
+                    <input type="text" id="profIccidBaru" required placeholder="ICCID Baru / 0"
+                      class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-slate-800">APN <span class="text-rose-500">*</span> <span class="font-normal text-[11px] text-slate-400">(Rekomendasi jaringan)</span></label>
+                    <button type="button" onclick="quickEditDropdown('apn')" class="team-lead-only-dropdown-btn hidden text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded-lg">
+                      <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                    </button>
+                  </div>
+                  <div id="profApnContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-semibold text-slate-700"></div>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-sm transition">
+                Kirim Formulir Profiling BNI
+              </button>
+            </form>
+          </div>
         </div>
 
         <!-- TABEL DAFTAR TIKET PROFILING BNI -->
@@ -560,7 +576,7 @@
       </section>
 
       <!-- TAB 5: PERMINTAAN BARANG HUB (tab-hub) -->
-      <section id="tab-hub" class="hidden space-y-6 animate-pop">
+      <section id="tab-hub" class="hidden space-y-6">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Permintaan Restock Barang ke HUB Pusat</h2>
           <p class="text-xs text-slate-500 mt-0.5">Ajukan pengisian stok dari HUB Pusat dan pantau tahapan Proses Email, Done Email, Proses Kirim, hingga Diterima.</p>
@@ -639,7 +655,7 @@
       </section>
 
       <!-- TAB 6: MANAJEMEN STOK GUDANG (tab-stock) -->
-      <section id="tab-stock" class="hidden space-y-6 animate-pop">
+      <section id="tab-stock" class="hidden space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Manajemen Stok Gudang</h2>
@@ -711,7 +727,7 @@
       </section>
 
       <!-- TAB 7: EDIT KATALOG BARANG (tab-catalog) -->
-      <section id="tab-catalog" class="hidden space-y-5 animate-pop">
+      <section id="tab-catalog" class="hidden space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Edit Katalog & Logo Barang</h2>
@@ -731,7 +747,7 @@
       </section>
 
       <!-- TAB 8: HISTORY CHECKOUT (tab-history) -->
-      <section id="tab-history" class="hidden space-y-5 animate-pop">
+      <section id="tab-history" class="hidden space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Riwayat & Status Checkout Barang</h2>
@@ -760,7 +776,7 @@
       </section>
 
       <!-- TAB 9: MANAGEMENT AKSES & PENGGUNA DENGAN CUSTOM PER-USER PERMISSIONS (tab-users) -->
-      <section id="tab-users" class="hidden space-y-6 animate-pop">
+      <section id="tab-users" class="hidden space-y-6">
         <div>
           <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Management Akses & Pengguna</h2>
           <p class="text-xs text-slate-500 mt-0.5">Kelola akun, ubah Service Point teknisi, serta atur hak akses menu custom untuk masing-masing pengguna.</p>
@@ -1236,6 +1252,31 @@
         <p id="alertModalMessage" class="text-xs text-slate-600 mt-1 leading-relaxed">-</p>
       </div>
       <button type="button" onclick="closeCustomAlert()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs">Mengerti</button>
+    </div>
+  </div>
+
+  <!-- 10. MODAL ATUR URUTAN MENU NAVBAR (TEAM LEADER & LOGISTIK) -->
+  <div id="navOrderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeNavOrderModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop">
+      <div class="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-sm text-slate-900">Atur Posisi Menu Navbar Atas</h3>
+          <p class="text-[11px] text-slate-500">Geser urutan menu sesuai kebutuhan Anda</p>
+        </div>
+        <button type="button" onclick="closeNavOrderModal()" class="w-8 h-8 rounded-xl bg-slate-200/70 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="navOrderListContainer" class="p-4 sm:p-5 space-y-2 max-h-80 overflow-y-auto"></div>
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+        <button type="button" onclick="resetUserNavOrder()" class="px-3.5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold rounded-xl text-xs">
+          Reset Default
+        </button>
+        <button type="button" onclick="saveUserNavOrder()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-2xs">
+          Simpan Urutan
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1884,6 +1925,24 @@
     // ==========================================
     // 4. NAVIGASI ROLE, CUSTOM PERMISSIONS & DROPDOWN MANAGEMENT
     // ==========================================
+    let currentRoleMenuCatalog = [];
+
+    function applySavedNavOrder(items) {
+      if (!currentUser || !Array.isArray(items)) return items;
+      const savedOrder = loadLocal(`spl_nav_order_${currentUser.id}`, null);
+      if (!Array.isArray(savedOrder) || savedOrder.length === 0) return items;
+
+      const sorted = [];
+      savedOrder.forEach(tabId => {
+        const found = items.find(m => m.id === tabId);
+        if (found) sorted.push(found);
+      });
+      items.forEach(m => {
+        if (!sorted.some(s => s.id === m.id)) sorted.push(m);
+      });
+      return sorted;
+    }
+
     function setupRoleNavigation() {
       if (!currentUser) return;
       const role = currentUser.role;
@@ -1913,6 +1972,7 @@
           menuItems.push({ id: 'tab-stock', label: 'Stok Gudang', icon: 'fa-boxes-stacked' });
         }
       } else if (role === 'logistik') {
+        menuItems.push({ id: 'tab-home', label: 'Beranda', icon: 'fa-house' });
         if (userHasPermission('scanner')) menuItems.push({ id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' });
         if (userHasPermission('stock')) menuItems.push({ id: 'tab-stock', label: 'Stok Gudang', icon: 'fa-boxes-stacked' });
         if (userHasPermission('retur')) menuItems.push({ id: 'tab-retur', label: 'Retur Barang', icon: 'fa-rotate-left' });
@@ -1921,6 +1981,7 @@
         menuItems.push({ id: 'tab-history', label: 'History Checkout', icon: 'fa-list-check' });
       } else {
         menuItems = [
+          { id: 'tab-home', label: 'Beranda', icon: 'fa-house' },
           { id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' },
           { id: 'tab-retur', label: 'Retur', icon: 'fa-rotate-left' },
           { id: 'tab-profiling', label: 'Profiling BNI', icon: 'fa-id-card-clip' },
@@ -1929,10 +1990,15 @@
         ];
       }
 
+      currentRoleMenuCatalog = [...menuItems];
+      if (role === 'lead' || role === 'logistik') {
+        menuItems = applySavedNavOrder(menuItems);
+      }
+
       if (desktopNav) {
         let html = menuItems.map(m => `
           <button type="button" data-tab="${m.id}" onclick="switchTab('${m.id}')"
-            class="nav-pill-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/70">
+            class="nav-pill-btn px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/70">
             <i class="fa-solid ${m.icon} text-[11px]"></i>
             <span>${m.label}</span>
           </button>
@@ -1942,7 +2008,7 @@
           html += `
             <div class="relative" id="leadManagementDropdownWrapper">
               <button type="button" onclick="toggleLeadMgmtMenu(event)"
-                class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-white text-slate-800 hover:text-blue-700 shadow-2xs border border-slate-200/70">
+                class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-white text-slate-800 hover:text-blue-700 shadow-2xs border border-slate-200/70">
                 <i class="fa-solid fa-sliders text-[11px] text-blue-600"></i>
                 <span>Management</span>
                 <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
@@ -1964,18 +2030,36 @@
             </div>
           `;
         }
+
+        if (role === 'lead' || role === 'logistik') {
+          html += `
+            <button type="button" onclick="openNavOrderModal()" title="Atur Urutan Menu Navbar"
+              class="p-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-white transition shrink-0">
+              <i class="fa-solid fa-arrows-left-right text-xs"></i>
+            </button>
+          `;
+        }
         desktopNav.innerHTML = html;
       }
 
       const mobileQuickPills = document.getElementById('mobileQuickPills');
       if (mobileQuickPills) {
-        mobileQuickPills.innerHTML = menuItems.map(m => `
+        let mHtml = menuItems.map(m => `
           <button type="button" data-tab="${m.id}" onclick="switchTab('${m.id}')"
             class="mobile-pill-btn px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition flex items-center gap-1.5 bg-white text-slate-600 border border-slate-200">
             <i class="fa-solid ${m.icon} text-[10px]"></i>
             <span>${m.label}</span>
           </button>
         `).join('');
+        if (role === 'lead' || role === 'logistik') {
+          mHtml += `
+            <button type="button" onclick="openNavOrderModal()" title="Atur Urutan Menu"
+              class="px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+              <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+            </button>
+          `;
+        }
+        mobileQuickPills.innerHTML = mHtml;
       }
 
       let allAccessibleItems = [...menuItems];
@@ -2007,10 +2091,68 @@
         else resetBtn.classList.add('hidden');
       }
 
-      const defaultTab = role === 'teknisi' ? 'tab-home' : (menuItems[0]?.id || 'tab-scanner');
+      const defaultTab = 'tab-home';
       const allowedTabIds = allAccessibleItems.map(m => m.id);
       const targetTab = allowedTabIds.includes(currentTabId) ? currentTabId : defaultTab;
       switchTab(targetTab);
+    }
+
+    function openNavOrderModal() {
+      if (!currentUser) return;
+      const ordered = applySavedNavOrder(currentRoleMenuCatalog);
+      const container = document.getElementById('navOrderListContainer');
+      if (!container) return;
+
+      container.innerHTML = ordered.map(m => `
+        <div data-nav-id="${m.id}" class="nav-order-row p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 text-xs font-bold text-slate-800">
+            <i class="fa-solid ${m.icon} text-blue-600 w-4 text-center"></i>
+            <span>${escapeHtml(m.label)}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="moveNavOrderRow(this, -1)" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-blue-50 text-slate-700 text-xs" title="Geser Kiri / Atas">
+              <i class="fa-solid fa-arrow-up"></i>
+            </button>
+            <button type="button" onclick="moveNavOrderRow(this, 1)" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:bg-blue-50 text-slate-700 text-xs" title="Geser Kanan / Bawah">
+              <i class="fa-solid fa-arrow-down"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('navOrderModal').classList.remove('hidden');
+    }
+
+    function moveNavOrderRow(btn, dir) {
+      const row = btn.closest('.nav-order-row');
+      if (!row || !row.parentElement) return;
+      if (dir === -1 && row.previousElementSibling) {
+        row.parentElement.insertBefore(row, row.previousElementSibling);
+      } else if (dir === 1 && row.nextElementSibling) {
+        row.parentElement.insertBefore(row.nextElementSibling, row);
+      }
+    }
+
+    function saveUserNavOrder() {
+      if (!currentUser) return;
+      const rows = document.querySelectorAll('#navOrderListContainer .nav-order-row');
+      const newOrder = Array.from(rows).map(r => r.dataset.navId);
+      saveLocal(`spl_nav_order_${currentUser.id}`, newOrder);
+      closeNavOrderModal();
+      setupRoleNavigation();
+      showCustomAlert('Urutan Menu Disimpan', 'Posisi menu navbar atas telah diperbarui sesuai pilihan Anda.');
+    }
+
+    function resetUserNavOrder() {
+      if (!currentUser) return;
+      localStorage.removeItem(`spl_nav_order_${currentUser.id}`);
+      closeNavOrderModal();
+      setupRoleNavigation();
+      showCustomAlert('Urutan Direset', 'Posisi menu navbar dikembalikan ke urutan awal.');
+    }
+
+    function closeNavOrderModal() {
+      document.getElementById('navOrderModal').classList.add('hidden');
     }
 
     function toggleLeadMgmtMenu(e) {
@@ -2046,9 +2188,9 @@
 
       document.querySelectorAll('.nav-pill-btn').forEach(btn => {
         if (btn.dataset.tab === tabId) {
-          btn.className = 'nav-pill-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm';
+          btn.className = 'nav-pill-btn px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm';
         } else {
-          btn.className = 'nav-pill-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/70';
+          btn.className = 'nav-pill-btn px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900 hover:bg-white/70';
         }
       });
 
@@ -2089,7 +2231,7 @@
     }
 
     // ==========================================
-    // 5. BERANDA TEKNISI (SAPAAN & STATISTIK)
+    // 5. BERANDA (TEKNISI, TEAM LEADER, ADMIN & LOGISTIK)
     // ==========================================
     function renderTeknisiBeranda() {
       if (!currentUser) return;
@@ -2117,15 +2259,121 @@
       const elHead = document.getElementById('greetingHeadline');
       const elSub = document.getElementById('greetingSubInfo');
       const elQuote = document.getElementById('dailyMotivationQuote');
+      const elQuoteFoot = document.getElementById('greetingQuoteFooter');
+      const elMenuTitle = document.getElementById('homeQuickMenuTitle');
 
       if (elIcon) elIcon.className = `fa-solid ${iconClass}`;
       if (elDate) elDate.textContent = dateStr;
       if (elHead) elHead.textContent = `${greeting}, ${currentUser.name}!`;
-      if (elSub) elSub.textContent = `Service Point: ${currentUser.servicePoint || '01 Cirebon'} • User ID: ${currentUser.id}`;
+      if (elSub) elSub.textContent = `${getRoleLabel(currentUser.role)} • Service Point: ${currentUser.servicePoint || '01 Cirebon'} • User ID: ${currentUser.id}`;
       if (elQuote) {
         const idx = now.getDate() % MOTIVATION_QUOTES.length;
         elQuote.textContent = `"${MOTIVATION_QUOTES[idx]}"`;
       }
+
+      const statsGrid = document.getElementById('tekHomeStatsGrid');
+      const menuGrid = document.getElementById('tekHomeMenuGrid');
+      const role = currentUser.role;
+
+      if (role === 'lead' || role === 'logistik') {
+        if (elQuoteFoot) elQuoteFoot.textContent = `— Semangat Koordinasi & Operasional ${getRoleLabel(role)}`;
+        if (elMenuTitle) elMenuTitle.textContent = `Pintasan Operasional ${getRoleLabel(role)}`;
+
+        const activeCheckouts = checkoutHistory.filter(c => c.status !== 'Done Pickup').length;
+        const pendingReturs = returHistory.filter(r => r.status !== 'Diterima Logistik').length;
+        const activeProfilings = profilingHistory.filter(p => p.status !== 'Done').length;
+        const activeHubs = hubRequests.filter(h => h.status !== 'Diterima' && h.status !== 'Diterima Gudang').length;
+
+        if (statsGrid) {
+          statsGrid.innerHTML = `
+            <div onclick="switchTab('tab-scanner')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-300 transition text-center">
+              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">ANTREAN CHECKOUT</p>
+              <p class="text-2xl sm:text-3xl font-extrabold text-blue-600 mt-1">${activeCheckouts}</p>
+            </div>
+            <div onclick="switchTab('tab-retur')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-amber-300 transition text-center">
+              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">RETUR PENDING</p>
+              <p class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1">${pendingReturs}</p>
+            </div>
+            <div onclick="switchTab('tab-profiling')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-emerald-300 transition text-center">
+              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">PROFILING BNI</p>
+              <p class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1">${activeProfilings}</p>
+            </div>
+            <div onclick="switchTab('tab-hub')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-indigo-300 transition text-center">
+              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">PERMINTAAN HUB</p>
+              <p class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mt-1">${activeHubs}</p>
+            </div>
+          `;
+        }
+
+        if (menuGrid) {
+          const leadCards = [
+            {
+              show: userHasPermission('scanner'),
+              tab: 'tab-scanner',
+              icon: 'fa-barcode',
+              bg: 'bg-blue-50 text-blue-600',
+              title: 'Scan & Verifikasi Nota',
+              desc: 'Proses Ready Pickup (potong stok) & konfirmasi serah terima barang'
+            },
+            {
+              show: userHasPermission('retur'),
+              tab: 'tab-retur',
+              icon: 'fa-rotate-left',
+              bg: 'bg-amber-50 text-amber-600',
+              title: 'Validasi Barang Retur',
+              desc: 'Terima & verifikasi fisik pengembalian EDC dari teknisi'
+            },
+            {
+              show: userHasPermission('profiling'),
+              tab: 'tab-profiling',
+              icon: 'fa-id-card-clip',
+              bg: 'bg-emerald-50 text-emerald-600',
+              title: 'Monitoring Profiling BNI',
+              desc: 'Update status tiket profiling, SN baru, ICCID, & respon office'
+            },
+            {
+              show: userHasPermission('hub'),
+              tab: 'tab-hub',
+              icon: 'fa-truck-ramp-box',
+              bg: 'bg-cyan-50 text-cyan-600',
+              title: 'Permintaan & Pengiriman HUB',
+              desc: 'Kelola status Proses Email, Done Email, Proses Kirim, & Diterima'
+            },
+            {
+              show: userHasPermission('stock'),
+              tab: 'tab-stock',
+              icon: 'fa-boxes-stacked',
+              bg: 'bg-indigo-50 text-indigo-600',
+              title: 'Manajemen Stok Gudang',
+              desc: 'Cek saldo stok 01 Cirebon, penyesuaian fisik, & export Excel'
+            },
+            {
+              show: role === 'lead' || userHasPermission('users'),
+              tab: 'tab-users',
+              icon: 'fa-users-gear',
+              bg: 'bg-purple-50 text-purple-600',
+              title: 'Management Akses & Pengguna',
+              desc: 'Atur akun teknisi, Service Point, serta hak akses menu custom'
+            }
+          ].filter(c => c.show);
+
+          menuGrid.innerHTML = leadCards.map(c => `
+            <button type="button" onclick="switchTab('${c.tab}')" class="p-4 bg-white hover:bg-blue-50/40 border border-slate-200/90 hover:border-blue-300 rounded-2xl flex items-center gap-4 text-left transition shadow-2xs">
+              <div class="w-12 h-12 rounded-2xl ${c.bg} flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid ${c.icon}"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-slate-900">${c.title}</h4>
+                <p class="text-xs text-slate-500 mt-0.5">${c.desc}</p>
+              </div>
+            </button>
+          `).join('');
+        }
+        return;
+      }
+
+      if (elQuoteFoot) elQuoteFoot.textContent = '— Semangat Tim Operasional Lapangan';
+      if (elMenuTitle) elMenuTitle.textContent = 'Menu Operasional Teknisi';
 
       const myCheckouts = checkoutHistory.filter(c => isOwnedByCurrentUser(c.techId, c.techName) && c.status !== 'Done Pickup').length;
       const myReturs = returHistory.filter(r => isOwnedByCurrentUser(r.techId, r.techName) && r.status !== 'Diterima Logistik').length;
@@ -2138,7 +2386,6 @@
       const canScanner = userHasPermission('scanner');
       const canStock = userHasPermission('stock');
 
-      const statsGrid = document.getElementById('tekHomeStatsGrid');
       if (statsGrid) {
         const statCards = [];
         if (canCheckout) {
@@ -2168,7 +2415,6 @@
         statsGrid.innerHTML = statCards.join('');
       }
 
-      const menuGrid = document.getElementById('tekHomeMenuGrid');
       if (menuGrid) {
         const menuCards = [];
         if (canCheckout) {
@@ -2852,18 +3098,18 @@
       if (katContainer) {
         const katOpts = masterDropdowns.kategoriJo || DEFAULT_DROPDOWNS.kategoriJo;
         katContainer.innerHTML = katOpts.map((opt, idx) => `
-          <label class="flex items-center gap-2.5 cursor-pointer">
+          <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200/80 hover:border-blue-300 cursor-pointer transition">
             <input type="radio" name="profKategoriJo" value="${escapeHtml(opt)}" ${idx === 0 ? 'checked' : ''} class="text-blue-600" />
             <span>${escapeHtml(opt)}</span>
           </label>
         `).join('') + `
-          <div class="flex items-center gap-2 pt-0.5">
-            <label class="flex items-center gap-2.5 cursor-pointer shrink-0">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80">
+            <label class="flex items-center gap-2 cursor-pointer shrink-0">
               <input type="radio" name="profKategoriJo" value="Yang lain" class="text-blue-600" />
-              <span>Yang lain:</span>
+              <span>Lainnya:</span>
             </label>
-            <input type="text" id="profKategoriJoOther" placeholder="Keterangan kategori lain"
-              class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-600" />
+            <input type="text" id="profKategoriJoOther" placeholder="Isi kategori lain..."
+              class="flex-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600" />
           </div>
         `;
       }
@@ -2872,7 +3118,7 @@
       if (kebContainer) {
         const kebOpts = masterDropdowns.kebutuhan || DEFAULT_DROPDOWNS.kebutuhan;
         kebContainer.innerHTML = kebOpts.map((opt, idx) => `
-          <label class="flex items-center gap-2.5 cursor-pointer">
+          <label class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-blue-300 cursor-pointer transition">
             <input type="checkbox" name="profKebutuhan" value="${escapeHtml(opt)}" ${idx === 0 ? 'checked' : ''} class="rounded text-blue-600" />
             <span>${escapeHtml(opt)}</span>
           </label>
@@ -2883,11 +3129,27 @@
       if (apnContainer) {
         const apnOpts = masterDropdowns.apn || DEFAULT_DROPDOWNS.apn;
         apnContainer.innerHTML = apnOpts.map((opt, idx) => `
-          <label class="flex items-center gap-2.5 cursor-pointer">
+          <label class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200/80 hover:border-blue-300 cursor-pointer transition">
             <input type="radio" name="profApn" value="${escapeHtml(opt)}" ${idx === 0 ? 'checked' : ''} class="text-blue-600" />
-            <span>${escapeHtml(opt)}</span>
+            <span class="truncate">${escapeHtml(opt)}</span>
           </label>
         `).join('');
+      }
+    }
+
+    function toggleProfilingFormCollapse() {
+      const body = document.getElementById('profilingFormBody');
+      const icon = document.getElementById('iconToggleProfilingForm');
+      const label = document.getElementById('labelToggleProfilingForm');
+      if (!body) return;
+
+      const isHidden = body.classList.toggle('hidden');
+      if (isHidden) {
+        if (icon) icon.className = 'fa-solid fa-thumbtack text-[10px] text-blue-600';
+        if (label) label.textContent = 'Sematkan / Buka Form';
+      } else {
+        if (icon) icon.className = 'fa-solid fa-chevron-up text-[10px]';
+        if (label) label.textContent = 'Ciutkan';
       }
     }
 
@@ -3382,15 +3644,23 @@
       req.processedAt = ts;
       if (!Array.isArray(req.auditLogs)) req.auditLogs = [];
 
+      const asalNormalized = String(req.asalHub || '').trim().toLowerCase();
+      const isMainCirebonStock = asalNormalized === '01 cirebon';
+
       let stockNote = '';
       if (newStatus === 'Diterima' && !req.stockAdded) {
-        const stockObj = warehouseStock.find(s => s.id === req.itemId || s.name === req.itemName);
-        if (stockObj) {
-          stockObj.stock = Number(stockObj.stock) + Number(req.qty);
-          syncToCloud('app_stock_cirebon', warehouseStock);
+        if (isMainCirebonStock) {
+          const stockObj = warehouseStock.find(s => s.id === req.itemId || s.name === req.itemName);
+          if (stockObj) {
+            stockObj.stock = Number(stockObj.stock) + Number(req.qty);
+            syncToCloud('app_stock_cirebon', warehouseStock);
+          }
+          req.stockAdded = true;
+          stockNote = ` (+${req.qty} ${req.unit} masuk ke Stok Gudang 01 Cirebon)`;
+        } else {
+          req.stockAdded = true;
+          stockNote = ` (Diterima untuk ${req.asalHub || 'HUB'} — tidak menambah stok 01 Cirebon)`;
         }
-        req.stockAdded = true;
-        stockNote = ` (+${req.qty} ${req.unit} otomatis masuk ke Stok Gudang)`;
       }
 
       req.auditLogs.push({
@@ -3414,8 +3684,12 @@
       }
 
       refreshAllActiveViews();
-      if (newStatus === 'Diterima' && stockNote) {
-        showCustomAlert('Barang Diterima & Stok Bertambah', `Status ${req.poNo} menjadi Diterima. Stok ${req.itemName} bertambah +${req.qty} ${req.unit}.`);
+      if (newStatus === 'Diterima') {
+        if (isMainCirebonStock) {
+          showCustomAlert('Barang Diterima & Stok 01 Cirebon Bertambah', `Status ${req.poNo} menjadi Diterima. Stok ${req.itemName} di 01 Cirebon bertambah +${req.qty} ${req.unit}.`);
+        } else {
+          showCustomAlert('Barang Diterima di HUB', `Status ${req.poNo} untuk ${req.asalHub} telah Diterima (Stok 01 Cirebon tidak berubah).`);
+        }
       }
     }
 
