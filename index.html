@@ -1486,8 +1486,15 @@
     }
 
     // ================= RESTORE ACTIVE SESSION ON LOAD / REFRESH =================
-    const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // Batas Waktu Diam: 5 Menit
+    const IDLE_TIMEOUT_TEKNISI_MS = 5 * 60 * 1000;   // Batas Waktu Diam Teknisi: 5 Menit
+    const IDLE_TIMEOUT_STAFF_MS = 60 * 60 * 1000;    // Batas Waktu Diam Admin, Team Leader & Logistik: 1 Jam
     let idleCheckInterval = null;
+
+    function getUserIdleTimeoutMs(user) {
+      if (!user) return IDLE_TIMEOUT_TEKNISI_MS;
+      const isStaff = user.role === 'lead' || user.role === 'logistik' || (user.id || '').toLowerCase() === 'admin';
+      return isStaff ? IDLE_TIMEOUT_STAFF_MS : IDLE_TIMEOUT_TEKNISI_MS;
+    }
 
     function recordUserActivity() {
       if (!currentUser) return;
@@ -1528,19 +1535,21 @@
       if (!currentUser) return;
       const lastActive = safeStorageLoad('spl_last_active', Date.now());
       const elapsed = Date.now() - lastActive;
+      const timeoutLimit = getUserIdleTimeoutMs(currentUser);
 
-      // Jika sudah diam / tidak ada aktivitas selama 5 menit atau lebih
-      if (elapsed >= IDLE_TIMEOUT_MS) {
-        logoutDueToInactivity();
+      // Jika sudah diam / tidak ada aktivitas melewati batas waktu peran masing-masing
+      if (elapsed >= timeoutLimit) {
+        logoutDueToInactivity(timeoutLimit);
       }
     }
 
-    function logoutDueToInactivity() {
+    function logoutDueToInactivity(timeoutMs = IDLE_TIMEOUT_TEKNISI_MS) {
+      const durationLabel = timeoutMs >= IDLE_TIMEOUT_STAFF_MS ? '1 jam' : '5 menit';
       logout();
       const alertBox = document.getElementById('loginAlert');
       const alertText = document.getElementById('loginAlertText');
       if (alertBox && alertText) {
-        alertText.innerText = 'Sesi telah berakhir karena tidak ada aktivitas selama 5 menit. Silakan login kembali.';
+        alertText.innerText = `Sesi telah berakhir karena tidak ada aktivitas selama ${durationLabel}. Silakan login kembali.`;
         alertBox.classList.remove('hidden');
       }
     }
@@ -1548,18 +1557,21 @@
     function restoreUserSession() {
       const savedUser = safeStorageLoad('spl_active_user', null);
       if (savedUser && savedUser.id) {
+        // Cek apakah akun masih terdaftar di sistemUsers
+        const matched = systemUsers.find(u => u.id.toLowerCase() === savedUser.id.toLowerCase());
+        const targetUser = matched || savedUser;
+        const timeoutLimit = getUserIdleTimeoutMs(targetUser);
+
         const lastActive = safeStorageLoad('spl_last_active', 0);
         const elapsed = Date.now() - lastActive;
 
-        // Jika riwayat aktivitas terakhir sudah lewat dari 5 menit
-        if (lastActive && elapsed >= IDLE_TIMEOUT_MS) {
-          logoutDueToInactivity();
+        // Jika riwayat aktivitas terakhir sudah melewati batas waktu peran
+        if (lastActive && elapsed >= timeoutLimit) {
+          logoutDueToInactivity(timeoutLimit);
           return;
         }
 
-        // Cek apakah akun masih terdaftar di sistemUsers
-        const matched = systemUsers.find(u => u.id.toLowerCase() === savedUser.id.toLowerCase());
-        currentUser = matched || savedUser;
+        currentUser = targetUser;
         if (currentUser.active === false) {
           logout();
           return;
@@ -3585,37 +3597,96 @@
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
         timestamp: Date.now(),
-        readBy: []
+        readBy: [],
+        readAt: {}
       };
 
+      cleanupExpiredNotifications(false);
       systemNotifications.unshift(newNotif);
       if (systemNotifications.length > 50) systemNotifications.pop();
       syncToCloud('app_notifications', systemNotifications);
       updateNotificationUI();
     }
 
+    // Pembersihan otomatis notifikasi yang sudah dibaca lebih dari 1 hari (24 jam)
+    function cleanupExpiredNotifications(shouldSync = true) {
+      if (!Array.isArray(systemNotifications) || systemNotifications.length === 0) return;
+      const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const initialLen = systemNotifications.length;
+
+      systemNotifications = systemNotifications.filter(n => {
+        const readByArr = n.readBy || [];
+        const readAtMap = n.readAt || {};
+
+        // Jika notifikasi belum dibaca oleh siapa pun, tetap pertahankan (maksimal 7 hari agar DB tidak penuh)
+        if (readByArr.length === 0) {
+          return (now - (n.timestamp || now)) < (7 * ONE_DAY_MS);
+        }
+
+        // Cek apakah user saat ini sudah membacanya > 1 hari yang lalu
+        if (currentUser && readByArr.includes(currentUser.id)) {
+          const readTime = readAtMap[currentUser.id] || n.timestamp || 0;
+          if ((now - readTime) >= ONE_DAY_MS) {
+            return false; // Hapus karena sudah terbaca >= 1 hari
+          }
+        }
+
+        // Untuk notifikasi khusus teknisi tertentu, jika sudah dibaca oleh targetnya >= 1 hari, hapus permanen
+        if (n.targetUserId && readByArr.includes(n.targetUserId)) {
+          const targetReadTime = readAtMap[n.targetUserId] || n.timestamp || 0;
+          if ((now - targetReadTime) >= ONE_DAY_MS) {
+            return false;
+          }
+        }
+
+        // Untuk notifikasi umum (Admin/Logistik), jika waktu baca paling awal sudah >= 1 hari, bersihkan agar tidak menumpuk
+        const earliestReadTime = Object.values(readAtMap).length > 0
+          ? Math.min(...Object.values(readAtMap))
+          : (n.timestamp || 0);
+        if ((now - earliestReadTime) >= ONE_DAY_MS) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (shouldSync && systemNotifications.length !== initialLen) {
+        syncToCloud('app_notifications', systemNotifications);
+      }
+    }
+
     let lastHandledNotifId = safeStorageLoad('spl_last_toast_id', null);
 
     function handleIncomingNotificationsLive() {
+      cleanupExpiredNotifications(false);
       updateNotificationUI();
       if (!currentUser || !systemNotifications || systemNotifications.length === 0) return;
 
       const latest = systemNotifications[0];
       if (!latest || latest.id === lastHandledNotifId) return;
 
+      // Abaikan notifikasi yang dikirim oleh diri sendiri
+      if (latest.senderId && latest.senderId.toLowerCase() === currentUser.id.toLowerCase()) {
+        lastHandledNotifId = latest.id;
+        safeStorageSave('spl_last_toast_id', latest.id);
+        return;
+      }
+
       const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
       const myId = (currentUser.id || '').toLowerCase();
       const myName = (currentUser.name || '').toLowerCase();
 
-      const isTargetTechnician = (latest.targetUserId && latest.targetUserId.toLowerCase() === myId) || 
-                                 (latest.targetUserName && latest.targetUserName.toLowerCase() === myName);
-      const isGeneralForAdmin = (!latest.targetUserId && !latest.targetUserName) && isLeadOrLogistik;
+      let isForMe = false;
+      if (latest.targetUserId || latest.targetUserName) {
+        const matchId = latest.targetUserId && latest.targetUserId.toLowerCase() === myId;
+        const matchName = latest.targetUserName && latest.targetUserName.toLowerCase() === myName;
+        isForMe = Boolean(matchId || matchName);
+      } else {
+        isForMe = isLeadOrLogistik;
+      }
 
-      // Pastikan bukan pengirim sendiri yang mendapatkan toast
-      const senderIsMe = (latest.senderId && latest.senderId.toLowerCase() === myId) ||
-                         (latest.senderName && latest.senderName.toLowerCase() === myName);
-
-      if (!senderIsMe && (isTargetTechnician || isGeneralForAdmin)) {
+      if (isForMe && !(latest.readBy || []).includes(currentUser.id)) {
         lastHandledNotifId = latest.id;
         safeStorageSave('spl_last_toast_id', latest.id);
         playNotificationSound();
@@ -3628,36 +3699,50 @@
       if (!container) return;
 
       const toast = document.createElement('div');
-      toast.className = "pointer-events-auto bg-white border border-blue-200 rounded-2xl p-3.5 shadow-xl flex items-start gap-3 transition-all duration-300 cursor-pointer hover:border-blue-400";
-      toast.innerHTML = `
-        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
-          <i class="fa-solid fa-bell text-xs"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-bold text-xs text-slate-800 truncate">${notif.title}</span>
-            <span class="text-[10px] text-slate-400">${notif.time}</span>
-          </div>
-          <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${notif.message}</p>
-        </div>
-      `;
+      toast.className = "pointer-events-auto bg-white border-l-4 border-blue-600 rounded-2xl p-3.5 shadow-xl border border-slate-200 flex items-start gap-3 transition-all duration-300 cursor-pointer hover:bg-blue-50/40";
       toast.onclick = () => {
         handleNotificationClick(notif.id);
         toast.remove();
       };
 
+      toast.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <h5 class="font-bold text-slate-800 text-xs truncate">${notif.title}</h5>
+            <span class="text-[10px] text-slate-400 font-mono shrink-0">${notif.time}</span>
+          </div>
+          <p class="text-[11px] text-slate-600 mt-0.5 line-clamp-2">${notif.message}</p>
+        </div>
+      `;
+
       container.appendChild(toast);
       setTimeout(() => {
-        if (toast.parentNode) toast.remove();
-      }, 6000);
+        if (toast && toast.parentNode) toast.remove();
+      }, 6500);
     }
 
     function toggleNotificationDropdown() {
-      const dropdown = document.getElementById('notifDropdown');
-      if (!dropdown) return;
+      const drop = document.getElementById('notifDropdown');
+      if (!drop) return;
       notifDropdownOpen = !notifDropdownOpen;
-      dropdown.classList.toggle('hidden', !notifDropdownOpen);
+      drop.classList.toggle('hidden', !notifDropdownOpen);
+      if (notifDropdownOpen) {
+        cleanupExpiredNotifications(true);
+        updateNotificationUI();
+      }
     }
+
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('notifBellWrapper');
+      const drop = document.getElementById('notifDropdown');
+      if (wrapper && drop && !wrapper.contains(e.target)) {
+        notifDropdownOpen = false;
+        drop.classList.add('hidden');
+      }
+    });
 
     function updateNotificationUI() {
       const badge = document.getElementById('notifBadge');
@@ -3665,11 +3750,19 @@
       const container = document.getElementById('notifListContainer');
       if (!container || !currentUser) return;
 
+      const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+      const now = Date.now();
       const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
       const myId = (currentUser.id || '').toLowerCase();
       const myName = (currentUser.name || '').toLowerCase();
 
       const relevantNotifs = systemNotifications.filter(n => {
+        // Sembunyikan jika sudah dibaca oleh user ini >= 1 hari (24 jam)
+        if ((n.readBy || []).includes(currentUser.id)) {
+          const readTime = (n.readAt && n.readAt[currentUser.id]) ? n.readAt[currentUser.id] : (n.timestamp || 0);
+          if ((now - readTime) >= ONE_DAY_MS) return false;
+        }
+
         if (n.targetUserId || n.targetUserName) {
           const matchId = n.targetUserId && n.targetUserId.toLowerCase() === myId;
           const matchName = n.targetUserName && n.targetUserName.toLowerCase() === myName;
@@ -3679,52 +3772,71 @@
       });
 
       const unreadNotifs = relevantNotifs.filter(n => !(n.readBy || []).includes(currentUser.id));
-      const unreadCount = unreadNotifs.length;
 
       if (badge) {
-        if (unreadCount > 0) {
-          badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+        if (unreadNotifs.length > 0) {
+          badge.innerText = unreadNotifs.length > 99 ? '99+' : unreadNotifs.length;
           badge.classList.remove('hidden');
         } else {
           badge.classList.add('hidden');
         }
       }
+
       if (headerCount) {
-        headerCount.innerText = `${unreadCount} Baru`;
+        headerCount.innerText = `${unreadNotifs.length} Baru`;
       }
 
+      container.innerHTML = '';
       if (relevantNotifs.length === 0) {
-        container.innerHTML = `<div class="p-6 text-center text-slate-400 font-semibold">Belum ada pemberitahuan</div>`;
+        container.innerHTML = `
+          <div class="py-8 text-center text-slate-400">
+            <i class="fa-regular fa-bell-slash text-lg mb-1 block"></i>
+            <span class="text-xs font-semibold">Tidak ada pemberitahuan masuk</span>
+          </div>
+        `;
         return;
       }
 
-      container.innerHTML = relevantNotifs.map(n => {
+      relevantNotifs.forEach(n => {
         const isRead = (n.readBy || []).includes(currentUser.id);
-        return `
-          <div onclick="handleNotificationClick('${n.id}')" class="p-3 hover:bg-slate-50 cursor-pointer transition flex items-start gap-2.5 ${isRead ? 'opacity-65' : 'bg-blue-50/40'}">
-            <div class="w-7 h-7 rounded-lg ${isRead ? 'bg-slate-100 text-slate-500' : 'bg-blue-100 text-blue-600'} flex items-center justify-center shrink-0 mt-0.5">
-              <i class="fa-solid ${n.type === 'checkout' ? 'fa-cart-shopping' : n.type === 'retur' ? 'fa-rotate-left' : 'fa-id-card'} text-[11px]"></i>
+        let iconClass = 'fa-box text-blue-600 bg-blue-50';
+        if (n.type === 'retur') iconClass = 'fa-rotate-left text-amber-600 bg-amber-50';
+        if (n.type === 'profiling') iconClass = 'fa-id-card text-emerald-600 bg-emerald-50';
+
+        const row = document.createElement('div');
+        row.className = `p-3 hover:bg-slate-50 transition cursor-pointer flex items-start gap-2.5 ${isRead ? 'opacity-70 bg-white' : 'bg-blue-50/40'}`;
+        row.onclick = () => handleNotificationClick(n.id);
+        row.innerHTML = `
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${iconClass.split(' ').slice(1).join(' ')}">
+            <i class="fa-solid ${iconClass.split(' ')[0]} ${iconClass.split(' ')[1]}"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-slate-800 truncate">${n.title}</span>
+              <span class="text-[10px] text-slate-400 font-mono shrink-0">${n.date || ''} ${n.time}</span>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1">
-                <span class="font-bold text-slate-800 truncate">${n.title}</span>
-                <span class="text-[10px] text-slate-400 whitespace-nowrap">${n.time}</span>
-              </div>
-              <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${n.message}</p>
-            </div>
+            <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${n.message}</p>
+            ${!isRead ? `<span class="inline-block mt-1 text-[10px] font-bold text-blue-600">● Belum dibaca</span>` : `<span class="inline-block mt-1 text-[10px] text-slate-400">✓ Sudah dibaca (tersimpan 24 jam)</span>`}
           </div>
         `;
-      }).join('');
+        container.appendChild(row);
+      });
     }
 
     function markAllNotificationsRead() {
       if (!currentUser) return;
+      const now = Date.now();
       systemNotifications.forEach(n => {
         if (!n.readBy) n.readBy = [];
+        if (!n.readAt) n.readAt = {};
         if (!n.readBy.includes(currentUser.id)) {
           n.readBy.push(currentUser.id);
+          n.readAt[currentUser.id] = now;
+        } else if (!n.readAt[currentUser.id]) {
+          n.readAt[currentUser.id] = now;
         }
       });
+      cleanupExpiredNotifications(false);
       syncToCloud('app_notifications', systemNotifications);
       updateNotificationUI();
     }
@@ -3733,15 +3845,21 @@
       const notif = systemNotifications.find(n => n.id === notifId);
       if (!notif || !currentUser) return;
 
+      const now = Date.now();
       if (!notif.readBy) notif.readBy = [];
+      if (!notif.readAt) notif.readAt = {};
       if (!notif.readBy.includes(currentUser.id)) {
         notif.readBy.push(currentUser.id);
+        notif.readAt[currentUser.id] = now;
+        syncToCloud('app_notifications', systemNotifications);
+      } else if (!notif.readAt[currentUser.id]) {
+        notif.readAt[currentUser.id] = now;
         syncToCloud('app_notifications', systemNotifications);
       }
 
       notifDropdownOpen = false;
-      const dropdown = document.getElementById('notifDropdown');
-      if (dropdown) dropdown.classList.add('hidden');
+      const drop = document.getElementById('notifDropdown');
+      if (drop) drop.classList.add('hidden');
       updateNotificationUI();
 
       if (notif.linkTab) {
@@ -3756,130 +3874,140 @@
       }
     }
 
-    // ================= MASTER DROPDOWN & EDIT PILIHAN =================
+    // ================= MASTER DROPDOWN & QUICK EDIT (TEAM LEADER) =================
     function populateMasterDropdownOptions() {
-      const itemSelect = document.getElementById('returItemType');
-      if (itemSelect && masterDropdown.itemTypeList) {
-        itemSelect.innerHTML = masterDropdown.itemTypeList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-      }
+      const itemSel = document.getElementById('returItemType');
+      const custSel = document.getElementById('returCustomerSelect');
+      const kelSel = document.getElementById('returKelengkapanSelect');
+      const spList = document.getElementById('spOptionsList');
 
-      const custSelect = document.getElementById('returCustomerSelect');
-      if (custSelect && masterDropdown.customerList) {
-        custSelect.innerHTML = masterDropdown.customerList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      if (itemSel && masterDropdown.itemTypeList) {
+        itemSel.innerHTML = masterDropdown.itemTypeList.map(v => `<option value="${v}">${v}</option>`).join('');
       }
-
-      const kelSelect = document.getElementById('returKelengkapanSelect');
-      if (kelSelect && masterDropdown.kelengkapanList) {
-        kelSelect.innerHTML = masterDropdown.kelengkapanList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      if (custSel && masterDropdown.customerList) {
+        custSel.innerHTML = masterDropdown.customerList.map(v => `<option value="${v}">${v}</option>`).join('');
       }
-
-      const spDatalist = document.getElementById('spOptionsList');
-      if (spDatalist && masterDropdown.hubList) {
-        spDatalist.innerHTML = masterDropdown.hubList.map(sp => `<option value="${sp}">`).join('');
+      if (kelSel && masterDropdown.kelengkapanList) {
+        kelSel.innerHTML = masterDropdown.kelengkapanList.map(v => `<option value="${v}">${v}</option>`).join('');
+      }
+      if (spList && masterDropdown.hubList) {
+        spList.innerHTML = masterDropdown.hubList.map(v => `<option value="${v}">`).join('');
       }
     }
 
-    function quickEditDropdown(categoryKey, titleLabel) {
+    let tempSingleDropdownList = [];
+
+    function quickEditDropdown(categoryKey, displayTitle) {
       activeMasterReturCat = categoryKey;
       const titleEl = document.getElementById('targetDropdownTitle');
-      if (titleEl) titleEl.innerText = titleLabel;
-      renderSingleDropdownItems();
+      if (titleEl) titleEl.innerText = displayTitle;
+      tempSingleDropdownList = [...(masterDropdown[categoryKey] || [])];
+      renderSingleDropdownEditor();
       document.getElementById('modalSingleDropdownEdit').classList.remove('hidden');
-    }
-
-    function renderSingleDropdownItems() {
-      const container = document.getElementById('singleDropdownItemsContainer');
-      if (!container) return;
-      const list = masterDropdown[activeMasterReturCat] || [];
-      container.innerHTML = list.map((val, idx) => `
-        <div class="flex items-center gap-2">
-          <input type="text" id="singleDropOpt_${idx}" value="${val}" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
-          ${list.length > 1 ? `
-            <button type="button" onclick="deleteSingleDropdownOption(${idx})" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          ` : ''}
-        </div>
-      `).join('');
-    }
-
-    function addSingleDropdownOption() {
-      if (!masterDropdown[activeMasterReturCat]) masterDropdown[activeMasterReturCat] = [];
-      masterDropdown[activeMasterReturCat].push('Pilihan Baru');
-      renderSingleDropdownItems();
-    }
-
-    function deleteSingleDropdownOption(idx) {
-      const list = masterDropdown[activeMasterReturCat] || [];
-      if (list.length <= 1) return;
-      list.splice(idx, 1);
-      renderSingleDropdownItems();
-    }
-
-    function saveSingleDropdownOptions() {
-      const list = masterDropdown[activeMasterReturCat] || [];
-      const updated = [];
-      list.forEach((_, idx) => {
-        const input = document.getElementById(`singleDropOpt_${idx}`);
-        if (input && input.value.trim()) {
-          updated.push(input.value.trim());
-        }
-      });
-      if (updated.length === 0) {
-        showCustomAlert('Peringatan', 'Minimal harus ada 1 pilihan dalam daftar.', true);
-        return;
-      }
-      masterDropdown[activeMasterReturCat] = updated;
-      syncToCloud('app_master_dropdown', masterDropdown);
-      populateMasterDropdownOptions();
-      closeModalSingleDropdownEdit();
-      showCustomAlert('Tersimpan', 'Daftar pilihan dropdown berhasil diperbarui.');
     }
 
     function closeModalSingleDropdownEdit() {
       document.getElementById('modalSingleDropdownEdit').classList.add('hidden');
     }
 
-    // ================= EDIT & TAMBAH KATALOG BARANG (TEAM LEADER) =================
+    function renderSingleDropdownEditor() {
+      const container = document.getElementById('singleDropdownItemsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      tempSingleDropdownList.forEach((val, idx) => {
+        const row = document.createElement('div');
+        row.className = "flex items-center gap-2";
+        row.innerHTML = `
+          <input type="text" value="${val}" onchange="tempSingleDropdownList[${idx}] = this.value" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+          ${tempSingleDropdownList.length > 1 ? `
+            <button type="button" onclick="removeSingleDropdownOption(${idx})" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : ''}
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function addSingleDropdownOption() {
+      tempSingleDropdownList.push('Pilihan Baru');
+      renderSingleDropdownEditor();
+    }
+
+    function removeSingleDropdownOption(idx) {
+      if (tempSingleDropdownList.length <= 1) return;
+      tempSingleDropdownList.splice(idx, 1);
+      renderSingleDropdownEditor();
+    }
+
+    function saveSingleDropdownOptions() {
+      const cleaned = tempSingleDropdownList.map(s => s.trim()).filter(Boolean);
+      if (cleaned.length === 0) {
+        showCustomAlert('Input Kosong', 'Minimal harus ada 1 pilihan dalam daftar.', true);
+        return;
+      }
+      masterDropdown[activeMasterReturCat] = cleaned;
+      syncToCloud('app_master_dropdown', masterDropdown);
+      populateMasterDropdownOptions();
+      closeModalSingleDropdownEdit();
+      showCustomAlert('Tersimpan', 'Daftar pilihan dropdown berhasil diperbarui.');
+    }
+
+    // ================= ICON PICKER & KATALOG BARANG (ADMIN & TEAM LEADER) =================
     const CATALOG_ICON_PRESETS = [
       { icon: 'fa-calculator', color: 'bg-blue-100 text-blue-700', label: 'EDC' },
       { icon: 'fa-scroll', color: 'bg-amber-100 text-amber-700', label: 'Thermal' },
       { icon: 'fa-sim-card', color: 'bg-indigo-100 text-indigo-700', label: 'SIM' },
-      { icon: 'fa-microchip', color: 'bg-rose-100 text-rose-700', label: 'SAM/Chip' },
+      { icon: 'fa-microchip', color: 'bg-rose-100 text-rose-700', label: 'SAM' },
       { icon: 'fa-battery-full', color: 'bg-teal-100 text-teal-700', label: 'Baterai' },
       { icon: 'fa-plug', color: 'bg-orange-100 text-orange-700', label: 'Charger' },
       { icon: 'fa-shield-halved', color: 'bg-purple-100 text-purple-700', label: 'FKM' },
       { icon: 'fa-note-sticky', color: 'bg-emerald-100 text-emerald-700', label: 'Sticker' },
-      { icon: 'fa-ethernet', color: 'bg-cyan-100 text-cyan-700', label: 'Kabel LAN' },
-      { icon: 'fa-wifi', color: 'bg-sky-100 text-sky-700', label: 'Modem/WiFi' },
+      { icon: 'fa-ethernet', color: 'bg-cyan-100 text-cyan-700', label: 'Kabel' },
+      { icon: 'fa-wifi', color: 'bg-sky-100 text-sky-700', label: 'Modem' },
       { icon: 'fa-print', color: 'bg-slate-200 text-slate-700', label: 'Printer' },
-      { icon: 'fa-box', color: 'bg-violet-100 text-violet-700', label: 'Box/Lainnya' }
+      { icon: 'fa-box', color: 'bg-blue-100 text-blue-700', label: 'Box' }
     ];
 
-    function renderIconPicker(gridId, iconInputId, colorInputId, selectedIcon) {
+    function renderIconPickerGrid(gridId, selectedIcon, onSelectFnName) {
       const grid = document.getElementById(gridId);
       if (!grid) return;
-      grid.innerHTML = CATALOG_ICON_PRESETS.map(preset => {
+      grid.innerHTML = '';
+
+      CATALOG_ICON_PRESETS.forEach(preset => {
         const isSelected = preset.icon === selectedIcon;
-        return `
-          <button type="button" onclick="selectCatalogIcon('${gridId}', '${iconInputId}', '${colorInputId}', '${preset.icon}', '${preset.color}')"
-            title="${preset.label}"
-            class="h-10 rounded-xl flex items-center justify-center text-base transition ${preset.color} ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2 scale-105 shadow-xs' : 'opacity-75 hover:opacity-100'}">
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.title = preset.label;
+        btn.className = `p-2 rounded-xl flex flex-col items-center justify-center gap-1 border transition ${isSelected ? 'border-blue-600 bg-blue-50/80 ring-2 ring-blue-500/30' : 'border-slate-200 bg-white hover:bg-slate-50'}`;
+        btn.innerHTML = `
+          <div class="w-7 h-7 rounded-lg ${preset.color} flex items-center justify-center text-xs">
             <i class="fa-solid ${preset.icon}"></i>
-          </button>
+          </div>
+          <span class="text-[9px] font-bold text-slate-600 truncate w-full text-center">${preset.label}</span>
         `;
-      }).join('');
+        btn.onclick = () => window[onSelectFnName](preset.icon, preset.color);
+        grid.appendChild(btn);
+      });
     }
 
-    function selectCatalogIcon(gridId, iconInputId, colorInputId, icon, color) {
-      document.getElementById(iconInputId).value = icon;
-      document.getElementById(colorInputId).value = color;
-      renderIconPicker(gridId, iconInputId, colorInputId, icon);
+    function selectEditItemIcon(icon, color) {
+      document.getElementById('editItemIcon').value = icon;
+      document.getElementById('editItemColor').value = color;
+      renderIconPickerGrid('editIconPickerGrid', icon, 'selectEditItemIcon');
+    }
+
+    function selectNewItemIcon(icon, color) {
+      document.getElementById('newItemIcon').value = icon;
+      document.getElementById('newItemColor').value = color;
+      renderIconPickerGrid('newIconPickerGrid', icon, 'selectNewItemIcon');
     }
 
     function openEditItemModal(itemId) {
       const item = warehouseStock.find(i => i.id === itemId);
       if (!item) return;
+
       document.getElementById('editItemId').value = item.id;
       document.getElementById('editItemName').value = item.name;
       document.getElementById('editItemCategory').value = item.category;
@@ -3888,7 +4016,7 @@
       document.getElementById('editItemIcon').value = item.icon || 'fa-box';
       document.getElementById('editItemColor').value = item.color || 'bg-blue-100 text-blue-700';
 
-      renderIconPicker('editIconPickerGrid', 'editItemIcon', 'editItemColor', item.icon || 'fa-box');
+      renderIconPickerGrid('editIconPickerGrid', item.icon || 'fa-box', 'selectEditItemIcon');
       document.getElementById('modalEditItem').classList.remove('hidden');
     }
 
@@ -3911,7 +4039,7 @@
 
       syncToCloud('app_stock_cirebon', warehouseStock);
       closeEditItemModal();
-      showCustomAlert('Berhasil', `Detail barang ${item.name} berhasil disimpan.`);
+      showCustomAlert('Tersimpan', `Detail barang "${item.name}" berhasil diperbarui.`);
       refreshUI();
     }
 
@@ -3921,11 +4049,11 @@
       if (idx === -1) return;
       const itemName = warehouseStock[idx].name;
 
-      showCustomConfirm('Hapus Barang Katalog', `Hapus barang "${itemName}" dari katalog gudang?`, () => {
+      showCustomConfirm('Hapus Barang Katalog', `Yakin ingin menghapus "${itemName}" dari katalog?`, () => {
         warehouseStock.splice(idx, 1);
         syncToCloud('app_stock_cirebon', warehouseStock);
         closeEditItemModal();
-        showCustomAlert('Terhapus', `Barang ${itemName} telah dihapus dari katalog.`);
+        showCustomAlert('Terhapus', `Barang "${itemName}" telah dihapus dari katalog.`);
         refreshUI();
       });
     }
@@ -3936,9 +4064,9 @@
       document.getElementById('newItemUnit').value = 'Pcs';
       document.getElementById('newItemStock').value = '0';
       document.getElementById('newItemIcon').value = 'fa-box';
-      document.getElementById('newItemColor').value = 'bg-violet-100 text-violet-700';
+      document.getElementById('newItemColor').value = 'bg-blue-100 text-blue-700';
 
-      renderIconPicker('newIconPickerGrid', 'newItemIcon', 'newItemColor', 'fa-box');
+      renderIconPickerGrid('newIconPickerGrid', 'fa-box', 'selectNewItemIcon');
       document.getElementById('modalAddNewItem').classList.remove('hidden');
     }
 
@@ -3953,7 +4081,7 @@
       const unit = document.getElementById('newItemUnit').value.trim() || 'Pcs';
       const stock = Math.max(0, parseInt(document.getElementById('newItemStock').value) || 0);
       const icon = document.getElementById('newItemIcon').value || 'fa-box';
-      const color = document.getElementById('newItemColor').value || 'bg-violet-100 text-violet-700';
+      const color = document.getElementById('newItemColor').value || 'bg-blue-100 text-blue-700';
 
       const newItem = {
         id: 'item-' + Date.now().toString().slice(-6),
@@ -3968,55 +4096,62 @@
       warehouseStock.push(newItem);
       syncToCloud('app_stock_cirebon', warehouseStock);
       closeModalAddNewItem();
-      showCustomAlert('Ditambahkan', `Barang baru "${name}" berhasil ditambahkan ke katalog.`);
+      showCustomAlert('Berhasil', `Barang baru "${name}" berhasil ditambahkan ke katalog.`);
       refreshUI();
     }
 
     // ================= MANAGEMENT AKSES & PENGGUNA =================
-    let editingPermissionsUserId = null;
-
     function renderUserManagementTable() {
       const tbody = document.getElementById('userManagementTableBody');
       if (!tbody) return;
       tbody.innerHTML = '';
 
       systemUsers.forEach(u => {
-        const isActive = u.active !== false;
         const isMasterAdmin = u.id.toLowerCase() === 'admin';
-        const roleLabel = u.role === 'lead' ? 'Team Leader' : u.role === 'logistik' ? 'Logistik' : 'Teknisi';
+        const isActive = u.active !== false;
+
+        let roleLabel = 'Teknisi';
+        let roleBadge = 'bg-slate-100 text-slate-700';
+        if (u.role === 'lead') {
+          roleLabel = 'Team Leader';
+          roleBadge = 'bg-blue-50 text-blue-700 border border-blue-200';
+        } else if (u.role === 'logistik') {
+          roleLabel = 'Logistik';
+          roleBadge = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+        }
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition";
         tr.innerHTML = `
-          <td class="py-3 px-4 font-mono font-bold text-blue-600">${u.id}</td>
+          <td class="py-3 px-4 font-mono font-bold text-slate-800">${u.id}</td>
           <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
           <td class="py-3 px-4">
-            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">${roleLabel}</span>
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold ${roleBadge}">${roleLabel}</span>
           </td>
           <td class="py-3 px-4 text-slate-600 font-semibold">${u.servicePoint || '01 Cirebon'}</td>
           <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
               <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
               ${isActive ? 'Aktif' : 'Nonaktif'}
             </span>
           </td>
           <td class="py-3 px-4 text-center">
             <div class="inline-flex items-center gap-1.5 justify-center">
-              <button onclick="openModalEditPermissions('${u.id}')" title="Edit Hak Akses" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 rounded-lg font-bold text-xs transition">
-                <i class="fa-solid fa-sliders"></i> Akses
+              <button onclick="openModalEditPermissions('${u.id}')" title="Edit Akses & SP" class="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition">
+                <i class="fa-solid fa-sliders"></i>
               </button>
-              <button onclick="openModalResetPassword('${u.id}')" title="Ganti Password" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">
+              <button onclick="openModalResetPassword('${u.id}')" title="Ganti Password" class="px-2 py-1 bg-slate-100 hover:bg-amber-50 hover:text-amber-600 text-slate-700 rounded-lg font-bold text-xs transition">
                 <i class="fa-solid fa-key"></i>
               </button>
               ${!isMasterAdmin ? `
-                <button onclick="toggleUserStatus('${u.id}')" title="${isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}" class="px-2.5 py-1 ${isActive ? 'bg-amber-50 hover:bg-amber-100 text-amber-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'} rounded-lg font-bold text-xs transition">
+                <button onclick="toggleUserActiveStatus('${u.id}')" title="${isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}" class="px-2 py-1 ${isActive ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'} rounded-lg font-bold text-xs transition">
                   <i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'}"></i>
                 </button>
-              ` : ''}
-              ${(!isActive && !isMasterAdmin) ? `
-                <button onclick="deleteInactiveUser('${u.id}')" title="Hapus Permanen Akun Nonaktif" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 rounded-lg font-bold text-xs transition">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
+                ${!isActive ? `
+                  <button onclick="deleteInactiveUser('${u.id}')" title="Hapus Permanen Akun Nonaktif" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                ` : ''}
               ` : ''}
             </div>
           </td>
@@ -4025,17 +4160,40 @@
       });
     }
 
+    function toggleUserActiveStatus(userId) {
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user || user.id.toLowerCase() === 'admin') return;
+      user.active = user.active === false ? true : false;
+      syncToCloud('app_system_users', systemUsers);
+      renderUserManagementTable();
+      showCustomAlert('Status Akun Diubah', `Akun ${user.name} (${user.id}) sekarang berstatus ${user.active ? 'Aktif' : 'Nonaktif'}.`);
+    }
+
+    function deleteInactiveUser(userId) {
+      const idx = systemUsers.findIndex(u => u.id === userId);
+      if (idx === -1) return;
+      const user = systemUsers[idx];
+      if (user.id.toLowerCase() === 'admin' || user.active !== false) return;
+
+      showCustomConfirm('Hapus Akun Nonaktif', `Yakin ingin menghapus permanen akun nonaktif ${user.name} (${user.id})?`, () => {
+        systemUsers.splice(idx, 1);
+        syncToCloud('app_system_users', systemUsers);
+        renderUserManagementTable();
+        showCustomAlert('Akun Dihapus', `Akun ${user.name} (${user.id}) berhasil dihapus permanen.`);
+      });
+    }
+
     function openModalEditPermissions(userId) {
       const user = systemUsers.find(u => u.id === userId);
       if (!user) return;
-      editingPermissionsUserId = userId;
-      document.getElementById('editPermUserId').innerText = `${user.id} (${user.name})`;
+
+      document.getElementById('editPermUserId').innerText = user.id;
       document.getElementById('editPermUserSP').value = user.servicePoint || '01 Cirebon';
 
       const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
       const userPerms = user.permissions || [];
       permIds.forEach(p => {
-        const el = document.getElementById(`edit_${p}`);
+        const el = document.getElementById('edit_' + p);
         if (el) el.checked = userPerms.includes(p);
       });
 
@@ -4044,27 +4202,27 @@
 
     function closeModalEditPermissions() {
       document.getElementById('modalEditPermissions').classList.add('hidden');
-      editingPermissionsUserId = null;
     }
 
     function saveUserPermissionsChanges() {
-      if (!editingPermissionsUserId) return;
-      const user = systemUsers.find(u => u.id === editingPermissionsUserId);
+      const userId = document.getElementById('editPermUserId').innerText;
+      const user = systemUsers.find(u => u.id === userId);
       if (!user) return;
 
       user.servicePoint = document.getElementById('editPermUserSP').value.trim() || '01 Cirebon';
+
       const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
       const updatedPerms = [];
       permIds.forEach(p => {
-        const el = document.getElementById(`edit_${p}`);
+        const el = document.getElementById('edit_' + p);
         if (el && el.checked) updatedPerms.push(p);
       });
       user.permissions = updatedPerms;
 
       syncToCloud('app_system_users', systemUsers);
       closeModalEditPermissions();
-      showCustomAlert('Tersimpan', `Hak akses untuk ${user.name} berhasil diperbarui.`);
       renderUserManagementTable();
+      showCustomAlert('Hak Akses Disimpan', `Pengaturan akses untuk ${user.name} berhasil diperbarui.`);
     }
 
     function openModalResetPassword(userId) {
@@ -4079,48 +4237,85 @@
 
     function handleSaveNewPassword(e) {
       if (e) e.preventDefault();
-      const uid = document.getElementById('targetResetUserId').value;
+      const userId = document.getElementById('targetResetUserId').value;
       const newPass = document.getElementById('inputNewPasswordVal').value.trim();
-      if (newPass.length < 4) {
-        showCustomAlert('Password Terlalu Pendek', 'Password minimal harus 4 karakter.', true);
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user || newPass.length < 4) {
+        showCustomAlert('Password Pendek', 'Password baru minimal terdiri dari 4 karakter.', true);
         return;
       }
-      const user = systemUsers.find(u => u.id === uid);
-      if (!user) return;
+
       user.password = newPass;
       syncToCloud('app_system_users', systemUsers);
       closeModalResetPassword();
-      showCustomAlert('Password Diperbarui', `Password untuk akun ${uid} berhasil diubah.`);
+      showCustomAlert('Password Diperbarui', `Password untuk akun ${user.name} (${user.id}) berhasil diubah.`);
     }
 
-    function toggleUserStatus(userId) {
-      if (userId.toLowerCase() === 'admin') return;
-      const user = systemUsers.find(u => u.id === userId);
-      if (!user) return;
-      user.active = user.active === false ? true : false;
-      syncToCloud('app_system_users', systemUsers);
-      renderUserManagementTable();
-    }
-
-    function deleteInactiveUser(userId) {
-      if (userId.toLowerCase() === 'admin') return;
-      const idx = systemUsers.findIndex(u => u.id === userId);
-      if (idx === -1) return;
-      if (systemUsers[idx].active !== false) {
-        showCustomAlert('Tidak Diizinkan', 'Nonaktifkan akun terlebih dahulu sebelum menghapus permanen.', true);
+    // ================= EKSPOR EXCEL & RESET BULANAN =================
+    function exportAllDataToExcel() {
+      if (typeof XLSX === 'undefined') {
+        showCustomAlert('Pustaka Belum Siap', 'Library Excel sedang dimuat, coba sesaat lagi.', true);
         return;
       }
-      const userName = systemUsers[idx].name;
 
-      showCustomConfirm('Hapus Akun Nonaktif', `Hapus permanen akun nonaktif "${userName}" (${userId})?`, () => {
-        systemUsers.splice(idx, 1);
-        syncToCloud('app_system_users', systemUsers);
-        showCustomAlert('Akun Dihapus', `Akun nonaktif ${userName} (${userId}) berhasil dihapus permanen.`);
-        renderUserManagementTable();
-      });
+      const wb = XLSX.utils.book_new();
+
+      const wsStock = XLSX.utils.json_to_sheet(warehouseStock.map(s => ({
+        Kode: s.id,
+        Nama_Barang: s.name,
+        Kategori: s.category,
+        Stok_Fisik: s.stock,
+        Satuan: s.unit
+      })));
+      XLSX.utils.book_append_sheet(wb, wsStock, "Stok_Gudang");
+
+      const wsCheckout = XLSX.utils.json_to_sheet(checkoutHistory.map(c => ({
+        No_Kwitansi: c.ticketNo,
+        Waktu: c.date,
+        Teknisi: c.techName,
+        Service_Point: c.servicePoint,
+        Rincian_Barang: c.items.map(i => `${i.name} (${i.qty} ${i.unit})`).join(', '),
+        Catatan: c.notes,
+        Status: c.status,
+        Diproses_Oleh: c.processedBy || '-'
+      })));
+      XLSX.utils.book_append_sheet(wb, wsCheckout, "Riwayat_Checkout");
+
+      const wsRetur = XLSX.utils.json_to_sheet(returHistory.map(r => ({
+        No_Retur: r.returNo,
+        Waktu: r.date,
+        Jenis_Barang: r.itemType,
+        Serial_Number: r.sn,
+        Customer: r.customer,
+        Kelengkapan: r.kelengkapan,
+        Alasan: r.reason,
+        Teknisi: r.techName,
+        Status: r.status,
+        Diterima_Oleh: r.receivedBy || '-'
+      })));
+      XLSX.utils.book_append_sheet(wb, wsRetur, "Data_Retur");
+
+      const wsProfiling = XLSX.utils.json_to_sheet(profilingBNIList.map(p => ({
+        ID_Tiket: p.id,
+        Waktu: p.date,
+        TID: p.tid,
+        Kategori_JO: p.kategoriJO,
+        Kebutuhan: p.kebutuhan,
+        Kendala: p.kendala,
+        SN_Baru: p.snBaru,
+        ICCID_Baru: p.iccidBaru,
+        APN: p.apn,
+        Teknisi: p.techName,
+        Status: p.status,
+        Diproses_Oleh: p.processedBy || '-'
+      })));
+      XLSX.utils.book_append_sheet(wb, wsProfiling, "Profiling_BNI");
+
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `Laporan_Logistik_Cirebon_${dateStamp}.xlsx`);
+      showCustomAlert('Ekspor Berhasil', 'File Excel laporan operasional berhasil diunduh.');
     }
 
-    // ================= RESET BULANAN & EKSPOR EXCEL =================
     function openModalMonthlyReset() {
       document.getElementById('modalMonthlyReset').classList.remove('hidden');
     }
@@ -4130,102 +4325,36 @@
     }
 
     function executeMonthlyReset() {
-      showCustomConfirm('Konfirmasi Reset Bulanan', 'Apakah Anda yakin ingin menghapus data riwayat yang dicentang untuk reset bulanan?', () => {
-        if (document.getElementById('resetChkCheckout').checked) {
-          checkoutHistory = [];
-          syncToCloud('app_checkout_history', checkoutHistory);
-        }
-        if (document.getElementById('resetChkRetur').checked) {
-          returHistory = [];
-          syncToCloud('app_retur_history', returHistory);
-        }
-        if (document.getElementById('resetChkHub').checked) {
-          hubRequests = [];
-          syncToCloud('app_hub_requests', hubRequests);
-        }
-        if (document.getElementById('resetChkProfiling').checked) {
-          profilingBNIList = [];
-          syncToCloud('app_profiling_bni', profilingBNIList);
-        }
+      const rCheckout = document.getElementById('resetChkCheckout').checked;
+      const rRetur = document.getElementById('resetChkRetur').checked;
+      const rHub = document.getElementById('resetChkHub').checked;
+      const rProf = document.getElementById('resetChkProfiling').checked;
 
-        closeModalMonthlyReset();
-        showCustomAlert('Reset Bulanan Selesai', 'Data riwayat terpilih telah dibersihkan untuk periode bulan baru.');
-        refreshUI();
-      });
-    }
-
-    function exportAllDataToExcel() {
-      if (typeof XLSX === 'undefined') {
-        showCustomAlert('Gagal Ekspor', 'Library Excel belum siap. Periksa koneksi internet Anda.', true);
+      if (!rCheckout && !rRetur && !rHub && !rProf) {
+        showCustomAlert('Pilih Data', 'Centang minimal 1 kategori riwayat yang akan dibersihkan.', true);
         return;
       }
 
-      const wb = XLSX.utils.book_new();
+      if (rCheckout) {
+        checkoutHistory = [];
+        syncToCloud('app_checkout_history', checkoutHistory);
+      }
+      if (rRetur) {
+        returHistory = [];
+        syncToCloud('app_retur_history', returHistory);
+      }
+      if (rHub) {
+        hubRequests = [];
+        syncToCloud('app_hub_requests', hubRequests);
+      }
+      if (rProf) {
+        profilingBNIList = [];
+        syncToCloud('app_profiling_bni', profilingBNIList);
+      }
 
-      const stockRows = warehouseStock.map(s => ({
-        'Kode Barang': s.id,
-        'Nama Barang': s.name,
-        'Kategori': s.category,
-        'Stok Fisik': s.stock,
-        'Satuan': s.unit
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows), 'Stok Gudang');
-
-      const coRows = checkoutHistory.map(c => ({
-        'No Kwitansi': c.ticketNo,
-        'Waktu': c.date,
-        'ID Teknisi': c.techId,
-        'Nama Teknisi': c.techName,
-        'Service Point': c.servicePoint,
-        'Barang': c.items.map(i => `${i.name} (${i.qty} ${i.unit})`).join('; '),
-        'Catatan': c.notes,
-        'Status': c.status
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(coRows.length ? coRows : [{ Info: 'Kosong' }]), 'Checkout Barang');
-
-      const retRows = returHistory.map(r => ({
-        'No Retur': r.returNo,
-        'Waktu': r.date,
-        'Jenis Barang': r.itemType,
-        'Serial Number': r.sn,
-        'Customer': r.customer,
-        'Kelengkapan': r.kelengkapan,
-        'Kerusakan': r.reason,
-        'Teknisi': r.techName,
-        'Status': r.status,
-        'Diterima Oleh': r.receivedBy
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(retRows.length ? retRows : [{ Info: 'Kosong' }]), 'Barang Retur');
-
-      const profRows = profilingBNIList.map(p => ({
-        'ID Tiket': p.id,
-        'Waktu': p.date,
-        'TID': p.tid,
-        'Kategori JO': p.kategoriJO,
-        'Kebutuhan': p.kebutuhan,
-        'Kendala': p.kendala,
-        'SN Baru': p.snBaru,
-        'ICCID Baru': p.iccidBaru,
-        'APN': p.apn,
-        'Teknisi': p.techName,
-        'Status': p.status
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profRows.length ? profRows : [{ Info: 'Kosong' }]), 'Profiling BNI');
-
-      const hubRows = hubRequests.map(h => ({
-        'No Pengajuan': h.reqNo,
-        'Tanggal': h.date,
-        'HUB Pemohon': h.hub,
-        'Tujuan': h.destination,
-        'Kebutuhan': h.items.replace(/\n/g, '; '),
-        'Keterangan': h.notes,
-        'Status': h.status
-      }));
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hubRows.length ? hubRows : [{ Info: 'Kosong' }]), 'Permintaan HUB');
-
-      const fileName = `Laporan_SiPalingLogistik_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-      showCustomAlert('Ekspor Berhasil', `Laporan lengkap berhasil diunduh (${fileName}).`);
+      closeModalMonthlyReset();
+      refreshUI();
+      showCustomAlert('Reset Bulanan Selesai', 'Riwayat data operasional terpilih berhasil dibersihkan untuk periode bulan baru.');
     }
 
     // ================= INITIAL LOAD =================
@@ -4233,6 +4362,7 @@
       populateMasterDropdownOptions();
       initActivityTracker();
       restoreUserSession();
+      cleanupExpiredNotifications(true);
       initFirestoreLiveListeners();
     });
   </script>
