@@ -48,6 +48,15 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    /* Hilangkan panah spinner bawaan pada input angka keranjang agar tetap rapi */
+    input.cart-qty-input::-webkit-outer-spin-button,
+    input.cart-qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input.cart-qty-input {
+      -moz-appearance: textfield;
+    }
     /* Mencegah iOS Safari & Android Auto-Zoom saat mengetik yang memicu layar bergeser */
     @media (max-width: 768px) {
       input, select, textarea {
@@ -2151,6 +2160,23 @@
       renderStockCatalog();
     }
 
+    function setCartQty(itemId, rawValue) {
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!item) return;
+
+      const parsed = parseInt(rawValue, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        delete cart[itemId];
+      } else if (parsed > item.stock) {
+        cart[itemId] = item.stock;
+        showCustomAlert('Melebihi Stok Gudang', `Stok tersedia untuk ${item.name} hanya ${item.stock} ${item.unit}. Jumlah otomatis disesuaikan ke batas maksimal stok.`, true);
+      } else {
+        cart[itemId] = parsed;
+      }
+      renderCartUI();
+      renderStockCatalog();
+    }
+
     function renderCartUI() {
       const list = document.getElementById('cartItemsList');
       const badge = document.getElementById('cartCountBadge');
@@ -2189,9 +2215,9 @@
             </div>
           </div>
           <div class="flex items-center gap-1.5">
-            <button onclick="updateCartQty('${id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">-</button>
-            <span class="w-7 text-center font-bold font-mono text-slate-800 text-xs">${qty}</span>
-            <button onclick="updateCartQty('${id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">+</button>
+            <button type="button" onclick="updateCartQty('${id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs active:scale-95">-</button>
+            <input type="number" min="1" max="${item.stock}" value="${qty}" onchange="setCartQty('${id}', this.value)" onfocus="this.select()" aria-label="Jumlah ${item.name}" class="cart-qty-input w-14 h-7 text-center bg-white border border-slate-200 rounded-lg font-bold font-mono text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="button" onclick="updateCartQty('${id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs active:scale-95">+</button>
           </div>
         `;
         list.appendChild(row);
