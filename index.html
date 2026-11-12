@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Si Paling Logistik - Sistem Operasional EDC & HUB</title>
   
+  <!-- Favicon Tab Browser (Logo Boks Logistik Modern) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M16 6L7 11l9 5 9-5-9-5zm-8 7.2v8l7 4.2v-8.2l-7-4zm18 0l-7 4v8.2l7-4.2v-8z' fill='%23ffffff'/%3E%3C/svg%3E">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -158,7 +161,7 @@
             <span class="hidden md:inline">Reset Bulanan</span>
           </button>
 
-          <!-- Tombol Lonceng Notifikasi (Logistik & Team Leader) -->
+          <!-- Tombol Lonceng Notifikasi (Tersedia untuk Semua Role: Team Leader, Logistik, & Teknisi) -->
           <div class="relative" id="notifBellWrapper">
             <button id="btnNotifBell" onclick="toggleNotificationDropdown()" title="Pemberitahuan Masuk" class="relative w-9 h-9 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 flex items-center justify-center transition active:scale-95">
               <i class="fa-solid fa-bell text-sm"></i>
@@ -217,9 +220,9 @@
           <!-- Render dinamis via JS -->
         </div>
 
-        <!-- Tampilan Laptop / Layar Lebar (Horizontal Segmented Bar) -->
+        <!-- Tampilan Laptop / Layar Lebar (Horizontal Grouped Bar) -->
         <div class="hidden md:flex items-center justify-center">
-          <nav id="roleNavTabs" class="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl whitespace-nowrap shadow-2xs">
+          <nav id="roleNavTabs" class="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl shadow-2xs">
             <!-- Render dinamis via JS -->
           </nav>
         </div>
@@ -242,45 +245,10 @@
           </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- List Item Kartu Stok Gudang -->
-          <div id="catalogGridContainer" class="lg:col-span-2 space-y-3">
-            <div id="stockGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <!-- Render otomatis via JS -->
-            </div>
-          </div>
-
-          <!-- Keranjang Checkout Teknisi (Hanya aktif untuk teknisi) -->
-          <div id="cartCheckoutContainer" class="lg:col-span-1">
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm sticky top-28 space-y-4">
-              <div class="flex items-center justify-between border-b pb-3 border-slate-100">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                  </div>
-                  <h3 class="font-bold text-slate-800 text-sm">Keranjang Checkout</h3>
-                </div>
-                <span id="cartCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">0 Item</span>
-              </div>
-
-              <!-- Daftar Barang di Keranjang -->
-              <div id="cartItemsList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                <!-- Render via JS -->
-              </div>
-
-              <!-- Informasi Teknisi Pengambil -->
-              <div class="pt-3 border-t border-slate-100 space-y-3">
-                <div>
-                  <label class="block text-xs font-bold text-slate-600 mb-1">Catatan / Keperluan</label>
-                  <input type="text" id="checkoutNotes" placeholder="Contoh: Kebutuhan merchant BNI / Maintenance" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500">
-                </div>
-
-                <button id="btnProcessCheckout" onclick="processCheckout()" disabled class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-receipt"></i>
-                  <span>Buat Kwitansi & Barcode</span>
-                </button>
-              </div>
-            </div>
+        <!-- List Item Kartu Stok Gudang (Full Width yang Rapi) -->
+        <div id="catalogGridContainer" class="w-full space-y-3">
+          <div id="stockGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- Render otomatis via JS -->
           </div>
         </div>
       </section>
@@ -710,6 +678,53 @@
           </div>
         </div>
       </section>
+    </main>
+  </div>
+
+  <!-- Floating Button Keranjang Checkout (Khusus Teknisi) -->
+  <button id="floatingCartBtn" onclick="openFloatingCartModal()" class="hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-xl shadow-blue-600/30 flex items-center justify-center transition transform active:scale-95">
+    <i class="fa-solid fa-cart-shopping text-xl"></i>
+    <span id="floatingCartBadge" class="absolute -top-2 -right-2 min-w-[24px] h-[24px] px-1.5 bg-rose-600 text-white border-2 border-white rounded-full text-xs font-black flex items-center justify-center shadow-sm">0</span>
+  </button>
+
+  <!-- Modal / Drawer Keranjang Checkout Teknisi -->
+  <div id="modalFloatingCart" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between border-b pb-3 border-slate-100 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="fa-solid fa-cart-shopping"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-800 text-sm">Keranjang Checkout</h3>
+            <span id="cartCountBadge" class="text-[11px] font-bold text-blue-600">0 Item dipilih</span>
+          </div>
+        </div>
+        <button onclick="closeFloatingCartModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Daftar Barang di Keranjang -->
+      <div id="cartItemsList" class="space-y-2.5 overflow-y-auto pr-1 flex-1 min-h-[120px]">
+        <!-- Render via JS -->
+      </div>
+
+      <!-- Informasi Teknisi Pengambil -->
+      <div class="pt-3 border-t border-slate-100 space-y-3 shrink-0">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Catatan / Keperluan</label>
+          <input type="text" id="checkoutNotes" placeholder="Contoh: Kebutuhan merchant BNI / Maintenance" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+        </div>
+
+        <button id="btnProcessCheckout" onclick="processCheckout()" disabled class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/20 active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+          <i class="fa-solid fa-receipt"></i>
+          <span>Buat Kwitansi & Barcode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Container Toast Notifikasi Mengambang -->
   <div id="floatingToastContainer" class="fixed top-18 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-2 sm:px-0"></div>
 
@@ -987,7 +1002,7 @@
 
   <!-- Modal 7: Edit Barang Katalog & Stok Gudang (Team Leader) -->
   <div id="modalEditItem" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b pb-3 border-slate-100">
         <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
           <i class="fa-solid fa-pen-to-square text-blue-600"></i> Edit Detail Barang
@@ -997,10 +1012,22 @@
 
       <form onsubmit="handleSaveItemEdit(event)" class="space-y-3 text-xs">
         <input type="hidden" id="editItemId">
+        <input type="hidden" id="editItemIcon">
+        <input type="hidden" id="editItemColor">
+
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Barang</label>
           <input type="text" id="editItemName" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
         </div>
+
+        <!-- Pilihan Logo / Ikon Barang -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">Pilih Logo / Ikon Barang</label>
+          <div id="editIconPickerGrid" class="grid grid-cols-6 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <!-- Render via JS -->
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kategori</label>
@@ -1028,7 +1055,7 @@
 
   <!-- Modal 7.1: Tambah Barang Baru ke Katalog (Khusus Team Leader) -->
   <div id="modalAddNewItem" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b pb-3 border-slate-100">
         <h3 class="font-black text-slate-800 text-sm flex items-center gap-2">
           <i class="fa-solid fa-box-open text-blue-600"></i> Tambah Barang ke Katalog
@@ -1037,10 +1064,22 @@
       </div>
 
       <form onsubmit="handleAddNewCatalogItemSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="newItemIcon" value="fa-box">
+        <input type="hidden" id="newItemColor" value="bg-blue-100 text-blue-700">
+
         <div>
           <label class="block font-bold text-slate-700 mb-1">Nama Barang Baru</label>
           <input type="text" id="newItemName" required placeholder="Contoh: Thermal Paper 80mm / Kabel LAN Cat 6" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold">
         </div>
+
+        <!-- Pilihan Logo / Ikon Barang Baru -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1.5">Pilih Logo / Ikon Barang</label>
+          <div id="newIconPickerGrid" class="grid grid-cols-6 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <!-- Render via JS -->
+          </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Kategori</label>
@@ -1519,9 +1558,9 @@
       const btnReset = document.getElementById('btnMonthlyReset');
       if (btnReset) btnReset.classList.toggle('hidden', !isLead);
 
-      // Tampilkan lonceng notifikasi untuk Team Leader dan Logistik
+      // Tampilkan lonceng notifikasi untuk semua role (Teknisi, Logistik, Team Leader)
       const notifBell = document.getElementById('notifBellWrapper');
-      if (notifBell) notifBell.classList.toggle('hidden', !(isLead || user.role === 'logistik'));
+      if (notifBell) notifBell.classList.remove('hidden');
 
       populateMasterDropdownOptions();
       setupRoleNavigation();
@@ -1630,17 +1669,65 @@
       const isLogistik = currentUser.role === 'logistik';
       const tabs = [];
 
+      // Kelompok Menu Management (Khusus Team Leader)
+      const mgmtTabs = [];
       if (isLead || perms.includes('perm_mgmtAkses')) {
-        tabs.push({ id: 'tab_mgmtAkses', label: 'Management Akses', icon: 'fa-users-gear', view: 'viewManagementAkses' });
+        mgmtTabs.push({ id: 'tab_mgmtAkses', label: 'Management Akses', icon: 'fa-users-gear', view: 'viewManagementAkses' });
       }
-
-      if (isLead || perms.includes('perm_stockMgmt')) {
-        tabs.push({ id: 'tab_stockMgmt', label: 'Manajemen Stok Gudang', icon: 'fa-boxes-stacked', view: 'viewManajemenStok' });
-      }
-
       if (isLead || perms.includes('perm_catalogEdit')) {
-        tabs.push({ id: 'tab_checkoutCatalog', label: 'Edit Katalog Barang', icon: 'fa-pen-to-square', view: 'viewCheckoutTeknisi' });
-      } else if (perms.includes('perm_checkout')) {
+        mgmtTabs.push({ id: 'tab_catalogEdit', label: 'Edit Katalog Barang', icon: 'fa-pen-to-square', view: 'viewCheckoutTeknisi' });
+      }
+      if (isLead || perms.includes('perm_stockMgmt')) {
+        mgmtTabs.push({ id: 'tab_stockMgmt', label: 'Manajemen Stok Gudang', icon: 'fa-boxes-stacked', view: 'viewManajemenStok' });
+      }
+
+      // Jika ada menu Management dan user adalah Team Leader, buat dropdown group di Desktop
+      if (isLead && mgmtTabs.length > 0) {
+        const mgmtGroup = document.createElement('div');
+        mgmtGroup.className = 'relative inline-block';
+        mgmtGroup.innerHTML = `
+          <button id="btnGroupManagement" type="button" onclick="toggleManagementDropdown(event)" class="px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap text-slate-700 hover:bg-slate-100">
+            <i class="fa-solid fa-sliders text-blue-600"></i>
+            <span id="labelGroupManagement">Management</span>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
+          </button>
+          <div id="dropdownMenuManagement" class="hidden absolute left-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 py-1 divide-y divide-slate-100">
+            ${mgmtTabs.map(m => `
+              <button type="button" onclick="selectManagementSubmenu('${m.view}', '${m.label}', '${m.icon}')" class="w-full text-left px-3.5 py-2.5 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-xs flex items-center gap-2.5 transition">
+                <i class="fa-solid ${m.icon} text-slate-400 w-4 text-center"></i>
+                <span>${m.label}</span>
+              </button>
+            `).join('')}
+          </div>
+        `;
+        navContainer.appendChild(mgmtGroup);
+
+        // Di mobile, tetap render secara terpisah dan mudah diakses
+        if (mobileNavContainer) {
+          mgmtTabs.forEach(m => {
+            const mBtn = document.createElement('button');
+            mBtn.className = "w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs transition flex items-center justify-between text-slate-700 hover:bg-blue-50 hover:text-blue-700 bg-white border border-slate-100";
+            mBtn.innerHTML = `
+              <span class="flex items-center gap-2.5">
+                <i class="fa-solid ${m.icon} text-blue-600 text-xs w-4"></i>
+                <span>${m.label}</span>
+              </span>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase">MGMT</span>
+            `;
+            mBtn.onclick = () => {
+              switchTab(m.view, null, m.label, m.icon);
+              toggleMobileNavMenu();
+            };
+            mobileNavContainer.appendChild(mBtn);
+          });
+        }
+      } else {
+        // Jika bukan TL (misal teknisi biasa yang diberi izin katalog), masukkan ke tabs umum
+        mgmtTabs.forEach(m => tabs.push(m));
+      }
+
+      // Modul Operasional lainnya
+      if (!isLead && perms.includes('perm_checkout')) {
         tabs.push({ id: 'tab_checkoutCatalog', label: 'Checkout Barang', icon: 'fa-cart-shopping', view: 'viewCheckoutTeknisi' });
       }
 
@@ -1669,9 +1756,12 @@
       tabs.forEach((tab, index) => {
         const btn = document.createElement('button');
         btn.id = tab.id;
-        btn.className = `px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 ${index === 0 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`;
+        btn.className = `px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 ${index === 0 && !isLead ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`;
         btn.innerHTML = `<i class="fa-solid ${tab.icon} text-xs"></i> <span>${tab.label}</span>`;
-        btn.onclick = () => switchTab(tab.view, btn, tab.label, tab.icon);
+        btn.onclick = () => {
+          closeManagementDropdown();
+          switchTab(tab.view, btn, tab.label, tab.icon);
+        };
         navContainer.appendChild(btn);
 
         if (mobileNavContainer) {
@@ -1692,11 +1782,57 @@
         }
       });
 
-      if (tabs.length > 0) {
-        switchTab(tabs[0].view, navContainer.children[0], tabs[0].label, tabs[0].icon);
+      // Default active tab
+      if (isLead) {
+        selectManagementSubmenu('viewManagementAkses', 'Management Akses', 'fa-users-gear');
+      } else if (tabs.length > 0) {
+        const firstBtn = navContainer.querySelector(`button#${tabs[0].id}`);
+        switchTab(tabs[0].view, firstBtn, tabs[0].label, tabs[0].icon);
       }
       refreshUI();
     }
+
+    function toggleManagementDropdown(e) {
+      if (e) e.stopPropagation();
+      const drop = document.getElementById('dropdownMenuManagement');
+      if (drop) drop.classList.toggle('hidden');
+    }
+
+    function closeManagementDropdown() {
+      const drop = document.getElementById('dropdownMenuManagement');
+      if (drop) drop.classList.add('hidden');
+    }
+
+    function selectManagementSubmenu(viewId, label, icon) {
+      closeManagementDropdown();
+      const groupBtn = document.getElementById('btnGroupManagement');
+      const groupLabel = document.getElementById('labelGroupManagement');
+      
+      const navContainer = document.getElementById('roleNavTabs');
+      if (navContainer) {
+        Array.from(navContainer.querySelectorAll('button')).forEach(b => {
+          b.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        });
+      }
+
+      if (groupBtn) {
+        groupBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 bg-blue-600 text-white shadow-xs';
+      }
+      if (groupLabel) {
+        groupLabel.innerText = `Management: ${label}`;
+      }
+
+      switchTab(viewId, null, label, icon);
+    }
+
+    // Tutup dropdown management saat klik di luar
+    document.addEventListener('click', (e) => {
+      const groupBtn = document.getElementById('btnGroupManagement');
+      const drop = document.getElementById('dropdownMenuManagement');
+      if (groupBtn && drop && !groupBtn.contains(e.target) && !drop.contains(e.target)) {
+        drop.classList.add('hidden');
+      }
+    });
 
     function switchTab(viewId, activeBtn, tabLabel, tabIcon) {
       const views = [
@@ -1718,11 +1854,21 @@
       const target = document.getElementById(viewId);
       if (target) target.classList.remove('hidden');
 
+      updateFloatingCartVisibility(viewId);
+
       const navContainer = document.getElementById('roleNavTabs');
       if (navContainer && activeBtn) {
-        Array.from(navContainer.children).forEach(btn => {
-          btn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        Array.from(navContainer.querySelectorAll('button')).forEach(btn => {
+          if (btn.id !== 'btnGroupManagement') {
+            btn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+          }
         });
+        const groupBtn = document.getElementById('btnGroupManagement');
+        const groupLabel = document.getElementById('labelGroupManagement');
+        if (groupBtn) {
+          groupBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 text-slate-700 hover:bg-slate-100';
+          if (groupLabel) groupLabel.innerText = 'Management';
+        }
         activeBtn.className = 'px-3.5 py-1.5 rounded-xl font-bold text-xs transition inline-flex items-center gap-2 whitespace-nowrap shrink-0 bg-blue-600 text-white shadow-xs';
       }
 
@@ -1766,27 +1912,19 @@
       });
 
       const catalogTitle = document.getElementById('checkoutCatalogTitle');
-      const cartCont = document.getElementById('cartCheckoutContainer');
-      const catalogGridCont = document.getElementById('catalogGridContainer');
       const btnAddCatalog = document.getElementById('btnAddNewCatalogItem');
 
       if (isLead || (currentUser.permissions && currentUser.permissions.includes('perm_catalogEdit'))) {
         if (catalogTitle) catalogTitle.innerText = "Edit Katalog Barang (" + (currentUser.servicePoint || '01 Cirebon') + ")";
-        if (cartCont) cartCont.classList.add('hidden');
         if (btnAddCatalog) btnAddCatalog.classList.remove('hidden');
-        if (catalogGridCont) {
-          catalogGridCont.classList.remove('lg:col-span-2');
-          catalogGridCont.classList.add('lg:col-span-3');
-        }
       } else {
         if (catalogTitle) catalogTitle.innerText = "Checkout Barang (" + (currentUser.servicePoint || '01 Cirebon') + ")";
-        if (cartCont) cartCont.classList.remove('hidden');
         if (btnAddCatalog) btnAddCatalog.classList.add('hidden');
-        if (catalogGridCont) {
-          catalogGridCont.classList.remove('lg:col-span-3');
-          catalogGridCont.classList.add('lg:col-span-2');
-        }
       }
+
+      const activeViewEl = document.getElementById('viewCheckoutTeknisi');
+      const isCheckoutViewVisible = activeViewEl && !activeViewEl.classList.contains('hidden');
+      updateFloatingCartVisibility(isCheckoutViewVisible ? 'viewCheckoutTeknisi' : '');
 
       const returFormCard = document.getElementById('returFormCard');
       const returSectionTitle = document.getElementById('returSectionTitle');
@@ -1935,6 +2073,7 @@
     function renderCartUI() {
       const list = document.getElementById('cartItemsList');
       const badge = document.getElementById('cartCountBadge');
+      const floatingBadge = document.getElementById('floatingCartBadge');
       const btn = document.getElementById('btnProcessCheckout');
       if (!list || !badge || !btn) return;
 
@@ -1943,8 +2082,9 @@
       let totalQty = 0;
 
       if (keys.length === 0) {
-        list.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs font-semibold">Keranjang masih kosong</div>`;
-        badge.innerText = '0 Item';
+        list.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs font-semibold">Keranjang masih kosong.<br><span class="text-[11px] font-normal">Klik "+ Ambil" pada barang yang dibutuhkan.</span></div>`;
+        badge.innerText = '0 Item dipilih';
+        if (floatingBadge) floatingBadge.innerText = '0';
         btn.disabled = true;
         return;
       }
@@ -1956,23 +2096,52 @@
         totalQty += qty;
 
         const row = document.createElement('div');
-        row.className = "flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs";
+        row.className = "flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs";
         row.innerHTML = `
-          <div class="pr-2">
-            <h5 class="font-bold text-slate-800 leading-tight">${item.name}</h5>
-            <span class="text-[10px] text-slate-400 font-semibold">${item.unit}</span>
+          <div class="flex items-center gap-2.5 pr-2">
+            <div class="w-8 h-8 rounded-lg ${item.color} flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid ${item.icon}"></i>
+            </div>
+            <div>
+              <h5 class="font-bold text-slate-800 leading-tight">${item.name}</h5>
+              <span class="text-[10px] text-slate-400 font-semibold">${item.unit}</span>
+            </div>
           </div>
           <div class="flex items-center gap-1.5">
-            <button onclick="updateCartQty('${id}', -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">-</button>
+            <button onclick="updateCartQty('${id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">-</button>
             <span class="w-7 text-center font-bold font-mono text-slate-800 text-xs">${qty}</span>
-            <button onclick="updateCartQty('${id}', 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">+</button>
+            <button onclick="updateCartQty('${id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center font-bold text-xs">+</button>
           </div>
         `;
         list.appendChild(row);
       });
 
-      badge.innerText = `${totalQty} Item`;
+      badge.innerText = `${totalQty} Item dipilih`;
+      if (floatingBadge) floatingBadge.innerText = totalQty;
       btn.disabled = totalQty <= 0;
+    }
+
+    function updateFloatingCartVisibility(currentViewId) {
+      const floatBtn = document.getElementById('floatingCartBtn');
+      if (!floatBtn || !currentUser) return;
+      const isLead = currentUser.role === 'lead';
+      const canEditCatalog = isLead || (currentUser.permissions && currentUser.permissions.includes('perm_catalogEdit'));
+      const canCheckout = (currentUser.permissions && currentUser.permissions.includes('perm_checkout')) && !canEditCatalog;
+
+      if (canCheckout && currentViewId === 'viewCheckoutTeknisi') {
+        floatBtn.classList.remove('hidden');
+      } else {
+        floatBtn.classList.add('hidden');
+      }
+    }
+
+    function openFloatingCartModal() {
+      renderCartUI();
+      document.getElementById('modalFloatingCart').classList.remove('hidden');
+    }
+
+    function closeFloatingCartModal() {
+      document.getElementById('modalFloatingCart').classList.add('hidden');
     }
 
     function processCheckout() {
@@ -2019,6 +2188,7 @@
 
       cart = {};
       document.getElementById('checkoutNotes').value = '';
+      closeFloatingCartModal();
       renderCartUI();
       renderStockCatalog();
       renderHistoryTeknisi();
@@ -2068,6 +2238,7 @@
       tbody.innerHTML = '';
 
       const isTeknisi = currentUser.role === 'teknisi';
+      const isLead = currentUser.role === 'lead';
       const filtered = isTeknisi 
         ? checkoutHistory.filter(h => h.techId === currentUser.id)
         : checkoutHistory;
@@ -2095,119 +2266,33 @@
             </span>
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick='showReceiptModal(${JSON.stringify(h)})' class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-              <i class="fa-solid fa-barcode"></i>
-              <span>Buka Nota</span>
-            </button>
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              <button onclick='showReceiptModal(${JSON.stringify(h)})' class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                <i class="fa-solid fa-barcode"></i>
+                <span>Nota</span>
+              </button>
+              ${isLead ? `
+                <button onclick="deleteCheckoutEntry('${h.ticketNo}')" title="Hapus Riwayat Checkout" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // ================= SCANNER & VERIFIKASI PENGELUARAN =================
-    function handleScanTicket(e) {
-      if (e) e.preventDefault();
-      const code = document.getElementById('scanTicketInput').value.trim().toUpperCase();
-      const resultArea = document.getElementById('scanResultArea');
-      resultArea.classList.remove('hidden');
+    function deleteCheckoutEntry(ticketNo) {
+      if (currentUser.role !== 'lead') return;
+      if (!window.confirm(`Yakin ingin menghapus riwayat checkout ${ticketNo}?`)) return;
 
-      const found = checkoutHistory.find(h => h.ticketNo.toUpperCase() === code);
-
-      if (!found) {
-        resultArea.innerHTML = `
-          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold text-center">
-            <i class="fa-solid fa-circle-xmark text-lg block mb-1"></i>
-            Kwitansi <strong>${code}</strong> tidak ditemukan di sistem!
-          </div>
-        `;
-        return;
-      }
-
-      const isAlreadyTaken = found.status === 'Sudah Diambil';
-      const itemsListHtml = found.items.map(it => `
-        <div class="flex justify-between py-1 border-b border-slate-100 text-xs">
-          <span class="font-medium text-slate-700">${it.name}</span>
-          <span class="font-mono font-bold text-slate-900">${it.qty} ${it.unit}</span>
-        </div>
-      `).join('');
-
-      resultArea.innerHTML = `
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="font-mono font-bold text-blue-600 text-sm">${found.ticketNo}</span>
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${isAlreadyTaken ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isAlreadyTaken ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
-              ${found.status}
-            </span>
-          </div>
-
-          <div class="text-xs space-y-0.5 text-slate-500">
-            <div>Teknisi: <strong class="text-slate-800">${found.techName}</strong> (${found.techId})</div>
-            <div>Waktu: <strong class="text-slate-800">${found.date}</strong></div>
-            <div>Keperluan: <strong class="text-slate-800">${found.notes}</strong></div>
-          </div>
-
-          <div class="pt-2">
-            <span class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Rincian Barang Keluar:</span>
-            ${itemsListHtml}
-          </div>
-
-          <div class="pt-2">
-            ${isAlreadyTaken ? `
-              <div class="p-2.5 rounded-xl bg-slate-200 text-slate-600 text-center text-xs font-bold">
-                <i class="fa-solid fa-check-double mr-1"></i> Barang sudah diserahkan sebelumnya
-              </div>
-            ` : `
-              <button onclick="confirmStockDeduction('${found.ticketNo}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-500/20 active:scale-98 transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-check"></i>
-                <span>Verifikasi & Potong Stok Gudang</span>
-              </button>
-            `}
-          </div>
-        </div>
-      `;
-    }
-
-    function confirmStockDeduction(ticketNo) {
-      const found = checkoutHistory.find(h => h.ticketNo === ticketNo);
-      if (!found || found.status === 'Sudah Diambil') return;
-
-      for (let it of found.items) {
-        const stockItem = warehouseStock.find(s => s.id === it.id);
-        if (!stockItem || stockItem.stock < it.qty) {
-          showCustomAlert('Gagal Verifikasi', `Stok ${it.name} tidak cukup di gudang saat ini.`, true);
-          return;
-        }
-      }
-
-      found.items.forEach(it => {
-        const stockItem = warehouseStock.find(s => s.id === it.id);
-        if (stockItem) {
-          stockItem.stock -= it.qty;
-        }
-      });
-
-      found.status = 'Sudah Diambil';
-      syncToCloud('app_stock_cirebon', warehouseStock);
-      syncToCloud('app_checkout_history', checkoutHistory);
-
-      showCustomAlert('Berhasil!', `Barang untuk tiket ${ticketNo} telah diverifikasi dan stok gudang otomatis terpotong.`);
-      document.getElementById('scanTicketInput').value = '';
-      document.getElementById('scanResultArea').classList.add('hidden');
-
-      renderStockCatalog();
-      renderStockManagementTable();
-      renderHistoryTeknisi();
-    }
-
-    function pasteFromClipboard() {
-      if (checkoutHistory.length > 0) {
-        const pending = checkoutHistory.find(h => h.status === 'Menunggu Ambil');
-        document.getElementById('scanTicketInput').value = pending ? pending.ticketNo : checkoutHistory[0].ticketNo;
-        handleScanTicket();
-      } else {
-        showCustomAlert('Info', 'Belum ada tiket checkout dalam riwayat.');
+      const idx = checkoutHistory.findIndex(h => h.ticketNo === ticketNo);
+      if (idx !== -1) {
+        checkoutHistory.splice(idx, 1);
+        syncToCloud('app_checkout_history', checkoutHistory);
+        showCustomAlert('Terhapus', `Data checkout ${ticketNo} berhasil dihapus.`);
+        renderHistoryTeknisi();
       }
     }
 
@@ -2270,21 +2355,29 @@
 
       returHistory.forEach((r, idx) => {
         const isDone = r.status === 'Diterima Gudang';
+        const isLead = currentUser.role === 'lead';
 
         let actionCell = '';
         if (isLeadOrLogistik) {
           actionCell = `
             <td class="py-3 px-4 text-center">
-              ${isDone ? `
-                <span class="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-check"></i> Diterima (${r.receivedBy})
-                </span>
-              ` : `
-                <button onclick="openModalVerifyRetur(${idx})" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-                  <i class="fa-solid fa-clipboard-check"></i>
-                  <span>Verifikasi & Ceklis</span>
-                </button>
-              `}
+              <div class="inline-flex items-center gap-1.5 justify-center">
+                ${isDone ? `
+                  <span class="text-[11px] font-bold text-emerald-600 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-check"></i> Diterima (${r.receivedBy})
+                  </span>
+                ` : `
+                  <button onclick="openModalVerifyRetur(${idx})" class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Ceklis</span>
+                  </button>
+                `}
+                ${isLead ? `
+                  <button onclick="deleteReturEntry('${r.returNo}')" title="Hapus Data Retur" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                ` : ''}
+              </div>
             </td>
           `;
         }
@@ -2310,39 +2403,17 @@
       });
     }
 
-    function openModalVerifyRetur(index) {
-      pendingVerifyReturIndex = index;
-      const item = returHistory[index];
-      if (!item) return;
+    function deleteReturEntry(returNo) {
+      if (currentUser.role !== 'lead') return;
+      if (!window.confirm(`Yakin ingin menghapus data retur ${returNo}?`)) return;
 
-      const detailsEl = document.getElementById('verifyReturDetails');
-      detailsEl.innerHTML = `
-        <div class="flex justify-between"><span class="text-slate-500">No. Retur:</span> <strong class="font-mono text-slate-800">${item.returNo}</strong></div>
-        <div class="flex justify-between"><span class="text-slate-500">Item & SN:</span> <strong class="text-slate-800">${item.itemType} - ${item.sn}</strong></div>
-        <div class="flex justify-between"><span class="text-slate-500">Customer:</span> <strong class="text-slate-800">${item.customer}</strong></div>
-        <div class="flex justify-between"><span class="text-slate-500">Kelengkapan:</span> <strong class="text-slate-800">${item.kelengkapan}</strong></div>
-        <div class="flex justify-between"><span class="text-slate-500">Teknisi Pengirim:</span> <strong class="text-slate-800">${item.techName}</strong></div>
-        <div class="flex justify-between"><span class="text-slate-500">Kendala:</span> <span class="italic text-slate-700">${item.reason}</span></div>
-      `;
-
-      document.getElementById('chkReturSN').checked = false;
-      document.getElementById('chkReturKelengkapan').checked = false;
-      document.getElementById('chkReturKondisi').checked = false;
-      document.getElementById('btnConfirmReturSubmit').disabled = true;
-
-      document.getElementById('modalVerifyRetur').classList.remove('hidden');
-    }
-
-    function validateReturChecklist() {
-      const c1 = document.getElementById('chkReturSN').checked;
-      const c2 = document.getElementById('chkReturKelengkapan').checked;
-      const c3 = document.getElementById('chkReturKondisi').checked;
-      document.getElementById('btnConfirmReturSubmit').disabled = !(c1 && c2 && c3);
-    }
-
-    function closeModalVerifyRetur() {
-      document.getElementById('modalVerifyRetur').classList.add('hidden');
-      pendingVerifyReturIndex = -1;
+      const idx = returHistory.findIndex(r => r.returNo === returNo);
+      if (idx !== -1) {
+        returHistory.splice(idx, 1);
+        syncToCloud('app_retur_history', returHistory);
+        showCustomAlert('Terhapus', `Data retur ${returNo} berhasil dihapus.`);
+        renderReturTable();
+      }
     }
 
     function executeConfirmRetur() {
@@ -2352,6 +2423,18 @@
       item.receivedBy = currentUser.name;
 
       syncToCloud('app_retur_history', returHistory);
+
+      // Notifikasi otomatis ke teknisi pengaju
+      createAppNotification({
+        type: 'retur',
+        title: 'Retur Diterima Gudang',
+        message: `Retur ${item.returNo} (${item.itemType} - SN: ${item.sn}) telah diverifikasi & diterima fisik oleh ${currentUser.name}.`,
+        linkTab: 'viewPengembalianTeknisi',
+        dataId: item.returNo,
+        senderName: currentUser.name,
+        targetUserId: item.techId
+      });
+
       closeModalVerifyRetur();
       showCustomAlert('Validasi Selesai', `Barang retur ${item.returNo} berhasil diterima.`);
       renderReturTable();
@@ -2661,6 +2744,241 @@
       }
 
       const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+      const isLead = currentUser.role === 'lead';
+
+      profilingBNIList.forEach(p => {
+        const isDone = p.status === 'Done';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${p.tid}</td>
+          <td class="py-3 px-4 font-semibold text-slate-800">${p.kategoriJO}</td>
+          <td class="py-3 px-4 font-bold text-slate-700">${p.kebutuhan}</td>
+          <td class="py-3 px-4 text-slate-600 max-w-xs font-medium" title="${p.kendala}">${p.kendala}</td>
+          <td class="py-3 px-4 font-mono font-bold text-slate-800">${p.snBaru}</td>
+          <td class="py-3 px-4 font-mono text-slate-700">${p.iccidBaru}</td>
+          <td class="py-3 px-4 text-[11px] font-semibold text-slate-600">${p.apn}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap min-w-[95px] justify-center ${isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+              ${p.status}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              ${isLeadOrLogistik ? `
+                <button onclick="openModalEditProfiling('${p.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                  <i class="fa-solid fa-pen"></i>
+                  <span>Edit</span>
+                </button>
+              ` : `
+                <span class="text-xs text-slate-400 font-semibold">${p.techName}</span>
+              `}
+              ${isLead ? `
+                <button onclick="deleteProfilingEntry('${p.id}')" title="Hapus Tiket Profiling" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteProfilingEntry(id) {
+      if (currentUser.role !== 'lead') return;
+      const found = profilingBNIList.find(p => p.id === id);
+      if (!found) return;
+      if (!window.confirm(`Yakin ingin menghapus tiket profiling TID ${found.tid}?`)) return;
+
+      const idx = profilingBNIList.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        profilingBNIList.splice(idx, 1);
+        syncToCloud('app_profiling_bni', profilingBNIList);
+        showCustomAlert('Terhapus', `Tiket Profiling TID ${found.tid} berhasil dihapus.`);
+        renderProfilingBNITable();
+      }
+    }
+
+    function handleSaveProfilingEdit(e) {
+      if (e) e.preventDefault();
+      const id = document.getElementById('editProfId').value;
+      const found = profilingBNIList.find(p => p.id === id);
+      if (!found) return;
+
+      const oldStatus = found.status;
+      found.snBaru = document.getElementById('editProfSN').value.trim();
+      found.iccidBaru = document.getElementById('editProfICCID').value.trim();
+      found.apn = document.getElementById('editProfAPN').value;
+      found.status = document.getElementById('editProfStatus').value;
+
+      syncToCloud('app_profiling_bni', profilingBNIList);
+
+      // Notifikasi ke teknisi ketika status berubah menjadi DONE
+      if (oldStatus !== 'Done' && found.status === 'Done') {
+        createAppNotification({
+          type: 'profiling',
+          title: 'Profiling BNI Telah SELESAI (DONE)',
+          message: `Tiket TID ${found.tid} (${found.kebutuhan}) telah selesai diproses oleh ${currentUser.name}. SN: ${found.snBaru}`,
+          linkTab: 'viewProfilingBNI',
+          dataId: found.tid,
+          senderName: currentUser.name,
+          targetUserId: found.techId
+        });
+      }
+
+      closeModalEditProfiling();
+      showCustomAlert('Berhasil', 'Data Profiling BNI berhasil diperbarui.');
+      renderProfilingBNITable();
+    }
+
+    // ================= PERMINTAAN RESTOCK HUB =================
+    function renderHubRestockInputs() {
+      const container = document.getElementById('hubRestockInputsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      hubRestockItems.forEach(item => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <label class="block font-bold text-slate-700 mb-1">${item.name} (${item.unit})</label>
+          <input type="number" id="hubQty_${item.id}" min="0" placeholder="0" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-mono font-bold">
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function openModalRequestHUB() {
+      renderHubRestockInputs();
+      const isLead = currentUser && currentUser.role === 'lead';
+      const btnEdit = document.getElementById('btnEditHubItems');
+      if (btnEdit) btnEdit.classList.toggle('hidden', !isLead);
+
+      document.getElementById('hubRequestNotes').value = '';
+      document.getElementById('modalRequestHUB').classList.remove('hidden');
+    }
+
+    function closeModalRequestHUB() {
+      document.getElementById('modalRequestHUB').classList.add('hidden');
+    }
+
+    function openModalEditHubItems() {
+      const list = document.getElementById('editHubItemsList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      hubRestockItems.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2";
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 text-xs">Item #${index + 1}</span>
+            ${hubRestockItems.length > 1 ? `
+              <button type="button" onclick="deleteHubRestockItem(${index})" class="text-rose-500 hover:text-rose-700 text-xs font-semibold">
+                <i class="fa-solid fa-trash"></i> Hapus
+              </button>
+            ` : ''}
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 uppercase">Nama Barang</label>
+              <input type="text" id="editHubName_${index}" value="${item.name}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase">Satuan</label>
+              <input type="text" id="editHubUnit_${index}" value="${item.unit}" required class="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold">
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      document.getElementById('modalEditHubItems').classList.remove('hidden');
+    }
+
+    function closeModalEditHubItems() {
+      document.getElementById('modalEditHubItems').classList.add('hidden');
+    }
+
+    function addNewHubRestockItem() {
+      const newId = 'item_' + Date.now().toString().slice(-4);
+      hubRestockItems.push({ id: newId, name: 'Item Restock Baru', unit: 'Pcs' });
+      openModalEditHubItems();
+    }
+
+    function deleteHubRestockItem(index) {
+      if (hubRestockItems.length <= 1) return;
+      hubRestockItems.splice(index, 1);
+      openModalEditHubItems();
+    }
+
+    function saveHubRestockItems() {
+      hubRestockItems.forEach((item, index) => {
+        const nameEl = document.getElementById(`editHubName_${index}`);
+        const unitEl = document.getElementById(`editHubUnit_${index}`);
+        if (nameEl && nameEl.value.trim()) item.name = nameEl.value.trim();
+        if (unitEl && unitEl.value.trim()) item.unit = unitEl.value.trim();
+      });
+
+      syncToCloud('app_hub_items', hubRestockItems);
+      closeModalEditHubItems();
+      renderHubRestockInputs();
+      showCustomAlert('Berhasil', 'Daftar nama dan satuan barang restock HUB berhasil diperbarui.');
+    }
+
+    function handleHubRequestSubmit(e) {
+      if (e) e.preventDefault();
+      const requester = document.getElementById('hubRequesterSelect').value;
+      const notes = document.getElementById('hubRequestNotes').value.trim() || '-';
+
+      const itemsArr = [];
+      hubRestockItems.forEach(item => {
+        const input = document.getElementById(`hubQty_${item.id}`);
+        const val = input ? parseInt(input.value) || 0 : 0;
+        if (val > 0) {
+          itemsArr.push(`- ${item.name}: ${val} ${item.unit}`);
+        }
+      });
+
+      if (itemsArr.length === 0) {
+        showCustomAlert('Perhatian', 'Harap isi jumlah minimal untuk 1 jenis barang.', true);
+        return;
+      }
+
+      const itemsFormatted = itemsArr.join('\n');
+
+      const newReq = {
+        reqNo: 'REQ-HUB-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(Math.floor(100 + Math.random() * 900)),
+        date: new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }),
+        hub: requester,
+        destination: 'Warehouse Pusat (Jakarta)',
+        items: itemsFormatted,
+        notes: notes,
+        status: 'Proses Email',
+        createdBy: currentUser.name
+      };
+
+      hubRequests.unshift(newReq);
+      syncToCloud('app_hub_requests', hubRequests);
+
+      closeModalRequestHUB();
+      showCustomAlert('Terkirim', `Surat permintaan restock ${newReq.reqNo} berhasil dibuat.`);
+      renderHubRequestTable();
+    }
+
+    function renderHubRequestTable() {
+      const tbody = document.getElementById('hubRequestTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (hubRequests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400 font-semibold">Belum ada surat permintaan barang HUB</td></tr>`;
+        return;
+      }
+
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+      const isLead = currentUser.role === 'lead';
 
       hubRequests.forEach(req => {
         let badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
@@ -2696,10 +3014,17 @@
             `}
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick="window.print()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-              <i class="fa-solid fa-print"></i>
-              <span>Cetak</span>
-            </button>
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              <button onclick="window.print()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
+                <i class="fa-solid fa-print"></i>
+                <span>Cetak</span>
+              </button>
+              ${isLead ? `
+                <button onclick="deleteHubRequestEntry('${req.reqNo}')" title="Hapus Pengajuan HUB" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold text-xs transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
@@ -2707,12 +3032,148 @@
     }
 
     function updateHubRequestStatus(reqNo, newStatus) {
-      const found = hubRequests.find(r => r.reqNo === reqNo);
-      if (found) {
-        found.status = newStatus;
+      const req = hubRequests.find(r => r.reqNo === reqNo);
+      if (!req) return;
+      req.status = newStatus;
+      syncToCloud('app_hub_requests', hubRequests);
+      showCustomAlert('Status Diperbarui', `Status pengajuan ${reqNo} diubah menjadi ${newStatus}.`);
+      renderHubRequestTable();
+    }
+
+    function deleteHubRequestEntry(reqNo) {
+      if (currentUser.role !== 'lead') return;
+      if (!window.confirm(`Yakin ingin menghapus pengajuan HUB ${reqNo}?`)) return;
+
+      const idx = hubRequests.findIndex(r => r.reqNo === reqNo);
+      if (idx !== -1) {
+        hubRequests.splice(idx, 1);
         syncToCloud('app_hub_requests', hubRequests);
+        showCustomAlert('Terhapus', `Surat permintaan HUB ${reqNo} berhasil dihapus.`);
         renderHubRequestTable();
       }
+    }
+
+    // ================= SCANNER & VERIFIKASI NOTA =================
+    function handleScanTicket(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('scanTicketInput');
+      const resultArea = document.getElementById('scanResultArea');
+      if (!input || !resultArea) return;
+
+      const code = input.value.trim().toUpperCase();
+      if (!code) return;
+
+      const ticket = checkoutHistory.find(t => t.ticketNo.toUpperCase() === code);
+      resultArea.classList.remove('hidden');
+
+      if (!ticket) {
+        resultArea.innerHTML = `
+          <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold text-center">
+            <i class="fa-solid fa-circle-xmark text-lg mb-1 block"></i>
+            No. Kwitansi <span class="font-mono font-bold">${code}</span> tidak ditemukan!
+          </div>
+        `;
+        return;
+      }
+
+      const isTaken = ticket.status === 'Sudah Diambil';
+      const itemsHtml = ticket.items.map(it => `
+        <div class="flex justify-between py-1 border-b border-slate-100 last:border-0">
+          <span class="font-semibold text-slate-700">${it.name}</span>
+          <span class="font-mono font-bold text-slate-900">${it.qty} ${it.unit}</span>
+        </div>
+      `).join('');
+
+      resultArea.innerHTML = `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 text-xs">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div>
+              <span class="font-mono font-black text-blue-600 text-sm">${ticket.ticketNo}</span>
+              <div class="text-[11px] text-slate-500">${ticket.techName} (${ticket.servicePoint})</div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full font-bold text-[11px] ${isTaken ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+              ${ticket.status}
+            </span>
+          </div>
+          <div>${itemsHtml}</div>
+          ${!isTaken ? `
+            <button onclick="confirmPickupTicket('${ticket.ticketNo}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-check-double"></i>
+              <span>Konfirmasi Serah Terima & Potong Stok</span>
+            </button>
+          ` : `
+            <div class="text-center text-emerald-700 font-bold py-1">
+              <i class="fa-solid fa-circle-check"></i> Barang sudah diserahkan ke teknisi
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function pasteFromClipboard() {
+      const input = document.getElementById('scanTicketInput');
+      if (!input) return;
+      input.focus();
+      try {
+        document.execCommand('paste');
+      } catch (e) {}
+    }
+
+    function confirmPickupTicket(ticketNo) {
+      const ticket = checkoutHistory.find(t => t.ticketNo === ticketNo);
+      if (!ticket || ticket.status === 'Sudah Diambil') return;
+
+      // Potong stok fisik gudang
+      ticket.items.forEach(reqItem => {
+        const stockItem = warehouseStock.find(s => s.id === reqItem.id);
+        if (stockItem) {
+          stockItem.stock = Math.max(0, stockItem.stock - reqItem.qty);
+        }
+      });
+
+      ticket.status = 'Sudah Diambil';
+      syncToCloud('app_stock_cirebon', warehouseStock);
+      syncToCloud('app_checkout_history', checkoutHistory);
+
+      showCustomAlert('Serah Terima Berhasil', `Kwitansi ${ticketNo} telah diverifikasi dan stok gudang telah dipotong.`);
+      handleScanTicket();
+      refreshUI();
+    }
+
+    // ================= VERIFIKASI MODAL RETUR =================
+    function openModalVerifyRetur(idx) {
+      const r = returHistory[idx];
+      if (!r) return;
+      pendingVerifyReturIndex = idx;
+
+      const details = document.getElementById('verifyReturDetails');
+      if (details) {
+        details.innerHTML = `
+          <div class="flex justify-between"><span class="text-slate-500">No. Retur:</span><span class="font-mono font-bold text-blue-600">${r.returNo}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Barang & SN:</span><span class="font-bold text-slate-800">${r.itemType} (${r.sn})</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Kelengkapan:</span><span class="font-semibold text-slate-700">${r.kelengkapan}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Teknisi:</span><span class="font-bold text-slate-800">${r.techName}</span></div>
+        `;
+      }
+
+      document.getElementById('chkReturSN').checked = false;
+      document.getElementById('chkReturKelengkapan').checked = false;
+      document.getElementById('chkReturKondisi').checked = false;
+      document.getElementById('btnConfirmReturSubmit').disabled = true;
+
+      document.getElementById('modalVerifyRetur').classList.remove('hidden');
+    }
+
+    function closeModalVerifyRetur() {
+      document.getElementById('modalVerifyRetur').classList.add('hidden');
+      pendingVerifyReturIndex = -1;
+    }
+
+    function validateReturChecklist() {
+      const c1 = document.getElementById('chkReturSN').checked;
+      const c2 = document.getElementById('chkReturKelengkapan').checked;
+      const c3 = document.getElementById('chkReturKondisi').checked;
+      document.getElementById('btnConfirmReturSubmit').disabled = !(c1 && c2 && c3);
     }
 
     // ================= MANAJEMEN STOK FISIK (TEAM LEADER) =================
@@ -2726,29 +3187,24 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition";
         tr.innerHTML = `
-          <td class="py-3 px-4">
-            <div class="font-bold text-slate-800">${item.name}</div>
-          </td>
-          <td class="py-3 px-4 font-semibold text-slate-500 uppercase text-[10px]">${item.category}</td>
-          <td class="py-3 px-4 font-semibold text-slate-700">${item.unit}</td>
-          <td class="py-3 px-4 text-center font-mono font-bold text-sm ${isLow ? 'text-rose-600' : 'text-slate-800'}">${item.stock}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${item.name}</td>
+          <td class="py-3 px-4 uppercase text-slate-500 font-semibold text-[11px]">${item.category}</td>
+          <td class="py-3 px-4 text-slate-600">${item.unit}</td>
+          <td class="py-3 px-4 text-center font-mono font-bold text-sm text-slate-800">${item.stock}</td>
           <td class="py-3 px-4 text-center">
-            <div class="inline-flex items-center gap-1.5 justify-center">
-              <input type="number" id="inputStock_${item.id}" value="${item.stock}" min="0" class="w-20 px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center font-mono font-bold text-xs focus:ring-1 focus:ring-blue-500">
-              <button onclick="saveManualStockInput('${item.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition">
-                Simpan
-              </button>
+            <div class="inline-flex items-center gap-1.5">
+              <input type="number" id="manualStockInput_${item.id}" value="${item.stock}" min="0" class="w-20 p-1.5 text-center bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-xs">
+              <button onclick="updateManualStock('${item.id}')" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition">Simpan</button>
             </div>
           </td>
           <td class="py-3 px-4 text-center">
-            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
-              ${isLow ? 'Kritis' : 'Aman'}
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${isLow ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+              ${isLow ? 'Stok Kritis' : 'Aman'}
             </span>
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick="openEditItemModal('${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-              <i class="fa-solid fa-pen"></i>
-              <span>Edit Lengkap</span>
+            <button onclick="openEditItemModal('${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition">
+              <i class="fa-solid fa-pen"></i> Edit
             </button>
           </td>
         `;
@@ -2756,200 +3212,22 @@
       });
     }
 
-    function saveManualStockInput(itemId) {
-      const input = document.getElementById(`inputStock_${itemId}`);
-      if (!input) return;
+    function updateManualStock(itemId) {
+      const input = document.getElementById(`manualStockInput_${itemId}`);
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!input || !item) return;
+
       const val = parseInt(input.value);
       if (isNaN(val) || val < 0) {
-        showCustomAlert('Input Salah', 'Jumlah stok harus angka 0 atau lebih.', true);
+        showCustomAlert('Input Tidak Valid', 'Masukkan angka stok yang benar.', true);
         return;
       }
 
-      const item = warehouseStock.find(i => i.id === itemId);
-      if (item) {
-        item.stock = val;
-        syncToCloud('app_stock_cirebon', warehouseStock);
-        showCustomAlert('Stok Diperbarui', `Stok ${item.name} berhasil diubah.`);
-        renderStockManagementTable();
-        renderStockCatalog();
-      }
-    }
-
-    function openEditItemModal(itemId) {
-      const item = warehouseStock.find(i => i.id === itemId);
-      if (!item) return;
-
-      document.getElementById('editItemId').value = item.id;
-      document.getElementById('editItemName').value = item.name;
-      document.getElementById('editItemCategory').value = item.category;
-      document.getElementById('editItemUnit').value = item.unit;
-      document.getElementById('editItemStock').value = item.stock;
-
-      document.getElementById('modalEditItem').classList.remove('hidden');
-    }
-
-    function closeEditItemModal() {
-      document.getElementById('modalEditItem').classList.add('hidden');
-    }
-
-    function deleteCatalogItem() {
-      const id = document.getElementById('editItemId').value;
-      const index = warehouseStock.findIndex(i => i.id === id);
-      if (index === -1) return;
-
-      const itemName = warehouseStock[index].name;
-      warehouseStock.splice(index, 1);
-      delete cart[id];
-
+      item.stock = val;
       syncToCloud('app_stock_cirebon', warehouseStock);
-      closeEditItemModal();
-      showCustomAlert('Barang Dihapus', `${itemName} berhasil dihapus dari katalog.`);
-      renderStockCatalog();
-      renderStockManagementTable();
+      showCustomAlert('Stok Diperbarui', `Stok fisik ${item.name} diperbarui menjadi ${val} ${item.unit}.`);
+      refreshUI();
     }
-
-    function openModalAddNewItem() {
-      document.getElementById('newItemName').value = '';
-      document.getElementById('newItemCategory').value = 'CONSUMABLE';
-      document.getElementById('newItemUnit').value = 'Pcs';
-      document.getElementById('newItemStock').value = '0';
-      document.getElementById('modalAddNewItem').classList.remove('hidden');
-    }
-
-    function closeModalAddNewItem() {
-      document.getElementById('modalAddNewItem').classList.add('hidden');
-    }
-
-    function handleAddNewCatalogItemSubmit(e) {
-      if (e) e.preventDefault();
-      const name = document.getElementById('newItemName').value.trim();
-      const category = document.getElementById('newItemCategory').value.trim().toUpperCase();
-      const unit = document.getElementById('newItemUnit').value.trim();
-      const stock = parseInt(document.getElementById('newItemStock').value) || 0;
-
-      const newId = 'item-' + Date.now().toString().slice(-6);
-      const colorPresets = ['bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-purple-100 text-purple-700'];
-      const randomColor = colorPresets[Math.floor(Math.random() * colorPresets.length)];
-
-      const newItem = {
-        id: newId,
-        name: name,
-        category: category,
-        stock: stock,
-        unit: unit,
-        icon: 'fa-box-open',
-        color: randomColor
-      };
-
-      warehouseStock.push(newItem);
-      syncToCloud('app_stock_cirebon', warehouseStock);
-
-      closeModalAddNewItem();
-      showCustomAlert('Berhasil!', `Barang "${name}" berhasil ditambahkan ke katalog.`);
-      renderStockCatalog();
-      renderStockManagementTable();
-    }
-
-    function handleSaveItemEdit(e) {
-      if (e) e.preventDefault();
-      const id = document.getElementById('editItemId').value;
-      const item = warehouseStock.find(i => i.id === id);
-      if (!item) return;
-
-      item.name = document.getElementById('editItemName').value.trim();
-      item.category = document.getElementById('editItemCategory').value.trim();
-      item.unit = document.getElementById('editItemUnit').value.trim();
-      item.stock = parseInt(document.getElementById('editItemStock').value) || 0;
-
-      syncToCloud('app_stock_cirebon', warehouseStock);
-      closeEditItemModal();
-      showCustomAlert('Berhasil', 'Detail barang berhasil diperbarui.');
-      renderStockCatalog();
-      renderStockManagementTable();
-    }
-
-    // ================= MANAGEMENT USER & AKSES (TEAM LEADER) =================
-    function renderUserManagementTable() {
-      const tbody = document.getElementById('userManagementTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      systemUsers.forEach(u => {
-        const isActive = u.active !== false;
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-mono font-bold text-slate-800">${u.id}</td>
-          <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${u.role === 'lead' ? 'bg-purple-100 text-purple-700' : u.role === 'logistik' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}">
-              ${u.role}
-            </span>
-          </td>
-          <td class="py-3 px-4 font-semibold text-slate-600">${u.servicePoint || '01 Cirebon'}</td>
-          <td class="py-3 px-4 text-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
-              ${isActive ? 'Aktif' : 'Nonaktif'}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-center">
-            <div class="inline-flex items-center gap-1.5 justify-center">
-              <button onclick="openModalEditPermissions('${u.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-                <i class="fa-solid fa-sliders"></i>
-                <span>Akses</span>
-              </button>
-              <button onclick="openModalResetPassword('${u.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 rounded-lg font-bold text-xs transition inline-flex items-center gap-1">
-                <i class="fa-solid fa-key"></i>
-                <span>Password</span>
-              </button>
-              ${u.id !== currentUser.id ? `
-                <button onclick="toggleUserActiveState('${u.id}')" class="px-2.5 py-1 rounded-lg font-bold text-xs transition ${isActive ? 'bg-rose-50 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}">
-                  ${isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                </button>
-              ` : ''}
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function openModalCreateUser() {
-      document.getElementById('newUserId').value = '';
-      document.getElementById('newUserName').value = '';
-      document.getElementById('newUserPassword').value = '';
-      document.getElementById('newUserServicePoint').value = '01 Cirebon';
-      document.getElementById('newUserRole').value = 'teknisi';
-      applyDefaultRolePermissions();
-      document.getElementById('modalCreateUser').classList.remove('hidden');
-    }
-
-    function closeModalCreateUser() {
-      document.getElementById('modalCreateUser').classList.add('hidden');
-    }
-
-    function applyDefaultRolePermissions() {
-      const role = document.getElementById('newUserRole').value;
-      const chkMap = {
-        perm_mgmtAkses: role === 'lead',
-        perm_stockMgmt: role === 'lead',
-        perm_catalogEdit: role === 'lead',
-        perm_scanNota: role === 'logistik' || role === 'lead',
-        perm_returMonitoring: role === 'logistik' || role === 'lead',
-        perm_hubRequest: true,
-        perm_checkout: role === 'teknisi',
-        perm_historyCheckout: role === 'teknisi',
-        perm_returTeknisi: role === 'teknisi',
-        perm_profilingBNI: true
-      };
-
-      for (let k in chkMap) {
-        const el = document.getElementById(k);
-        if (el) el.checked = chkMap[k];
-      }
-    }
-
     function handleCreateUserSubmit(e) {
       if (e) e.preventDefault();
       const uid = document.getElementById('newUserId').value.trim().toUpperCase();
@@ -2987,326 +3265,40 @@
       renderUserManagementTable();
     }
 
-    function openModalEditPermissions(userId) {
-      const user = systemUsers.find(u => u.id === userId);
-      if (!user) return;
+    function openModalCreateUser() {
+      document.getElementById('newUserId').value = '';
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserRole').value = 'teknisi';
+      document.getElementById('newUserServicePoint').value = '01 Cirebon';
+      document.getElementById('newUserPassword').value = '';
+      applyDefaultRolePermissions();
+      document.getElementById('modalCreateUser').classList.remove('hidden');
+    }
 
-      document.getElementById('editPermUserId').innerText = user.id;
-      document.getElementById('editPermUserSP').value = user.servicePoint || '01 Cirebon';
+    function closeModalCreateUser() {
+      document.getElementById('modalCreateUser').classList.add('hidden');
+    }
 
+    function applyDefaultRolePermissions() {
+      const role = document.getElementById('newUserRole').value;
+      const defaults = {
+        teknisi: ['perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'],
+        logistik: ['perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_profilingBNI', 'perm_historyCheckout'],
+        lead: ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI']
+      };
+      const targetPerms = defaults[role] || [];
       const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
       permIds.forEach(p => {
-        const el = document.getElementById('edit_' + p);
-        if (el) {
-          el.checked = user.permissions && user.permissions.includes(p);
-        }
-      });
-
-      document.getElementById('modalEditPermissions').classList.remove('hidden');
-    }
-
-    function closeModalEditPermissions() {
-      document.getElementById('modalEditPermissions').classList.add('hidden');
-    }
-
-    function saveUserPermissionsChanges() {
-      const uid = document.getElementById('editPermUserId').innerText;
-      const user = systemUsers.find(u => u.id === uid);
-      if (!user) return;
-
-      user.servicePoint = document.getElementById('editPermUserSP').value.trim() || '01 Cirebon';
-
-      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
-      const newPerms = [];
-      permIds.forEach(p => {
-        const el = document.getElementById('edit_' + p);
-        if (el && el.checked) newPerms.push(p);
-      });
-      user.permissions = newPerms;
-
-      syncToCloud('app_system_users', systemUsers);
-      closeModalEditPermissions();
-      showCustomAlert('Hak Akses Diperbarui', `Hak akses untuk ${user.name} (${user.id}) berhasil disimpan.`);
-      renderUserManagementTable();
-
-      if (currentUser && currentUser.id === user.id) {
-        currentUser = user;
-        document.getElementById('labelUserSp').innerText = user.servicePoint;
-        setupRoleNavigation();
-      }
-    }
-
-    function toggleUserActiveState(userId) {
-      const user = systemUsers.find(u => u.id === userId);
-      if (!user) return;
-      user.active = !(user.active !== false);
-      syncToCloud('app_system_users', systemUsers);
-      renderUserManagementTable();
-    }
-
-    function openModalResetPassword(userId) {
-      document.getElementById('targetResetUserId').value = userId;
-      document.getElementById('inputNewPasswordVal').value = '';
-      document.getElementById('modalResetPassword').classList.remove('hidden');
-    }
-
-    function closeModalResetPassword() {
-      document.getElementById('modalResetPassword').classList.add('hidden');
-    }
-
-    function handleSaveNewPassword(e) {
-      if (e) e.preventDefault();
-      const uid = document.getElementById('targetResetUserId').value;
-      const newPass = document.getElementById('inputNewPasswordVal').value.trim();
-      const user = systemUsers.find(u => u.id === uid);
-
-      if (user && newPass) {
-        user.password = newPass;
-        syncToCloud('app_system_users', systemUsers);
-        closeModalResetPassword();
-        showCustomAlert('Password Berhasil Diubah', `Password untuk user ${uid} telah diperbarui.`);
-      }
-    }
-
-    // ================= MASTER DROPDOWN =================
-    function populateMasterDropdownOptions() {
-      // Pastikan itemTypeList selalu ada
-      if (!masterDropdown.itemTypeList || !Array.isArray(masterDropdown.itemTypeList)) {
-        masterDropdown.itemTypeList = ['Mesin EDC', 'Adaptor / Charger', 'Baterai EDC', 'Dudukan / FKM', 'SIM / SAM Card', 'Lainnya'];
-      }
-
-      const itemTypeSelect = document.getElementById('returItemType');
-      if (itemTypeSelect) {
-        itemTypeSelect.innerHTML = '';
-        masterDropdown.itemTypeList.forEach(it => {
-          const opt = document.createElement('option');
-          opt.value = it;
-          opt.innerText = it;
-          itemTypeSelect.appendChild(opt);
-        });
-      }
-
-      const hubSelect = document.getElementById('hubRequesterSelect');
-      if (hubSelect) {
-        hubSelect.innerHTML = '';
-        masterDropdown.hubList.forEach(h => {
-          const opt = document.createElement('option');
-          opt.value = h;
-          opt.innerText = h;
-          hubSelect.appendChild(opt);
-        });
-      }
-
-      const spDatalist = document.getElementById('spOptionsList');
-      if (spDatalist) {
-        spDatalist.innerHTML = '';
-        masterDropdown.hubList.forEach(h => {
-          const opt = document.createElement('option');
-          opt.value = h;
-          spDatalist.appendChild(opt);
-        });
-      }
-
-      const custSelect = document.getElementById('returCustomerSelect');
-      if (custSelect) {
-        custSelect.innerHTML = '';
-        masterDropdown.customerList.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c;
-          opt.innerText = c;
-          custSelect.appendChild(opt);
-        });
-      }
-
-      const kelSelect = document.getElementById('returKelengkapanSelect');
-      if (kelSelect) {
-        kelSelect.innerHTML = '';
-        masterDropdown.kelengkapanList.forEach(k => {
-          const opt = document.createElement('option');
-          opt.value = k;
-          opt.innerText = k;
-          kelSelect.appendChild(opt);
-        });
-      }
-    }
-
-    // ================= MODAL KELOLA MASTER DROPDOWN RETUR (TEAM LEADER) =================
-    let currentEditingDropdownKey = '';
-
-    function quickEditDropdown(catKey, catTitle) {
-      currentEditingDropdownKey = catKey;
-      const titleEl = document.getElementById('targetDropdownTitle');
-      if (titleEl) titleEl.innerText = catTitle;
-
-      renderSingleDropdownItems();
-      document.getElementById('modalSingleDropdownEdit').classList.remove('hidden');
-    }
-
-    function closeModalSingleDropdownEdit() {
-      document.getElementById('modalSingleDropdownEdit').classList.add('hidden');
-      currentEditingDropdownKey = '';
-    }
-
-    function renderSingleDropdownItems() {
-      const container = document.getElementById('singleDropdownItemsContainer');
-      if (!container || !currentEditingDropdownKey) return;
-      container.innerHTML = '';
-
-      const list = masterDropdown[currentEditingDropdownKey] || [];
-      if (list.length === 0) {
-        container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Belum ada pilihan data.</div>';
-        return;
-      }
-
-      list.forEach((val, idx) => {
-        const row = document.createElement('div');
-        row.className = "flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-xl";
-        row.innerHTML = `
-          <input type="text" id="singleDropInput_${idx}" value="${val}" class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500">
-          <button type="button" onclick="deleteSingleDropdownOption(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition" title="Hapus Pilihan">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        `;
-        container.appendChild(row);
+        const el = document.getElementById(p);
+        if (el) el.checked = targetPerms.includes(p);
       });
     }
-
-    function addSingleDropdownOption() {
-      if (!currentEditingDropdownKey) return;
-      if (!masterDropdown[currentEditingDropdownKey]) masterDropdown[currentEditingDropdownKey] = [];
-      masterDropdown[currentEditingDropdownKey].push('Pilihan Baru');
-      renderSingleDropdownItems();
-    }
-
-    function deleteSingleDropdownOption(idx) {
-      if (!currentEditingDropdownKey || !masterDropdown[currentEditingDropdownKey]) return;
-      if (masterDropdown[currentEditingDropdownKey].length <= 1) {
-        showCustomAlert('Perhatian', 'Minimal harus ada 1 pilihan pada daftar.', true);
-        return;
-      }
-      masterDropdown[currentEditingDropdownKey].splice(idx, 1);
-      renderSingleDropdownItems();
-    }
-
-    function saveSingleDropdownOptions() {
-      if (!currentEditingDropdownKey || !masterDropdown[currentEditingDropdownKey]) return;
-      const list = masterDropdown[currentEditingDropdownKey];
-      const updated = [];
-      list.forEach((_, idx) => {
-        const input = document.getElementById(`singleDropInput_${idx}`);
-        if (input && input.value.trim()) {
-          updated.push(input.value.trim());
-        }
-      });
-
-      if (updated.length === 0) {
-        showCustomAlert('Perhatian', 'Pilihan tidak boleh kosong semua.', true);
-        return;
-      }
-
-      masterDropdown[currentEditingDropdownKey] = updated;
-      syncToCloud('app_master_dropdown', masterDropdown);
-      populateMasterDropdownOptions();
-      closeModalSingleDropdownEdit();
-      showCustomAlert('Berhasil', 'Pilihan dropdown berhasil diperbarui.');
-    }
-
     function openModalMasterDropdownRetur() {
       quickEditDropdown('itemTypeList', 'Jenis Barang Retur');
     }
 
     function closeModalMasterDropdownRetur() {
       closeModalSingleDropdownEdit();
-    }
-
-    function closeModalMasterDropdownRetur() {
-      document.getElementById('modalMasterReturOptions').classList.add('hidden');
-    }
-
-    function switchMasterReturCategory(catKey) {
-      activeMasterReturCat = catKey;
-      const tabs = {
-        itemTypeList: { id: 'tabOpt_itemType', label: 'Daftar Jenis Barang Retur:' },
-        customerList: { id: 'tabOpt_customer', label: 'Daftar Customer / Bank / Merchant:' },
-        kelengkapanList: { id: 'tabOpt_kelengkapan', label: 'Daftar Pilihan Kelengkapan:' }
-      };
-
-      for (let k in tabs) {
-        const btn = document.getElementById(tabs[k].id);
-        if (btn) {
-          if (k === catKey) {
-            btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition bg-white text-blue-600 shadow-2xs";
-          } else {
-            btn.className = "flex-1 py-1.5 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900";
-          }
-        }
-      }
-
-      const lbl = document.getElementById('activeReturCategoryLabel');
-      if (lbl) lbl.innerText = tabs[catKey].label;
-
-      renderMasterReturItemsList();
-    }
-
-    function renderMasterReturItemsList() {
-      const container = document.getElementById('masterReturItemsContainer');
-      if (!container) return;
-      container.innerHTML = '';
-
-      const list = masterDropdown[activeMasterReturCat] || [];
-      if (list.length === 0) {
-        container.innerHTML = '<div class="text-center py-4 text-slate-400 text-xs">Belum ada pilihan data.</div>';
-        return;
-      }
-
-      list.forEach((val, idx) => {
-        const row = document.createElement('div');
-        row.className = "flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-200 rounded-xl";
-        row.innerHTML = `
-          <input type="text" id="masterReturInput_${idx}" value="${val}" class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500">
-          <button type="button" onclick="deleteMasterReturItem(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition" title="Hapus Pilihan">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    function addMasterReturItem() {
-      if (!masterDropdown[activeMasterReturCat]) masterDropdown[activeMasterReturCat] = [];
-      masterDropdown[activeMasterReturCat].push('Pilihan Baru');
-      renderMasterReturItemsList();
-    }
-
-    function deleteMasterReturItem(idx) {
-      if (!masterDropdown[activeMasterReturCat] || masterDropdown[activeMasterReturCat].length <= 1) {
-        showCustomAlert('Perhatian', 'Minimal harus ada 1 pilihan pada daftar.', true);
-        return;
-      }
-      masterDropdown[activeMasterReturCat].splice(idx, 1);
-      renderMasterReturItemsList();
-    }
-
-    function saveMasterReturOptions() {
-      const list = masterDropdown[activeMasterReturCat] || [];
-      const updated = [];
-      list.forEach((_, idx) => {
-        const input = document.getElementById(`masterReturInput_${idx}`);
-        if (input && input.value.trim()) {
-          updated.push(input.value.trim());
-        }
-      });
-
-      if (updated.length === 0) {
-        showCustomAlert('Perhatian', 'Pilihan tidak boleh kosong semua.', true);
-        return;
-      }
-
-      masterDropdown[activeMasterReturCat] = updated;
-      syncToCloud('app_master_dropdown', masterDropdown);
-      populateMasterDropdownOptions();
-      closeModalMasterDropdownRetur();
-      showCustomAlert('Berhasil', 'Pilihan opsi form pengembalian retur berhasil diperbarui.');
     }
 
     // ================= SISTEM NOTIFIKASI & SOUND EFFECT =================
@@ -3343,7 +3335,7 @@
       }
     }
 
-    function createAppNotification({ type, title, message, linkTab, dataId, senderName }) {
+    function createAppNotification({ type, title, message, linkTab, dataId, senderName, targetUserId }) {
       const newNotif = {
         id: 'NOTIF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         type: type, // 'checkout', 'retur', 'profiling'
@@ -3351,7 +3343,8 @@
         message: message,
         linkTab: linkTab,
         dataId: dataId,
-        senderName: senderName || 'Teknisi',
+        senderName: senderName || 'Sistem',
+        targetUserId: targetUserId || null,
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
         timestamp: Date.now(),
@@ -3359,7 +3352,7 @@
       };
 
       systemNotifications.unshift(newNotif);
-      if (systemNotifications.length > 50) systemNotifications.pop(); // simpan max 50 riwayat notif
+      if (systemNotifications.length > 50) systemNotifications.pop();
       syncToCloud('app_notifications', systemNotifications);
       updateNotificationUI();
     }
@@ -3367,14 +3360,14 @@
     function handleIncomingNotificationsLive(prevCount) {
       updateNotificationUI();
       if (!currentUser) return;
-      const isTarget = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      if (!isTarget) return;
 
-      // Jika ada notifikasi baru yang masuk
       if (systemNotifications.length > 0 && systemNotifications.length > prevCount) {
         const latest = systemNotifications[0];
-        // Jangan bunyikan untuk pengirim sendiri
-        if (latest.senderName !== currentUser.name) {
+        const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+        const isTargetTechnician = latest.targetUserId && latest.targetUserId.toLowerCase() === currentUser.id.toLowerCase();
+        const isGeneralForAdmin = !latest.targetUserId && isLeadOrLogistik;
+
+        if (latest.senderName !== currentUser.name && (isTargetTechnician || isGeneralForAdmin)) {
           playNotificationSound();
           showFloatingToast(latest);
         }
@@ -3386,51 +3379,28 @@
       if (!container) return;
 
       const toast = document.createElement('div');
-      toast.className = "pointer-events-auto bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-md flex items-start gap-3 transition-all duration-300 transform translate-y-[-10px] opacity-0";
-      
-      let iconColor = 'bg-blue-600';
-      let iconClass = 'fa-solid fa-bell';
-      if (notif.type === 'checkout') {
-        iconColor = 'bg-blue-600';
-        iconClass = 'fa-solid fa-cart-shopping';
-      } else if (notif.type === 'retur') {
-        iconColor = 'bg-amber-600';
-        iconClass = 'fa-solid fa-rotate-left';
-      } else if (notif.type === 'profiling') {
-        iconColor = 'bg-indigo-600';
-        iconClass = 'fa-solid fa-ticket';
-      }
-
+      toast.className = "pointer-events-auto bg-white border border-blue-200 rounded-2xl p-3.5 shadow-xl flex items-start gap-3 transition-all duration-300 cursor-pointer hover:border-blue-400";
       toast.innerHTML = `
-        <div class="w-8 h-8 rounded-xl ${iconColor} flex items-center justify-center text-white shrink-0 shadow-md">
-          <i class="${iconClass} text-xs"></i>
+        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fa-solid fa-bell text-xs"></i>
         </div>
-        <div class="flex-1 min-w-0 pr-1 cursor-pointer" onclick="handleNotificationClick('${notif.id}')">
-          <div class="flex items-center justify-between">
-            <h5 class="text-xs font-bold text-white truncate">${notif.title}</h5>
-            <span class="text-[10px] text-slate-400 font-semibold ml-2">${notif.time}</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-bold text-xs text-slate-800 truncate">${notif.title}</span>
+            <span class="text-[10px] text-slate-400">${notif.time}</span>
           </div>
-          <p class="text-[11px] text-slate-300 line-clamp-2 mt-0.5 leading-snug">${notif.message}</p>
+          <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${notif.message}</p>
         </div>
-        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark text-xs"></i>
-        </button>
       `;
+      toast.onclick = () => {
+        handleNotificationClick(notif.id);
+        toast.remove();
+      };
 
       container.appendChild(toast);
-
-      // Efek muncul
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-[-10px]', 'opacity-0');
-      });
-
-      // Hilang otomatis setelah 7 detik
       setTimeout(() => {
-        if (toast.parentElement) {
-          toast.classList.add('opacity-0', 'translate-y-[-10px]');
-          setTimeout(() => toast.remove(), 300);
-        }
-      }, 7000);
+        if (toast.parentNode) toast.remove();
+      }, 6000);
     }
 
     function toggleNotificationDropdown() {
@@ -3438,105 +3408,59 @@
       if (!dropdown) return;
       notifDropdownOpen = !notifDropdownOpen;
       dropdown.classList.toggle('hidden', !notifDropdownOpen);
-      if (notifDropdownOpen) updateNotificationUI();
     }
 
     function updateNotificationUI() {
-      if (!currentUser) return;
       const badge = document.getElementById('notifBadge');
-      const listContainer = document.getElementById('notifListContainer');
       const headerCount = document.getElementById('notifHeaderCount');
+      const container = document.getElementById('notifListContainer');
+      if (!container || !currentUser) return;
 
-      // Hitung notifikasi belum dibaca oleh user yang sedang login
-      const unreadCount = systemNotifications.filter(n => !(n.readBy || []).includes(currentUser.id)).length;
+      const isLeadOrLogistik = currentUser.role === 'lead' || currentUser.role === 'logistik';
+      const relevantNotifs = systemNotifications.filter(n => {
+        if (n.targetUserId) {
+          return n.targetUserId.toLowerCase() === currentUser.id.toLowerCase();
+        }
+        return isLeadOrLogistik;
+      });
+
+      const unreadNotifs = relevantNotifs.filter(n => !(n.readBy || []).includes(currentUser.id));
+      const unreadCount = unreadNotifs.length;
 
       if (badge) {
         if (unreadCount > 0) {
-          badge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+          badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
           badge.classList.remove('hidden');
         } else {
           badge.classList.add('hidden');
         }
       }
-
       if (headerCount) {
         headerCount.innerText = `${unreadCount} Baru`;
       }
 
-      if (!listContainer) return;
-      listContainer.innerHTML = '';
-
-      if (systemNotifications.length === 0) {
-        listContainer.innerHTML = '<div class="py-8 text-center text-slate-400 text-xs font-semibold">Tidak ada notifikasi baru</div>';
+      if (relevantNotifs.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-slate-400 font-semibold">Belum ada pemberitahuan</div>`;
         return;
       }
 
-      systemNotifications.forEach(notif => {
-        const isRead = (notif.readBy || []).includes(currentUser.id);
-        const item = document.createElement('div');
-        item.className = `p-3 hover:bg-slate-50 transition cursor-pointer flex items-start gap-2.5 ${isRead ? 'opacity-60 bg-white' : 'bg-blue-50/40 font-semibold'}`;
-        
-        let iconColor = 'text-blue-600 bg-blue-100';
-        let iconClass = 'fa-solid fa-bell';
-        if (notif.type === 'checkout') {
-          iconColor = 'text-blue-600 bg-blue-100';
-          iconClass = 'fa-solid fa-cart-shopping';
-        } else if (notif.type === 'retur') {
-          iconColor = 'text-amber-600 bg-amber-100';
-          iconClass = 'fa-solid fa-rotate-left';
-        } else if (notif.type === 'profiling') {
-          iconColor = 'text-indigo-600 bg-indigo-100';
-          iconClass = 'fa-solid fa-ticket';
-        }
-
-        item.innerHTML = `
-          <div class="w-7 h-7 rounded-lg ${iconColor} flex items-center justify-center shrink-0 mt-0.5">
-            <i class="${iconClass} text-xs"></i>
-          </div>
-          <div class="flex-1 min-w-0" onclick="handleNotificationClick('${notif.id}')">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-800 truncate">${notif.title}</span>
-              <span class="text-[10px] text-slate-400 whitespace-nowrap ml-1">${notif.time}</span>
+      container.innerHTML = relevantNotifs.map(n => {
+        const isRead = (n.readBy || []).includes(currentUser.id);
+        return `
+          <div onclick="handleNotificationClick('${n.id}')" class="p-3 hover:bg-slate-50 cursor-pointer transition flex items-start gap-2.5 ${isRead ? 'opacity-65' : 'bg-blue-50/40'}">
+            <div class="w-7 h-7 rounded-lg ${isRead ? 'bg-slate-100 text-slate-500' : 'bg-blue-100 text-blue-600'} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid ${n.type === 'checkout' ? 'fa-cart-shopping' : n.type === 'retur' ? 'fa-rotate-left' : 'fa-id-card'} text-[11px]"></i>
             </div>
-            <p class="text-[11px] text-slate-600 line-clamp-2 mt-0.5 leading-tight">${notif.message}</p>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-bold text-slate-800 truncate">${n.title}</span>
+                <span class="text-[10px] text-slate-400 whitespace-nowrap">${n.time}</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5 leading-snug">${n.message}</p>
+            </div>
           </div>
-          ${!isRead ? `<span class="w-2 h-2 rounded-full bg-blue-600 shrink-0 mt-1.5"></span>` : ''}
         `;
-        listContainer.appendChild(item);
-      });
-    }
-
-    function handleNotificationClick(notifId) {
-      const notif = systemNotifications.find(n => n.id === notifId);
-      if (!notif) return;
-
-      // Tandai dibaca
-      if (!notif.readBy) notif.readBy = [];
-      if (!notif.readBy.includes(currentUser.id)) {
-        notif.readBy.push(currentUser.id);
-        syncToCloud('app_notifications', systemNotifications);
-      }
-
-      // Tutup dropdown notif
-      const dropdown = document.getElementById('notifDropdown');
-      if (dropdown) dropdown.classList.add('hidden');
-      notifDropdownOpen = false;
-      updateNotificationUI();
-
-      // Buka halaman terkait
-      if (notif.linkTab) {
-        const navBtn = document.querySelector(`[onclick*="${notif.linkTab}"]`);
-        switchTab(notif.linkTab, navBtn);
-
-        // Jika checkout, otomatis isi scanner nota
-        if (notif.type === 'checkout' && notif.dataId) {
-          const scanInput = document.getElementById('scanTicketInput');
-          if (scanInput) {
-            scanInput.value = notif.dataId;
-            handleScanTicket();
-          }
-        }
-      }
+      }).join('');
     }
 
     function markAllNotificationsRead() {
@@ -3551,17 +3475,396 @@
       updateNotificationUI();
     }
 
-    // Menutup dropdown notifikasi jika pengguna mengklik di luar area
-    document.addEventListener('click', (e) => {
-      const wrapper = document.getElementById('notifBellWrapper');
-      const dropdown = document.getElementById('notifDropdown');
-      if (wrapper && !wrapper.contains(e.target) && dropdown && !dropdown.classList.contains('hidden')) {
-        dropdown.classList.add('hidden');
-        notifDropdownOpen = false;
-      }
-    });
+    function handleNotificationClick(notifId) {
+      const notif = systemNotifications.find(n => n.id === notifId);
+      if (!notif || !currentUser) return;
 
-    // ================= RESET BULANAN =================
+      if (!notif.readBy) notif.readBy = [];
+      if (!notif.readBy.includes(currentUser.id)) {
+        notif.readBy.push(currentUser.id);
+        syncToCloud('app_notifications', systemNotifications);
+      }
+
+      notifDropdownOpen = false;
+      const dropdown = document.getElementById('notifDropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      updateNotificationUI();
+
+      if (notif.linkTab) {
+        switchTab(notif.linkTab, null);
+        if (notif.linkTab === 'viewLogistikScanner' && notif.dataId) {
+          const scanInput = document.getElementById('scanTicketInput');
+          if (scanInput) {
+            scanInput.value = notif.dataId;
+            handleScanTicket();
+          }
+        }
+      }
+    }
+
+    // ================= MASTER DROPDOWN & EDIT PILIHAN =================
+    function populateMasterDropdownOptions() {
+      const itemSelect = document.getElementById('returItemType');
+      if (itemSelect && masterDropdown.itemTypeList) {
+        itemSelect.innerHTML = masterDropdown.itemTypeList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      }
+
+      const custSelect = document.getElementById('returCustomerSelect');
+      if (custSelect && masterDropdown.customerList) {
+        custSelect.innerHTML = masterDropdown.customerList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      }
+
+      const kelSelect = document.getElementById('returKelengkapanSelect');
+      if (kelSelect && masterDropdown.kelengkapanList) {
+        kelSelect.innerHTML = masterDropdown.kelengkapanList.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      }
+
+      const spDatalist = document.getElementById('spOptionsList');
+      if (spDatalist && masterDropdown.hubList) {
+        spDatalist.innerHTML = masterDropdown.hubList.map(sp => `<option value="${sp}">`).join('');
+      }
+    }
+
+    function quickEditDropdown(categoryKey, titleLabel) {
+      activeMasterReturCat = categoryKey;
+      const titleEl = document.getElementById('targetDropdownTitle');
+      if (titleEl) titleEl.innerText = titleLabel;
+      renderSingleDropdownItems();
+      document.getElementById('modalSingleDropdownEdit').classList.remove('hidden');
+    }
+
+    function renderSingleDropdownItems() {
+      const container = document.getElementById('singleDropdownItemsContainer');
+      if (!container) return;
+      const list = masterDropdown[activeMasterReturCat] || [];
+      container.innerHTML = list.map((val, idx) => `
+        <div class="flex items-center gap-2">
+          <input type="text" id="singleDropOpt_${idx}" value="${val}" class="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold">
+          ${list.length > 1 ? `
+            <button type="button" onclick="deleteSingleDropdownOption(${idx})" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function addSingleDropdownOption() {
+      if (!masterDropdown[activeMasterReturCat]) masterDropdown[activeMasterReturCat] = [];
+      masterDropdown[activeMasterReturCat].push('Pilihan Baru');
+      renderSingleDropdownItems();
+    }
+
+    function deleteSingleDropdownOption(idx) {
+      const list = masterDropdown[activeMasterReturCat] || [];
+      if (list.length <= 1) return;
+      list.splice(idx, 1);
+      renderSingleDropdownItems();
+    }
+
+    function saveSingleDropdownOptions() {
+      const list = masterDropdown[activeMasterReturCat] || [];
+      const updated = [];
+      list.forEach((_, idx) => {
+        const input = document.getElementById(`singleDropOpt_${idx}`);
+        if (input && input.value.trim()) {
+          updated.push(input.value.trim());
+        }
+      });
+      if (updated.length === 0) {
+        showCustomAlert('Peringatan', 'Minimal harus ada 1 pilihan dalam daftar.', true);
+        return;
+      }
+      masterDropdown[activeMasterReturCat] = updated;
+      syncToCloud('app_master_dropdown', masterDropdown);
+      populateMasterDropdownOptions();
+      closeModalSingleDropdownEdit();
+      showCustomAlert('Tersimpan', 'Daftar pilihan dropdown berhasil diperbarui.');
+    }
+
+    function closeModalSingleDropdownEdit() {
+      document.getElementById('modalSingleDropdownEdit').classList.add('hidden');
+    }
+
+    // ================= EDIT & TAMBAH KATALOG BARANG (TEAM LEADER) =================
+    const CATALOG_ICON_PRESETS = [
+      { icon: 'fa-calculator', color: 'bg-blue-100 text-blue-700', label: 'EDC' },
+      { icon: 'fa-scroll', color: 'bg-amber-100 text-amber-700', label: 'Thermal' },
+      { icon: 'fa-sim-card', color: 'bg-indigo-100 text-indigo-700', label: 'SIM' },
+      { icon: 'fa-microchip', color: 'bg-rose-100 text-rose-700', label: 'SAM/Chip' },
+      { icon: 'fa-battery-full', color: 'bg-teal-100 text-teal-700', label: 'Baterai' },
+      { icon: 'fa-plug', color: 'bg-orange-100 text-orange-700', label: 'Charger' },
+      { icon: 'fa-shield-halved', color: 'bg-purple-100 text-purple-700', label: 'FKM' },
+      { icon: 'fa-note-sticky', color: 'bg-emerald-100 text-emerald-700', label: 'Sticker' },
+      { icon: 'fa-ethernet', color: 'bg-cyan-100 text-cyan-700', label: 'Kabel LAN' },
+      { icon: 'fa-wifi', color: 'bg-sky-100 text-sky-700', label: 'Modem/WiFi' },
+      { icon: 'fa-print', color: 'bg-slate-200 text-slate-700', label: 'Printer' },
+      { icon: 'fa-box', color: 'bg-violet-100 text-violet-700', label: 'Box/Lainnya' }
+    ];
+
+    function renderIconPicker(gridId, iconInputId, colorInputId, selectedIcon) {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
+      grid.innerHTML = CATALOG_ICON_PRESETS.map(preset => {
+        const isSelected = preset.icon === selectedIcon;
+        return `
+          <button type="button" onclick="selectCatalogIcon('${gridId}', '${iconInputId}', '${colorInputId}', '${preset.icon}', '${preset.color}')"
+            title="${preset.label}"
+            class="h-10 rounded-xl flex items-center justify-center text-base transition ${preset.color} ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2 scale-105 shadow-xs' : 'opacity-75 hover:opacity-100'}">
+            <i class="fa-solid ${preset.icon}"></i>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectCatalogIcon(gridId, iconInputId, colorInputId, icon, color) {
+      document.getElementById(iconInputId).value = icon;
+      document.getElementById(colorInputId).value = color;
+      renderIconPicker(gridId, iconInputId, colorInputId, icon);
+    }
+
+    function openEditItemModal(itemId) {
+      const item = warehouseStock.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById('editItemId').value = item.id;
+      document.getElementById('editItemName').value = item.name;
+      document.getElementById('editItemCategory').value = item.category;
+      document.getElementById('editItemUnit').value = item.unit;
+      document.getElementById('editItemStock').value = item.stock;
+      document.getElementById('editItemIcon').value = item.icon || 'fa-box';
+      document.getElementById('editItemColor').value = item.color || 'bg-blue-100 text-blue-700';
+
+      renderIconPicker('editIconPickerGrid', 'editItemIcon', 'editItemColor', item.icon || 'fa-box');
+      document.getElementById('modalEditItem').classList.remove('hidden');
+    }
+
+    function closeEditItemModal() {
+      document.getElementById('modalEditItem').classList.add('hidden');
+    }
+
+    function handleSaveItemEdit(e) {
+      if (e) e.preventDefault();
+      const id = document.getElementById('editItemId').value;
+      const item = warehouseStock.find(i => i.id === id);
+      if (!item) return;
+
+      item.name = document.getElementById('editItemName').value.trim();
+      item.category = document.getElementById('editItemCategory').value.trim();
+      item.unit = document.getElementById('editItemUnit').value.trim();
+      item.stock = Math.max(0, parseInt(document.getElementById('editItemStock').value) || 0);
+      item.icon = document.getElementById('editItemIcon').value || 'fa-box';
+      item.color = document.getElementById('editItemColor').value || 'bg-blue-100 text-blue-700';
+
+      syncToCloud('app_stock_cirebon', warehouseStock);
+      closeEditItemModal();
+      showCustomAlert('Berhasil', `Detail barang ${item.name} berhasil disimpan.`);
+      refreshUI();
+    }
+
+    function deleteCatalogItem() {
+      const id = document.getElementById('editItemId').value;
+      const idx = warehouseStock.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      const itemName = warehouseStock[idx].name;
+      if (!window.confirm(`Hapus barang "${itemName}" dari katalog gudang?`)) return;
+
+      warehouseStock.splice(idx, 1);
+      syncToCloud('app_stock_cirebon', warehouseStock);
+      closeEditItemModal();
+      showCustomAlert('Terhapus', `Barang ${itemName} telah dihapus dari katalog.`);
+      refreshUI();
+    }
+
+    function openModalAddNewItem() {
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemCategory').value = 'CONSUMABLE';
+      document.getElementById('newItemUnit').value = 'Pcs';
+      document.getElementById('newItemStock').value = '0';
+      document.getElementById('newItemIcon').value = 'fa-box';
+      document.getElementById('newItemColor').value = 'bg-violet-100 text-violet-700';
+
+      renderIconPicker('newIconPickerGrid', 'newItemIcon', 'newItemColor', 'fa-box');
+      document.getElementById('modalAddNewItem').classList.remove('hidden');
+    }
+
+    function closeModalAddNewItem() {
+      document.getElementById('modalAddNewItem').classList.add('hidden');
+    }
+
+    function handleAddNewCatalogItemSubmit(e) {
+      if (e) e.preventDefault();
+      const name = document.getElementById('newItemName').value.trim();
+      const category = document.getElementById('newItemCategory').value.trim() || 'GENERAL';
+      const unit = document.getElementById('newItemUnit').value.trim() || 'Pcs';
+      const stock = Math.max(0, parseInt(document.getElementById('newItemStock').value) || 0);
+      const icon = document.getElementById('newItemIcon').value || 'fa-box';
+      const color = document.getElementById('newItemColor').value || 'bg-violet-100 text-violet-700';
+
+      const newItem = {
+        id: 'item-' + Date.now().toString().slice(-6),
+        name: name,
+        category: category,
+        stock: stock,
+        unit: unit,
+        icon: icon,
+        color: color
+      };
+
+      warehouseStock.push(newItem);
+      syncToCloud('app_stock_cirebon', warehouseStock);
+      closeModalAddNewItem();
+      showCustomAlert('Ditambahkan', `Barang baru "${name}" berhasil ditambahkan ke katalog.`);
+      refreshUI();
+    }
+
+    // ================= MANAGEMENT AKSES & PENGGUNA =================
+    let editingPermissionsUserId = null;
+
+    function renderUserManagementTable() {
+      const tbody = document.getElementById('userManagementTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      systemUsers.forEach(u => {
+        const isActive = u.active !== false;
+        const isMasterAdmin = u.id.toLowerCase() === 'admin';
+        const roleLabel = u.role === 'lead' ? 'Team Leader' : u.role === 'logistik' ? 'Logistik' : 'Teknisi';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono font-bold text-blue-600">${u.id}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${u.name}</td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">${roleLabel}</span>
+          </td>
+          <td class="py-3 px-4 text-slate-600 font-semibold">${u.servicePoint || '01 Cirebon'}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+              ${isActive ? 'Aktif' : 'Nonaktif'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <div class="inline-flex items-center gap-1.5 justify-center">
+              <button onclick="openModalEditPermissions('${u.id}')" title="Edit Hak Akses" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 rounded-lg font-bold text-xs transition">
+                <i class="fa-solid fa-sliders"></i> Akses
+              </button>
+              <button onclick="openModalResetPassword('${u.id}')" title="Ganti Password" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">
+                <i class="fa-solid fa-key"></i>
+              </button>
+              ${!isMasterAdmin ? `
+                <button onclick="toggleUserStatus('${u.id}')" title="${isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun'}" class="px-2.5 py-1 ${isActive ? 'bg-amber-50 hover:bg-amber-100 text-amber-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'} rounded-lg font-bold text-xs transition">
+                  <i class="fa-solid ${isActive ? 'fa-user-slash' : 'fa-user-check'}"></i>
+                </button>
+              ` : ''}
+              ${(!isActive && !isMasterAdmin) ? `
+                <button onclick="deleteInactiveUser('${u.id}')" title="Hapus Permanen Akun Nonaktif" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 rounded-lg font-bold text-xs transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModalEditPermissions(userId) {
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user) return;
+      editingPermissionsUserId = userId;
+      document.getElementById('editPermUserId').innerText = `${user.id} (${user.name})`;
+      document.getElementById('editPermUserSP').value = user.servicePoint || '01 Cirebon';
+
+      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
+      const userPerms = user.permissions || [];
+      permIds.forEach(p => {
+        const el = document.getElementById(`edit_${p}`);
+        if (el) el.checked = userPerms.includes(p);
+      });
+
+      document.getElementById('modalEditPermissions').classList.remove('hidden');
+    }
+
+    function closeModalEditPermissions() {
+      document.getElementById('modalEditPermissions').classList.add('hidden');
+      editingPermissionsUserId = null;
+    }
+
+    function saveUserPermissionsChanges() {
+      if (!editingPermissionsUserId) return;
+      const user = systemUsers.find(u => u.id === editingPermissionsUserId);
+      if (!user) return;
+
+      user.servicePoint = document.getElementById('editPermUserSP').value.trim() || '01 Cirebon';
+      const permIds = ['perm_mgmtAkses', 'perm_stockMgmt', 'perm_catalogEdit', 'perm_scanNota', 'perm_returMonitoring', 'perm_hubRequest', 'perm_checkout', 'perm_historyCheckout', 'perm_returTeknisi', 'perm_profilingBNI'];
+      const updatedPerms = [];
+      permIds.forEach(p => {
+        const el = document.getElementById(`edit_${p}`);
+        if (el && el.checked) updatedPerms.push(p);
+      });
+      user.permissions = updatedPerms;
+
+      syncToCloud('app_system_users', systemUsers);
+      closeModalEditPermissions();
+      showCustomAlert('Tersimpan', `Hak akses untuk ${user.name} berhasil diperbarui.`);
+      renderUserManagementTable();
+    }
+
+    function openModalResetPassword(userId) {
+      document.getElementById('targetResetUserId').value = userId;
+      document.getElementById('inputNewPasswordVal').value = '';
+      document.getElementById('modalResetPassword').classList.remove('hidden');
+    }
+
+    function closeModalResetPassword() {
+      document.getElementById('modalResetPassword').classList.add('hidden');
+    }
+
+    function handleSaveNewPassword(e) {
+      if (e) e.preventDefault();
+      const uid = document.getElementById('targetResetUserId').value;
+      const newPass = document.getElementById('inputNewPasswordVal').value.trim();
+      if (newPass.length < 4) {
+        showCustomAlert('Password Terlalu Pendek', 'Password minimal harus 4 karakter.', true);
+        return;
+      }
+      const user = systemUsers.find(u => u.id === uid);
+      if (!user) return;
+      user.password = newPass;
+      syncToCloud('app_system_users', systemUsers);
+      closeModalResetPassword();
+      showCustomAlert('Password Diperbarui', `Password untuk akun ${uid} berhasil diubah.`);
+    }
+
+    function toggleUserStatus(userId) {
+      if (userId.toLowerCase() === 'admin') return;
+      const user = systemUsers.find(u => u.id === userId);
+      if (!user) return;
+      user.active = user.active === false ? true : false;
+      syncToCloud('app_system_users', systemUsers);
+      renderUserManagementTable();
+    }
+
+    function deleteInactiveUser(userId) {
+      if (userId.toLowerCase() === 'admin') return;
+      const idx = systemUsers.findIndex(u => u.id === userId);
+      if (idx === -1) return;
+      if (systemUsers[idx].active !== false) {
+        showCustomAlert('Tidak Diizinkan', 'Nonaktifkan akun terlebih dahulu sebelum menghapus permanen.', true);
+        return;
+      }
+      const userName = systemUsers[idx].name;
+      if (!window.confirm(`Hapus permanen akun nonaktif "${userName}" (${userId})?`)) return;
+
+      systemUsers.splice(idx, 1);
+      syncToCloud('app_system_users', systemUsers);
+      showCustomAlert('Akun Dihapus', `Akun nonaktif ${userName} (${userId}) berhasil dihapus permanen.`);
+      renderUserManagementTable();
+    }
+
+    // ================= RESET BULANAN & EKSPOR EXCEL =================
     function openModalMonthlyReset() {
       document.getElementById('modalMonthlyReset').classList.remove('hidden');
     }
@@ -3571,115 +3874,102 @@
     }
 
     function executeMonthlyReset() {
-      const rCheckout = document.getElementById('resetChkCheckout').checked;
-      const rRetur = document.getElementById('resetChkRetur').checked;
-      const rHub = document.getElementById('resetChkHub').checked;
-      const rProf = document.getElementById('resetChkProfiling').checked;
+      if (!window.confirm('Apakah Anda yakin ingin menghapus data riwayat yang dicentang untuk reset bulanan?')) return;
 
-      let msg = [];
-      if (rCheckout) {
+      if (document.getElementById('resetChkCheckout').checked) {
         checkoutHistory = [];
-        syncToCloud('app_checkout_history', []);
-        msg.push('Riwayat Checkout');
+        syncToCloud('app_checkout_history', checkoutHistory);
       }
-      if (rRetur) {
+      if (document.getElementById('resetChkRetur').checked) {
         returHistory = [];
-        syncToCloud('app_retur_history', []);
-        msg.push('Riwayat Retur');
+        syncToCloud('app_retur_history', returHistory);
       }
-      if (rHub) {
+      if (document.getElementById('resetChkHub').checked) {
         hubRequests = [];
-        syncToCloud('app_hub_requests', []);
-        msg.push('Permintaan HUB');
+        syncToCloud('app_hub_requests', hubRequests);
       }
-      if (rProf) {
+      if (document.getElementById('resetChkProfiling').checked) {
         profilingBNIList = [];
-        syncToCloud('app_profiling_bni', []);
-        msg.push('Profiling BNI');
+        syncToCloud('app_profiling_bni', profilingBNIList);
       }
-
-      // Bersihkan juga riwayat notifikasi
-      systemNotifications = [];
-      syncToCloud('app_notifications', []);
 
       closeModalMonthlyReset();
-      showCustomAlert('Reset Berhasil', `Data berikut telah dibersihkan: ${msg.join(', ') || 'Tidak ada data dipilih'}. Master stok tetap aman.`);
+      showCustomAlert('Reset Bulanan Selesai', 'Data riwayat terpilih telah dibersihkan untuk periode bulan baru.');
       refreshUI();
     }
 
-    // ================= EKSPOR EXCEL (.XLSX) =================
     function exportAllDataToExcel() {
       if (typeof XLSX === 'undefined') {
-        showCustomAlert('Error', 'Pustaka Excel belum siap.', true);
+        showCustomAlert('Gagal Ekspor', 'Library Excel belum siap. Periksa koneksi internet Anda.', true);
         return;
       }
 
       const wb = XLSX.utils.book_new();
 
-      const wsStock = XLSX.utils.json_to_sheet(warehouseStock.map(s => ({
-        ID: s.id,
-        "Nama Barang": s.name,
-        Kategori: s.category,
-        "Stok Fisik": s.stock,
-        Satuan: s.unit
-      })));
-      XLSX.utils.book_append_sheet(wb, wsStock, "Stok Gudang");
+      const stockRows = warehouseStock.map(s => ({
+        'Kode Barang': s.id,
+        'Nama Barang': s.name,
+        'Kategori': s.category,
+        'Stok Fisik': s.stock,
+        'Satuan': s.unit
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockRows), 'Stok Gudang');
 
-      const wsCheckout = XLSX.utils.json_to_sheet(checkoutHistory.map(c => ({
-        "No Tiket": c.ticketNo,
-        Waktu: c.date,
-        Teknisi: c.techName,
-        "User ID": c.techId,
-        "Service Point": c.servicePoint,
-        Status: c.status,
-        Keperluan: c.notes,
-        "Rincian Barang": c.items.map(it => `${it.name} (${it.qty} ${it.unit})`).join('; ')
-      })));
-      XLSX.utils.book_append_sheet(wb, wsCheckout, "Riwayat Checkout");
+      const coRows = checkoutHistory.map(c => ({
+        'No Kwitansi': c.ticketNo,
+        'Waktu': c.date,
+        'ID Teknisi': c.techId,
+        'Nama Teknisi': c.techName,
+        'Service Point': c.servicePoint,
+        'Barang': c.items.map(i => `${i.name} (${i.qty} ${i.unit})`).join('; '),
+        'Catatan': c.notes,
+        'Status': c.status
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(coRows.length ? coRows : [{ Info: 'Kosong' }]), 'Checkout Barang');
 
-      const wsRetur = XLSX.utils.json_to_sheet(returHistory.map(r => ({
-        "No Retur": r.returNo,
-        Waktu: r.date,
-        "Jenis Barang": r.itemType,
-        "Serial Number": r.sn,
-        Customer: r.customer,
-        Kelengkapan: r.kelengkapan,
-        Teknisi: r.techName,
-        Status: r.status,
-        "Diterima Oleh": r.receivedBy,
-        "Alasan Kerusakan": r.reason
-      })));
-      XLSX.utils.book_append_sheet(wb, wsRetur, "Monitoring Retur");
+      const retRows = returHistory.map(r => ({
+        'No Retur': r.returNo,
+        'Waktu': r.date,
+        'Jenis Barang': r.itemType,
+        'Serial Number': r.sn,
+        'Customer': r.customer,
+        'Kelengkapan': r.kelengkapan,
+        'Kerusakan': r.reason,
+        'Teknisi': r.techName,
+        'Status': r.status,
+        'Diterima Oleh': r.receivedBy
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(retRows.length ? retRows : [{ Info: 'Kosong' }]), 'Barang Retur');
 
-      const wsProf = XLSX.utils.json_to_sheet(profilingBNIList.map(p => ({
-        TID: p.tid,
-        Waktu: p.date,
-        "Kategori JO": p.kategoriJO,
-        Kebutuhan: p.kebutuhan,
-        Kendala: p.kendala,
-        "SN Baru": p.snBaru,
-        "ICCID Baru": p.iccidBaru,
-        APN: p.apn,
-        Teknisi: p.techName,
-        Status: p.status
-      })));
-      XLSX.utils.book_append_sheet(wb, wsProf, "Profiling BNI");
+      const profRows = profilingBNIList.map(p => ({
+        'ID Tiket': p.id,
+        'Waktu': p.date,
+        'TID': p.tid,
+        'Kategori JO': p.kategoriJO,
+        'Kebutuhan': p.kebutuhan,
+        'Kendala': p.kendala,
+        'SN Baru': p.snBaru,
+        'ICCID Baru': p.iccidBaru,
+        'APN': p.apn,
+        'Teknisi': p.techName,
+        'Status': p.status
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profRows.length ? profRows : [{ Info: 'Kosong' }]), 'Profiling BNI');
 
-      const wsHub = XLSX.utils.json_to_sheet(hubRequests.map(h => ({
-        "No Pengajuan": h.reqNo,
-        Waktu: h.date,
-        "HUB Pemohon": h.hub,
-        Tujuan: h.destination,
-        "Daftar Item": h.items,
-        Keterangan: h.notes,
-        Status: h.status,
-        "Dibuat Oleh": h.createdBy
-      })));
-      XLSX.utils.book_append_sheet(wb, wsHub, "Permintaan HUB");
+      const hubRows = hubRequests.map(h => ({
+        'No Pengajuan': h.reqNo,
+        'Tanggal': h.date,
+        'HUB Pemohon': h.hub,
+        'Tujuan': h.destination,
+        'Kebutuhan': h.items.replace(/\n/g, '; '),
+        'Keterangan': h.notes,
+        'Status': h.status
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hubRows.length ? hubRows : [{ Info: 'Kosong' }]), 'Permintaan HUB');
 
-      const fileName = `Laporan_Logistik_EDC_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `Laporan_SiPalingLogistik_${new Date().toISOString().slice(0, 10)}.xlsx`;
       XLSX.writeFile(wb, fileName);
-      showCustomAlert('Ekspor Berhasil', `File ${fileName} berhasil diunduh.`);
+      showCustomAlert('Ekspor Berhasil', `Laporan lengkap berhasil diunduh (${fileName}).`);
     }
 
     // ================= INITIAL LOAD =================
