@@ -295,37 +295,40 @@
     <!-- =================================================================== -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
 
-      <!-- TAB 0: BERANDA (SEMUA ROLE: TEKNISI, TEAM LEADER, ADMIN & LOGISTIK) -->
+      <!-- TAB 0: BERANDA (EXECUTIVE BENTO GRID) -->
       <section id="tab-home" class="hidden space-y-5">
-        <div class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-xs">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-2">
-                <i id="greetingTimeIcon" class="fa-solid fa-sun text-amber-500"></i>
+        <!-- Bento Top Row: Hero Greeting (Left) + 2x2 Operational KPIs (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          <div class="lg:col-span-7 bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 text-white rounded-3xl p-5 sm:p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
+            <div class="relative z-10">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white text-xs font-bold mb-2.5">
+                <i id="greetingTimeIcon" class="fa-solid fa-sun text-amber-300"></i>
                 <span id="greetingDateBadge">Kamis, 12 November 2026</span>
               </div>
-              <h2 id="greetingHeadline" class="text-xl sm:text-2xl font-extrabold text-slate-900">Selamat Siang!</h2>
-              <p id="greetingSubInfo" class="text-slate-500 text-xs mt-1 font-medium">Service Point: 01 Cirebon • User ID: -</p>
+              <h2 id="greetingHeadline" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Selamat Siang!</h2>
+              <p id="greetingSubInfo" class="text-blue-100 text-xs mt-1 font-medium">Service Point: 01 Cirebon • User ID: -</p>
             </div>
-          </div>
 
-          <div class="mt-4 p-4 rounded-2xl bg-blue-50/70 border border-blue-100">
-            <div class="flex items-start gap-3">
-              <i class="fa-solid fa-quote-left text-blue-500 text-base mt-0.5"></i>
-              <div>
-                <p id="dailyMotivationQuote" class="text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
-                  "Ketelitian di lapangan adalah kunci kepuasan merchant. Tetap jaga keselamatan kerja dan semangat melayani!"
-                </p>
-                <p id="greetingQuoteFooter" class="text-[10px] text-blue-600 mt-1 font-bold uppercase tracking-wider">— Semangat Tim Operasional</p>
+            <div class="relative z-10 mt-4 p-3.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-xs">
+              <div class="flex items-start gap-2.5">
+                <i class="fa-solid fa-quote-left text-blue-200 text-sm mt-0.5 shrink-0"></i>
+                <div>
+                  <p id="dailyMotivationQuote" class="text-xs sm:text-[13px] font-medium text-white/95 leading-relaxed">
+                    "Ketelitian di lapangan adalah kunci kepuasan merchant. Tetap jaga keselamatan kerja dan semangat melayani!"
+                  </p>
+                  <p id="greetingQuoteFooter" class="text-[10px] text-blue-200 mt-1 font-bold uppercase tracking-wider">— Semangat Tim Operasional</p>
+                </div>
               </div>
             </div>
           </div>
+
+          <div id="tekHomeStatsGrid" class="lg:col-span-5 grid grid-cols-2 gap-3 h-full"></div>
         </div>
 
-        <div id="tekHomeStatsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"></div>
+        <!-- Bento Middle Row: Dashboard Movement SN EDC -->
+        <div id="homeMovementDashboard" class="hidden"></div>
 
-        <div id="homeMovementDashboard" class="hidden space-y-2.5"></div>
-
+        <!-- Bento Bottom Row: Pintasan Operasional -->
         <div>
           <h3 id="homeQuickMenuTitle" class="text-sm font-extrabold text-slate-800 mb-3">Menu Operasional</h3>
           <div id="tekHomeMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
@@ -1900,7 +1903,8 @@
           </label>
           <select id="mov-dm-category-select" onchange="renderMovementDropdownManagerList()" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
             <option value="spkIn">Jenis SPK — In (Masuk)</option>
-            <option value="spkOut">Jenis SPK — Out (Keluar)</option>
+            <option value="spkOutSpk">Jenis SPK — Out to SPK</option>
+            <option value="spkOut">Jenis SPK — Out to Others</option>
             <option value="itemTypes">Jenis Barang</option>
             <option value="servicePoints">Service Point</option>
             <option value="technicians">Teknisi</option>
@@ -2340,6 +2344,7 @@
 
     const DEFAULT_MOVEMENT_DROPDOWNS = {
       spkIn: ['Kiriman WH Pusat', 'Kiriman HUB lain', 'Hasil Tarikan Teknisi'],
+      spkOutSpk: ['Instal', 'Replenishment', 'CM / Maintenance', 'Buffer'],
       spkOut: ['Return to HO', 'Kirim ke HUB', 'Kirim ke SP Lain'],
       itemTypes: ['EDC BNI 4G', 'EDC BNI 3G'],
       servicePoints: ['01 Cirebon', 'Kuningan', 'Majalengka', 'Indramayu', 'Karawang', 'Cilamaya', 'Bekasi'],
@@ -2352,6 +2357,7 @@
       const saved = loadLocal('spl_movement_dropdowns', DEFAULT_MOVEMENT_DROPDOWNS);
       return {
         spkIn: Array.isArray(saved.spkIn) && saved.spkIn.length ? saved.spkIn : [...DEFAULT_MOVEMENT_DROPDOWNS.spkIn],
+        spkOutSpk: Array.isArray(saved.spkOutSpk) && saved.spkOutSpk.length ? saved.spkOutSpk : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOutSpk],
         spkOut: Array.isArray(saved.spkOut) && saved.spkOut.length ? saved.spkOut : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOut],
         itemTypes: Array.isArray(saved.itemTypes) && saved.itemTypes.length ? saved.itemTypes : [...DEFAULT_MOVEMENT_DROPDOWNS.itemTypes],
         servicePoints: Array.isArray(saved.servicePoints) && saved.servicePoints.length ? saved.servicePoints : [...DEFAULT_MOVEMENT_DROPDOWNS.servicePoints],
@@ -2713,6 +2719,7 @@
             if (val && typeof val === 'object') {
               movementDropdownConfig = {
                 spkIn: Array.isArray(val.spkIn) && val.spkIn.length ? val.spkIn : [...DEFAULT_MOVEMENT_DROPDOWNS.spkIn],
+                spkOutSpk: Array.isArray(val.spkOutSpk) && val.spkOutSpk.length ? val.spkOutSpk : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOutSpk],
                 spkOut: Array.isArray(val.spkOut) && val.spkOut.length ? val.spkOut : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOut],
                 itemTypes: Array.isArray(val.itemTypes) && val.itemTypes.length ? val.itemTypes : [...DEFAULT_MOVEMENT_DROPDOWNS.itemTypes],
                 servicePoints: Array.isArray(val.servicePoints) && val.servicePoints.length ? val.servicePoints : [...DEFAULT_MOVEMENT_DROPDOWNS.servicePoints],
@@ -6113,9 +6120,9 @@
     }
 
     function syncMovementDropdownUI() {
-      const currentInputType = document.querySelector('input[name="mov-input-type"]:checked')?.value || 'Out';
+      const inputSpkKey = getMovementSpkCategoryKey('input');
       const prevInputSpk = document.getElementById('mov-input-spk')?.value;
-      populateMovementSelectOptions('mov-input-spk', currentInputType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut, prevInputSpk);
+      populateMovementSelectOptions('mov-input-spk', movementDropdownConfig[inputSpkKey] || movementDropdownConfig.spkIn, prevInputSpk);
       populateMovementSelectOptions('mov-input-item-type', movementDropdownConfig.itemTypes, document.getElementById('mov-input-item-type')?.value);
       populateMovementSelectOptions('mov-input-sp', movementDropdownConfig.servicePoints, document.getElementById('mov-input-sp')?.value);
       populateMovementSelectOptions('mov-input-tech', movementDropdownConfig.technicians, document.getElementById('mov-input-tech')?.value);
@@ -6125,8 +6132,8 @@
       populateMovementSelectOptions('mov-outspk-tech', movementDropdownConfig.technicians, document.getElementById('mov-outspk-tech')?.value);
       populateMovementSelectOptions('mov-outspk-status', movementDropdownConfig.statuses, document.getElementById('mov-outspk-status')?.value || 'At Merchant');
 
-      const currentEditType = document.querySelector('input[name="mov-edit-type"]:checked')?.value || 'Out';
-      populateMovementSelectOptions('mov-edit-spk', currentEditType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut, document.getElementById('mov-edit-spk')?.value);
+      const editSpkKey = getMovementSpkCategoryKey('edit');
+      populateMovementSelectOptions('mov-edit-spk', movementDropdownConfig[editSpkKey] || movementDropdownConfig.spkOut, document.getElementById('mov-edit-spk')?.value);
       populateMovementSelectOptions('mov-edit-item-type', movementDropdownConfig.itemTypes, document.getElementById('mov-edit-item-type')?.value);
       populateMovementSelectOptions('mov-edit-sp', movementDropdownConfig.servicePoints, document.getElementById('mov-edit-sp')?.value);
       populateMovementSelectOptions('mov-edit-tech', movementDropdownConfig.technicians, document.getElementById('mov-edit-tech')?.value);
@@ -6161,20 +6168,19 @@
     }
 
     function getMovementSpkCategoryKey(prefix) {
-      const typeVal = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
-      return typeVal === 'In' ? 'spkIn' : 'spkOut';
+      const typeVal = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'In';
+      if (typeVal === 'In') return 'spkIn';
+      if (typeVal === 'OutSpk') return 'spkOutSpk';
+      return 'spkOut';
     }
 
     const selectedOutMovementIds = new Set();
 
-    const OUT_SPK_OPTIONS = ['Instal', 'Replenishment', 'CM / Maintenance', 'Buffer'];
-
     function onMovementFormTypeChange(prefix) {
-      const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
-      const options = selectedType === 'In'
-        ? movementDropdownConfig.spkIn
-        : (selectedType === 'OutSpk' ? OUT_SPK_OPTIONS : movementDropdownConfig.spkOut);
-      populateMovementSelectOptions(`mov-${prefix}-spk`, options);
+      const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'In';
+      const spkKey = getMovementSpkCategoryKey(prefix);
+      const options = movementDropdownConfig[spkKey] || [];
+      populateMovementSelectOptions(`mov-${prefix}-spk`, options, document.getElementById(`mov-${prefix}-spk`)?.value);
 
       if (prefix === 'input') {
         const inWrapper = document.getElementById('mov-in-fields-wrapper');
@@ -7266,34 +7272,44 @@
       }
       container.classList.remove('hidden');
       const breakdown = getMovementStatusBreakdown();
+      const totalCols = Math.min(Math.max(breakdown.length + 1, 2), 6);
+      const lgColsClass = {
+        2: 'lg:grid-cols-2',
+        3: 'lg:grid-cols-3',
+        4: 'lg:grid-cols-4',
+        5: 'lg:grid-cols-5',
+        6: 'lg:grid-cols-6'
+      }[totalCols] || 'lg:grid-cols-6';
       container.innerHTML = `
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
-          <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
-            Buka Movement &rarr;
-          </button>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-indigo-300 transition flex items-center justify-between col-span-2 sm:col-span-1">
-            <div>
-              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">TOTAL LOG SN</p>
-              <p class="text-2xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-layer-group"></i>
-            </div>
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
+            <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
+              Buka Movement &rarr;
+            </button>
           </div>
-          ${breakdown.map(item => `
-            <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-indigo-300 transition flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <p class="text-[10px] sm:text-xs font-bold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
-                <p class="text-2xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 ${lgColsClass} gap-2.5 sm:gap-3">
+            <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-slate-50/80 hover:bg-indigo-50/50 p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL LOG SN</p>
+                <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
               </div>
-              <div class="w-10 h-10 rounded-xl ${item.theme.box} flex items-center justify-center shrink-0">
-                <i class="fa-solid ${item.theme.icon}"></i>
+              <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-layer-group text-sm"></i>
               </div>
             </div>
-          `).join('')}
+            ${breakdown.map(item => `
+              <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
+                <div class="min-w-0 pr-2">
+                  <p class="text-[10px] font-bold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
+                  <p class="text-xl sm:text-2xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
+                </div>
+                <div class="w-9 h-9 rounded-xl ${item.theme.box} flex items-center justify-center shrink-0">
+                  <i class="fa-solid ${item.theme.icon} text-sm"></i>
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       `;
     }
