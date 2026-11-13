@@ -877,7 +877,7 @@
               </button>
               <button type="button" id="mov-tab-btn-excel" onclick="switchMovementInputTab('excel')" role="tab" aria-selected="false" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 -mb-px transition">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                <span>Upload Excel (.xlsx)</span>
+                <span>Upload Data</span>
                 <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Bulk</span>
               </button>
               <button type="button" id="mov-tab-btn-bast" onclick="switchMovementInputTab('bast')" role="tab" aria-selected="false" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 -mb-px transition">
@@ -899,24 +899,31 @@
           <div id="mov-tab-panel-single" class="p-5 sm:p-6">
             <form id="mov-movement-form" onsubmit="handleAddMovement(event)" class="space-y-5">
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                <!-- 1. Tipe Movement: In / Out -->
+                <!-- 1. Tipe Movement: In / Out to SPK / Out to Others -->
                 <div>
                   <label class="block text-xs font-semibold text-slate-700 mb-1.5">
                     Tipe Movement <span class="text-rose-500">*</span>
                   </label>
-                  <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/90">
+                  <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200/90">
                     <label class="cursor-pointer">
                       <input type="radio" name="mov-input-type" value="In" checked onchange="onMovementFormTypeChange('input')" class="peer sr-only">
-                      <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-xs transition">
-                        <i class="fa-solid fa-arrow-down-left text-xs"></i>
+                      <div class="flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-xs transition whitespace-nowrap">
+                        <i class="fa-solid fa-arrow-down-left text-[10px]"></i>
                         <span>In (Masuk)</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
+                      <input type="radio" name="mov-input-type" value="OutSpk" onchange="onMovementFormTypeChange('input')" class="peer sr-only">
+                      <div class="flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-bold text-slate-600 peer-checked:bg-sky-600 peer-checked:text-white peer-checked:shadow-xs transition whitespace-nowrap">
+                        <i class="fa-solid fa-store text-[10px]"></i>
+                        <span>Out to SPK</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
                       <input type="radio" name="mov-input-type" value="Out" onchange="onMovementFormTypeChange('input')" class="peer sr-only">
-                      <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:shadow-xs transition">
-                        <i class="fa-solid fa-arrow-up-right text-xs"></i>
-                        <span>Out (Keluar)</span>
+                      <div class="flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-bold text-slate-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:shadow-xs transition whitespace-nowrap">
+                        <i class="fa-solid fa-arrow-up-right text-[10px]"></i>
+                        <span>Out to Others</span>
                       </div>
                     </label>
                   </div>
@@ -1027,7 +1034,64 @@
                   </div>
                 </div>
 
-                <!-- FIELD KHUSUS OUT (KELUAR -> TAKEOUT SN & BUAT BAST) -->
+                <!-- FIELD KHUSUS OUT TO SPK (UPDATE SN -> MERCHANT) -->
+                <div id="mov-out-spk-fields-wrapper" class="hidden contents">
+                  <!-- Pilih SN EDC dari Data Movement -->
+                  <div class="sm:col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label for="mov-outspk-sn-id" class="text-xs font-semibold text-slate-700">
+                        Pilih SN EDC (Movement) <span class="text-rose-500">*</span>
+                      </label>
+                      <input type="text" id="mov-outspk-sn-search" oninput="renderMovementOutSpkSnOptions()" placeholder="Filter SN..."
+                        class="w-28 px-2 py-0.5 bg-slate-50 border border-slate-300 rounded-lg text-[11px] focus:outline-none focus:ring-1 focus:ring-sky-500" />
+                    </div>
+                    <select id="mov-outspk-sn-id" data-outspk-req="1" onchange="onOutSpkSnSelectChange()" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-mono-code font-medium text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition"></select>
+                  </div>
+
+                  <!-- TID -->
+                  <div>
+                    <label for="mov-outspk-tid" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      TID <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="mov-outspk-tid" data-outspk-req="1" maxlength="16" placeholder="Contoh: 71029384"
+                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition" />
+                  </div>
+
+                  <!-- Nama Agen / Merchant -->
+                  <div>
+                    <label for="mov-outspk-agent" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Nama Agen / Merchant <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="mov-outspk-agent" data-outspk-req="1" placeholder="Contoh: Agen Sumber Rezeki"
+                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition" />
+                  </div>
+
+                  <!-- Service Point -->
+                  <div>
+                    <label for="mov-outspk-sp" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Service Point <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="mov-outspk-sp" data-outspk-req="1" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition"></select>
+                  </div>
+
+                  <!-- Teknisi -->
+                  <div>
+                    <label for="mov-outspk-tech" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Teknisi <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="mov-outspk-tech" data-outspk-req="1" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition"></select>
+                  </div>
+
+                  <!-- Status EDC -->
+                  <div>
+                    <label for="mov-outspk-status" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Status EDC <span class="text-rose-500">*</span>
+                    </label>
+                    <select id="mov-outspk-status" data-outspk-req="1" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition"></select>
+                  </div>
+                </div>
+
+                <!-- FIELD KHUSUS OUT TO OTHERS (KELUAR -> TAKEOUT SN & BUAT BAST) -->
                 <div id="mov-out-fields-wrapper" class="hidden contents">
                   <!-- Tujuan Kirim -->
                   <div>
@@ -5921,6 +5985,10 @@
       populateMovementSelectOptions('mov-input-tech', movementDropdownConfig.technicians, document.getElementById('mov-input-tech')?.value);
       populateMovementSelectOptions('mov-input-status', movementDropdownConfig.statuses, document.getElementById('mov-input-status')?.value);
 
+      populateMovementSelectOptions('mov-outspk-sp', movementDropdownConfig.servicePoints, document.getElementById('mov-outspk-sp')?.value);
+      populateMovementSelectOptions('mov-outspk-tech', movementDropdownConfig.technicians, document.getElementById('mov-outspk-tech')?.value);
+      populateMovementSelectOptions('mov-outspk-status', movementDropdownConfig.statuses, document.getElementById('mov-outspk-status')?.value || 'At Merchant');
+
       const currentEditType = document.querySelector('input[name="mov-edit-type"]:checked')?.value || 'Out';
       populateMovementSelectOptions('mov-edit-spk', currentEditType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut, document.getElementById('mov-edit-spk')?.value);
       populateMovementSelectOptions('mov-edit-item-type', movementDropdownConfig.itemTypes, document.getElementById('mov-edit-item-type')?.value);
@@ -5963,23 +6031,36 @@
 
     const selectedOutMovementIds = new Set();
 
+    const OUT_SPK_OPTIONS = ['Instal', 'Replenishment', 'CM / Maintenance', 'Buffer'];
+
     function onMovementFormTypeChange(prefix) {
       const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
-      const options = selectedType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut;
+      const options = selectedType === 'In'
+        ? movementDropdownConfig.spkIn
+        : (selectedType === 'OutSpk' ? OUT_SPK_OPTIONS : movementDropdownConfig.spkOut);
       populateMovementSelectOptions(`mov-${prefix}-spk`, options);
 
       if (prefix === 'input') {
         const inWrapper = document.getElementById('mov-in-fields-wrapper');
+        const outSpkWrapper = document.getElementById('mov-out-spk-fields-wrapper');
         const outWrapper = document.getElementById('mov-out-fields-wrapper');
         const submitLabel = document.getElementById('mov-submit-btn-label');
         const outDestEl = document.getElementById('mov-out-destination');
         const outDateEl = document.getElementById('mov-out-date');
+        const isIn = selectedType === 'In';
+        const isOutSpk = selectedType === 'OutSpk';
         const isOut = selectedType === 'Out';
 
         if (inWrapper) {
-          inWrapper.classList.toggle('hidden', isOut);
+          inWrapper.classList.toggle('hidden', !isIn);
           inWrapper.querySelectorAll('[data-in-req="1"]').forEach(el => {
-            el.required = !isOut;
+            el.required = isIn;
+          });
+        }
+        if (outSpkWrapper) {
+          outSpkWrapper.classList.toggle('hidden', !isOutSpk);
+          outSpkWrapper.querySelectorAll('[data-outspk-req="1"]').forEach(el => {
+            el.required = isOutSpk;
           });
         }
         if (outWrapper) {
@@ -5993,7 +6074,12 @@
           }
         }
         if (submitLabel) {
-          submitLabel.textContent = isOut ? 'Buat BAST & Keluarkan SN' : 'Simpan Movement';
+          submitLabel.textContent = isOutSpk
+            ? 'Update SN ke SPK'
+            : (isOut ? 'Buat BAST & Keluarkan SN' : 'Simpan Movement');
+        }
+        if (isOutSpk) {
+          renderMovementOutSpkSnOptions();
         }
         if (isOut) {
           renderMovementOutSnChecklist();
@@ -6001,6 +6087,53 @@
       }
 
       onMovementFormSpkChange(prefix);
+    }
+
+    function renderMovementOutSpkSnOptions() {
+      const selectEl = document.getElementById('mov-outspk-sn-id');
+      if (!selectEl) return;
+      const prevVal = selectEl.value;
+      const query = (document.getElementById('mov-outspk-sn-search')?.value || '').trim().toLowerCase();
+      const filtered = movementLogs.filter(item => {
+        if (!query) return true;
+        return (
+          String(item.sn || '').toLowerCase().includes(query) ||
+          String(item.itemType || '').toLowerCase().includes(query) ||
+          String(item.status || '').toLowerCase().includes(query)
+        );
+      });
+
+      if (filtered.length === 0) {
+        selectEl.innerHTML = `<option value="">-- Tidak ada SN tersedia --</option>`;
+        return;
+      }
+      selectEl.innerHTML = `<option value="">-- Pilih SN EDC (${filtered.length}) --</option>` +
+        filtered.map(item => {
+          const sel = item.id === prevVal ? 'selected' : '';
+          return `<option value="${escapeHtml(item.id)}" ${sel}>${escapeHtml(item.sn)} • ${escapeHtml(item.itemType || 'EDC')} (${escapeHtml(item.status || '-')})</option>`;
+        }).join('');
+    }
+
+    function onOutSpkSnSelectChange() {
+      const selectedId = document.getElementById('mov-outspk-sn-id')?.value;
+      const item = movementLogs.find(m => m.id === selectedId);
+      if (!item) return;
+
+      const tidEl = document.getElementById('mov-outspk-tid');
+      const spEl = document.getElementById('mov-outspk-sp');
+      const techEl = document.getElementById('mov-outspk-tech');
+      const statusEl = document.getElementById('mov-outspk-status');
+
+      if (tidEl && item.tid && item.tid !== '-') tidEl.value = item.tid;
+      if (spEl && item.servicePoint && movementDropdownConfig.servicePoints.includes(item.servicePoint)) {
+        spEl.value = item.servicePoint;
+      }
+      if (techEl && item.technician && movementDropdownConfig.technicians.includes(item.technician)) {
+        techEl.value = item.technician;
+      }
+      if (statusEl && movementDropdownConfig.statuses.includes('At Merchant')) {
+        statusEl.value = 'At Merchant';
+      }
     }
 
     function onMovementFormSpkChange(prefix) {
@@ -6056,6 +6189,8 @@
       selectedOutMovementIds.clear();
       const searchOutEl = document.getElementById('mov-out-sn-search');
       if (searchOutEl) searchOutEl.value = '';
+      const searchOutSpkEl = document.getElementById('mov-outspk-sn-search');
+      if (searchOutSpkEl) searchOutSpkEl.value = '';
       const inRadio = document.querySelector('input[name="mov-input-type"][value="In"]');
       if (inRadio) inRadio.checked = true;
       syncMovementDropdownUI();
@@ -6066,6 +6201,50 @@
       event.preventDefault();
       const type = document.querySelector('input[name="mov-input-type"]:checked')?.value || 'In';
       const spk = document.getElementById('mov-input-spk').value;
+
+      if (type === 'OutSpk') {
+        const selectedId = document.getElementById('mov-outspk-sn-id')?.value;
+        const tid = document.getElementById('mov-outspk-tid')?.value.trim() || '-';
+        const agentName = document.getElementById('mov-outspk-agent')?.value.trim();
+        const servicePoint = document.getElementById('mov-outspk-sp')?.value;
+        const technician = document.getElementById('mov-outspk-tech')?.value;
+        const status = document.getElementById('mov-outspk-status')?.value || 'At Merchant';
+
+        if (!selectedId || !agentName) {
+          showMovementToast('Pilih SN EDC dan isi Nama Agen / Merchant.', 'error');
+          return;
+        }
+        const targetIdx = movementLogs.findIndex(item => item.id === selectedId);
+        if (targetIdx === -1) {
+          showMovementToast('SN EDC tidak ditemukan di data Movement.', 'error');
+          return;
+        }
+
+        const target = movementLogs[targetIdx];
+        movementLogs[targetIdx] = {
+          ...target,
+          type: 'Out',
+          spk,
+          tid,
+          agentName,
+          servicePoint,
+          technician,
+          status,
+          timestamp: formatTimestampNow()
+        };
+
+        document.getElementById('mov-outspk-tid').value = '';
+        document.getElementById('mov-outspk-agent').value = '';
+        const searchOutSpkEl = document.getElementById('mov-outspk-sn-search');
+        if (searchOutSpkEl) searchOutSpkEl.value = '';
+
+        syncToCloud('app_movement_edc', movementLogs);
+        syncMovementToWarehouseStock(true);
+        refreshAllActiveViews();
+        renderMovementOutSpkSnOptions();
+        showMovementToast(`SN ${target.sn} (${spk}) diperbarui ke ${agentName} [${status}].`, 'success');
+        return;
+      }
 
       if (type === 'Out') {
         const tujuanKirim = document.getElementById('mov-out-destination').value.trim();
