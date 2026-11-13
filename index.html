@@ -80,8 +80,9 @@
     }
     @media print {
       body * { visibility: hidden; }
-      #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
-      #receiptPrintArea {
+      #receiptPrintArea, #receiptPrintArea *,
+      #bastPrintArea, #bastPrintArea * { visibility: visible; }
+      #receiptPrintArea, #bastPrintArea {
         position: fixed;
         left: 0;
         top: 0;
@@ -900,16 +901,16 @@
                   </label>
                   <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/90">
                     <label class="cursor-pointer">
-                      <input type="radio" name="mov-input-type" value="In" onchange="onMovementFormTypeChange('input')" class="peer sr-only">
+                      <input type="radio" name="mov-input-type" value="In" checked onchange="onMovementFormTypeChange('input')" class="peer sr-only">
                       <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-xs transition">
-                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i>
+                        <i class="fa-solid fa-arrow-down-left text-xs"></i>
                         <span>In (Masuk)</span>
                       </div>
                     </label>
                     <label class="cursor-pointer">
-                      <input type="radio" name="mov-input-type" value="Out" checked onchange="onMovementFormTypeChange('input')" class="peer sr-only">
+                      <input type="radio" name="mov-input-type" value="Out" onchange="onMovementFormTypeChange('input')" class="peer sr-only">
                       <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:shadow-xs transition">
-                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                        <i class="fa-solid fa-arrow-up-right text-xs"></i>
                         <span>Out (Keluar)</span>
                       </div>
                     </label>
@@ -923,115 +924,157 @@
                       Jenis SPK <span class="text-rose-500">*</span>
                     </label>
                     <button type="button" onclick="openMovementDropdownManagerModal(getMovementSpkCategoryKey('input'))" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <i class="fa-solid fa-pen text-[10px]"></i>
                       <span>Edit Opsi</span>
                     </button>
                   </div>
                   <select id="mov-input-spk" required onchange="onMovementFormSpkChange('input')" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
                 </div>
 
-                <!-- 3. Jenis Barang -->
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <label for="mov-input-item-type" class="text-xs font-semibold text-slate-700">
-                      Jenis Barang <span class="text-rose-500">*</span>
-                    </label>
-                    <button type="button" onclick="openMovementDropdownManagerModal('itemTypes')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i data-lucide="pencil" class="w-3 h-3"></i>
-                      <span>Edit Opsi</span>
-                    </button>
+                <!-- FIELD KHUSUS IN (MASUK) -->
+                <div id="mov-in-fields-wrapper" class="contents">
+                  <!-- 3. Jenis Barang -->
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label for="mov-input-item-type" class="text-xs font-semibold text-slate-700">
+                        Jenis Barang <span class="text-rose-500">*</span>
+                      </label>
+                      <button type="button" onclick="openMovementDropdownManagerModal('itemTypes')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                        <span>Edit Opsi</span>
+                      </button>
+                    </div>
+                    <select id="mov-input-item-type" data-in-req="1" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
                   </div>
-                  <select id="mov-input-item-type" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
-                </div>
 
-                <!-- 4. SN EDC -->
-                <div>
-                  <label for="mov-input-sn" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                    SN EDC <span class="text-rose-500">*</span>
-                  </label>
-                  <input type="text" id="mov-input-sn" required oninput="this.value = this.value.toUpperCase()" placeholder="Contoh: P20098765432" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code uppercase text-slate-900 placeholder:normal-case placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
-                </div>
-
-                <!-- 5. ICCID -->
-                <div>
-                  <label for="mov-input-iccid" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                    ICCID (Nomor Kartu SIM) <span class="text-rose-500">*</span>
-                  </label>
-                  <input type="text" id="mov-input-iccid" required inputmode="numeric" placeholder="Contoh: 8962100045891234567" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
-                </div>
-
-                <!-- 6. TID -->
-                <div>
-                  <label for="mov-input-tid" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                    TID <span class="text-rose-500">*</span>
-                  </label>
-                  <input type="text" id="mov-input-tid" required maxlength="12" placeholder="Contoh: 71029384" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
-                </div>
-
-                <!-- 7. Service Point -->
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <label for="mov-input-sp" class="text-xs font-semibold text-slate-700">
-                      Service Point <span class="text-rose-500">*</span>
+                  <!-- 4. SN EDC -->
+                  <div>
+                    <label for="mov-input-sn" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      SN EDC <span class="text-rose-500">*</span>
                     </label>
-                    <button type="button" onclick="openMovementDropdownManagerModal('servicePoints')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i data-lucide="pencil" class="w-3 h-3"></i>
-                      <span>Edit Opsi</span>
-                    </button>
+                    <input type="text" id="mov-input-sn" data-in-req="1" required oninput="this.value = this.value.toUpperCase()" placeholder="Contoh: P20098765432" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code uppercase text-slate-900 placeholder:normal-case placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
                   </div>
-                  <select id="mov-input-sp" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
-                </div>
 
-                <!-- 8. Nama Agen / Merchant -->
-                <div>
-                  <label for="mov-input-agent" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                    Nama Agen / Merchant / Tujuan <span class="text-rose-500">*</span>
-                  </label>
-                  <input type="text" id="mov-input-agent" required placeholder="Contoh: Agen Sumber Rezeki / WH Pusat" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
-                </div>
-
-                <!-- 9. Teknisi -->
-                <div>
-                  <div class="flex items-center justify-between mb-1.5">
-                    <label for="mov-input-tech" class="text-xs font-semibold text-slate-700">
-                      Teknisi <span class="text-rose-500">*</span>
+                  <!-- 5. ICCID -->
+                  <div>
+                    <label for="mov-input-iccid" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      ICCID (Nomor Kartu SIM) <span class="text-rose-500">*</span>
                     </label>
-                    <button type="button" onclick="openMovementDropdownManagerModal('technicians')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i data-lucide="pencil" class="w-3 h-3"></i>
-                      <span>Edit Opsi</span>
-                    </button>
+                    <input type="text" id="mov-input-iccid" data-in-req="1" required inputmode="numeric" placeholder="Contoh: 8962100045891234567" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
                   </div>
-                  <select id="mov-input-tech" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+
+                  <!-- 6. TID -->
+                  <div>
+                    <label for="mov-input-tid" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      TID <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="mov-input-tid" data-in-req="1" required maxlength="12" placeholder="Contoh: 71029384" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                  </div>
+
+                  <!-- 7. Service Point -->
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label for="mov-input-sp" class="text-xs font-semibold text-slate-700">
+                        Service Point <span class="text-rose-500">*</span>
+                      </label>
+                      <button type="button" onclick="openMovementDropdownManagerModal('servicePoints')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                        <span>Edit Opsi</span>
+                      </button>
+                    </div>
+                    <select id="mov-input-sp" data-in-req="1" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                  </div>
+
+                  <!-- 8. Nama Agen / Merchant -->
+                  <div>
+                    <label for="mov-input-agent" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Nama Agen / Merchant / Tujuan <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="mov-input-agent" data-in-req="1" required placeholder="Contoh: Agen Sumber Rezeki / WH Pusat" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                  </div>
+
+                  <!-- 9. Teknisi -->
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label for="mov-input-tech" class="text-xs font-semibold text-slate-700">
+                        Teknisi <span class="text-rose-500">*</span>
+                      </label>
+                      <button type="button" onclick="openMovementDropdownManagerModal('technicians')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                        <span>Edit Opsi</span>
+                      </button>
+                    </div>
+                    <select id="mov-input-tech" data-in-req="1" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                  </div>
+
+                  <!-- 10. Status EDC -->
+                  <div class="sm:col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <label for="mov-input-status" class="text-xs font-semibold text-slate-700">
+                        Status EDC <span class="text-rose-500">*</span>
+                      </label>
+                      <button type="button" onclick="openMovementDropdownManagerModal('statuses')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                        <span>Edit Opsi</span>
+                      </button>
+                    </div>
+                    <select id="mov-input-status" data-in-req="1" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                  </div>
                 </div>
 
-                <!-- 10. Status EDC -->
-                <div class="sm:col-span-2 lg:col-span-1">
-                  <div class="flex items-center justify-between mb-1.5">
-                    <label for="mov-input-status" class="text-xs font-semibold text-slate-700">
-                      Status EDC <span class="text-rose-500">*</span>
+                <!-- FIELD KHUSUS OUT (KELUAR -> TAKEOUT SN & BUAT BAST) -->
+                <div id="mov-out-fields-wrapper" class="hidden contents">
+                  <!-- Tujuan Kirim -->
+                  <div>
+                    <label for="mov-out-destination" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Tujuan Kirim <span class="text-rose-500">*</span>
                     </label>
-                    <button type="button" onclick="openMovementDropdownManagerModal('statuses')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                      <i data-lucide="pencil" class="w-3 h-3"></i>
-                      <span>Edit Opsi</span>
-                    </button>
+                    <input type="text" id="mov-out-destination" placeholder="Contoh: HO Jakarta / HUB Kuningan / SP Bekasi"
+                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition" />
                   </div>
-                  <select id="mov-input-status" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+
+                  <!-- Tanggal Kirim -->
+                  <div>
+                    <label for="mov-out-date" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Tanggal Kirim <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="date" id="mov-out-date"
+                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition" />
+                  </div>
+
+                  <!-- Pilih SN EDC yang Dikeluarkan -->
+                  <div class="sm:col-span-2 lg:col-span-3 bg-slate-50 rounded-2xl border border-slate-200/90 p-4 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <p class="text-xs font-bold text-slate-800">
+                          Pilih SN EDC yang Akan Dikeluarkan (Takeout dari Movement) <span class="text-rose-500">*</span>
+                        </p>
+                        <p class="text-[11px] text-slate-500">SN yang dipilih akan dikeluarkan dari data Movement dan dicetak ke dalam dokumen BAST.</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span id="mov-out-selected-count" class="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-bold">0 SN dipilih</span>
+                        <input type="text" id="mov-out-sn-search" oninput="renderMovementOutSnChecklist()" placeholder="Cari SN / Status..."
+                          class="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                      </div>
+                    </div>
+                    <div id="mov-out-sn-list" class="max-h-56 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+                  </div>
                 </div>
               </div>
 
               <!-- Action Buttons -->
               <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p class="text-xs text-slate-400">
-                  <i data-lucide="clock" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>
+                <p id="mov-form-footer-note" class="text-xs text-slate-400">
+                  <i class="fa-regular fa-clock mr-1 text-slate-400"></i>
                   Timestamp transaksi dicatat otomatis di latar belakang saat data disimpan.
                 </p>
                 <div class="flex items-center justify-end gap-2.5">
                   <button type="button" onclick="resetMovementInputForm()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
                     Reset Form
                   </button>
-                  <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-sm shadow-indigo-600/20 transition">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    <span>Simpan Movement</span>
+                  <button type="submit" id="mov-submit-btn" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-sm shadow-indigo-600/20 transition">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i>
+                    <span id="mov-submit-btn-label">Simpan Movement</span>
                   </button>
                 </div>
               </div>
@@ -1177,10 +1220,35 @@
 
           <div id="mov-empty-state" class="hidden py-14 px-4 text-center">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-              <i data-lucide="folder-open" class="w-6 h-6"></i>
+              <i class="fa-regular fa-folder-open text-xl"></i>
             </div>
             <h4 class="font-bold text-slate-800">Belum ada data movement yang sesuai</h4>
             <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Ubah kata kunci pencarian/filter atau tambahkan log baru melalui Input Satuan maupun Upload Excel.</p>
+          </div>
+        </div>
+
+        <!-- RIWAYAT BAST PENGELUARAN UNIT (OUT) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900">Riwayat BAST Pengeluaran Unit (Out)</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Arsip Berita Acara Serah Terima (Return to HO, Kirim ke HUB, Kirim ke SP Lain) sampai dilakukan Reset Bulanan.</p>
+            </div>
+            <span id="mov-bast-count-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">0 BAST</span>
+          </div>
+          <div class="overflow-x-auto max-w-full">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">No. BAST &amp; Tanggal Kirim</th>
+                  <th class="py-3 px-4">Jenis SPK &amp; Tujuan</th>
+                  <th class="py-3 px-4">Unit / SN EDC</th>
+                  <th class="py-3 px-4">Dibuat Oleh</th>
+                  <th class="py-3 px-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="mov-bast-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -1921,6 +1989,135 @@
     </div>
   </div>
 
+  <!-- 15. MODAL BAST PENGELUARAN UNIT (PRINTABLE) -->
+  <div id="bastModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeBastModal()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop max-h-[92vh] flex flex-col">
+      <div id="bastPrintArea" class="p-6 sm:p-8 overflow-y-auto space-y-5 text-xs text-slate-800">
+        <div class="border-b-2 border-slate-800 pb-4 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-indigo-600">SI PALING LOGISTIK</p>
+            <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">BERITA ACARA SERAH TERIMA (BAST)</h3>
+            <p class="text-[11px] text-slate-500">Pengeluaran Perangkat EDC Lapangan</p>
+          </div>
+          <div class="text-right">
+            <p id="bastDocNo" class="font-mono font-extrabold text-sm text-indigo-700">BAST-000000</p>
+            <p id="bastDocCreatedAt" class="text-[11px] text-slate-500 mt-0.5">-</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+          <div><span class="text-slate-500">Jenis SPK:</span> <strong id="bastDocSpk" class="text-slate-900">-</strong></div>
+          <div><span class="text-slate-500">Tanggal Kirim:</span> <strong id="bastDocDate" class="text-slate-900">-</strong></div>
+          <div><span class="text-slate-500">Asal SP:</span> <strong id="bastDocOrigin" class="text-slate-900">-</strong></div>
+          <div><span class="text-slate-500">Tujuan Kirim:</span> <strong id="bastDocDest" class="text-slate-900">-</strong></div>
+        </div>
+
+        <div>
+          <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Daftar Perangkat yang Diserahkan (<span id="bastDocTotalUnits">0</span> Unit):</p>
+          <table class="w-full text-left border-collapse border border-slate-200 rounded-xl overflow-hidden">
+            <thead>
+              <tr class="bg-slate-100 text-[11px] font-bold text-slate-700 border-b border-slate-200">
+                <th class="p-2.5 w-10 text-center">No</th>
+                <th class="p-2.5">Jenis Barang</th>
+                <th class="p-2.5">SN EDC</th>
+                <th class="p-2.5">ICCID</th>
+                <th class="p-2.5">TID</th>
+              </tr>
+            </thead>
+            <tbody id="bastDocItemsBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6 pt-6 text-center">
+          <div>
+            <p class="text-[11px] text-slate-500 mb-12">Yang Menyerahkan (Logistik / Pengirim),</p>
+            <p id="bastDocCreator" class="font-bold text-slate-900 border-t border-slate-300 pt-1.5 inline-block px-6">-</p>
+          </div>
+          <div>
+            <p class="text-[11px] text-slate-500 mb-12">Penerima / Tujuan,</p>
+            <p class="font-bold text-slate-900 border-t border-slate-300 pt-1.5 inline-block px-6">( ........................................ )</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2 shrink-0">
+        <button type="button" onclick="window.print()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-print"></i>
+          <span>Cetak / Print BAST</span>
+        </button>
+        <button type="button" onclick="closeBastModal()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 16. MODAL RESET BULANAN DENGAN PILIHAN CEKLIS -->
+  <div id="monthlyResetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeMonthlyResetModal()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <form onsubmit="executeMonthlyReset(event)" class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop">
+      <div class="p-5 bg-rose-50/70 border-b border-rose-100 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
+            <i class="fa-solid fa-rotate"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">Reset Data Bulanan</h3>
+            <p class="text-[11px] text-slate-500">Centang data mana saja yang ingin dikosongkan</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMonthlyResetModal()" class="w-8 h-8 rounded-xl bg-white text-slate-500 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-2.5 text-xs">
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+          <input type="checkbox" name="resetTarget" value="checkout" checked class="rounded text-rose-600" />
+          <span class="font-semibold text-slate-800">Riwayat Checkout</span>
+        </label>
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+          <input type="checkbox" name="resetTarget" value="retur" checked class="rounded text-rose-600" />
+          <span class="font-semibold text-slate-800">Riwayat Retur Barang</span>
+        </label>
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+          <input type="checkbox" name="resetTarget" value="profiling" checked class="rounded text-rose-600" />
+          <span class="font-semibold text-slate-800">Riwayat Profiling BNI</span>
+        </label>
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+          <input type="checkbox" name="resetTarget" value="hub" checked class="rounded text-rose-600" />
+          <span class="font-semibold text-slate-800">Riwayat Permintaan HUB</span>
+        </label>
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer">
+          <input type="checkbox" name="resetTarget" value="bast" checked class="rounded text-rose-600" />
+          <span class="font-semibold text-slate-800">Riwayat BAST Pengeluaran (Out)</span>
+        </label>
+        <div class="pt-1 border-t border-slate-100 space-y-2">
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/80 cursor-pointer">
+            <input type="checkbox" name="resetTarget" value="movement" class="rounded text-rose-600" />
+            <div>
+              <span class="font-bold text-slate-800 block">Data Movement SN EDC</span>
+              <span class="text-[10px] text-slate-500">Tidak dicentang default agar data SN tetap aman</span>
+            </div>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-50/50 border border-amber-200/80 cursor-pointer">
+            <input type="checkbox" name="resetTarget" value="stock" class="rounded text-rose-600" />
+            <div>
+              <span class="font-bold text-slate-800 block">Saldo Stok Gudang (Reset ke 0)</span>
+              <span class="text-[10px] text-slate-500">Tidak dicentang default agar stok gudang tetap aman</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+        <button type="button" onclick="closeMonthlyResetModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs">Batal</button>
+        <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-2xs">Reset Data Terpilih</button>
+      </div>
+    </form>
+  </div>
+
   <!-- MOVEMENT TOAST CONTAINER -->
   <div id="mov-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
@@ -2040,13 +2237,14 @@
 
     const DEFAULT_MOVEMENT_DROPDOWNS = {
       spkIn: ['Kiriman WH Pusat', 'Kiriman HUB lain', 'Hasil Tarikan Teknisi'],
-      spkOut: ['Instal', 'Replace', 'Buffer', 'Return to WH', 'Send to HUB'],
+      spkOut: ['Return to HO', 'Kirim ke HUB', 'Kirim ke SP Lain'],
       itemTypes: ['EDC BNI 4G', 'EDC BNI 3G'],
       servicePoints: ['01 Cirebon', 'Kuningan', 'Majalengka', 'Indramayu', 'Karawang', 'Cilamaya', 'Bekasi'],
       technicians: ['Ayief Syuhada', 'Wahyudi', 'Bedul', 'Dayat', 'Kampleng', 'Coach', 'Achmad Kolik'],
       statuses: ['At Merchant', 'Booked', 'Free', 'Damaged']
     };
     let movementLogs = loadLocal('spl_movement', []);
+    let bastHistory = loadLocal('spl_bast', []);
     let movementDropdownConfig = (() => {
       const saved = loadLocal('spl_movement_dropdowns', DEFAULT_MOVEMENT_DROPDOWNS);
       return {
@@ -2232,7 +2430,8 @@
         app_master_dropdown: 'spl_dropdowns',
         app_notifications: 'spl_notifications',
         app_movement_edc: 'spl_movement',
-        app_movement_dropdowns: 'spl_movement_dropdowns'
+        app_movement_dropdowns: 'spl_movement_dropdowns',
+        app_bast_history: 'spl_bast'
       };
       if (localMap[docKey]) {
         saveLocal(localMap[docKey], dataArrayOrObj);
@@ -2394,6 +2593,15 @@
                 statuses: Array.isArray(val.statuses) && val.statuses.length ? val.statuses : [...DEFAULT_MOVEMENT_DROPDOWNS.statuses]
               };
               saveLocal('spl_movement_dropdowns', movementDropdownConfig);
+            }
+          }
+        },
+        {
+          doc: 'app_bast_history',
+          apply: (val) => {
+            if (Array.isArray(val)) {
+              bastHistory = val;
+              saveLocal('spl_bast', val);
             }
           }
         }
@@ -3006,6 +3214,8 @@
           }
           updateMovementKPIs();
           renderMovementTable();
+          renderMovementOutSnChecklist();
+          renderBastHistoryTable();
           break;
       }
     }
@@ -5452,27 +5662,81 @@
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profilingHistory), 'Profiling BNI');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hubRequests), 'Permintaan HUB');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movementLogs), 'Movement SN EDC');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((bastHistory || []).map(b => ({
+        No_BAST: b.bastNo,
+        Jenis_SPK: b.spk,
+        Tujuan_Kirim: b.tujuanKirim,
+        Tanggal_Kirim: b.tanggalKirim,
+        Jumlah_Unit: b.totalUnits,
+        Daftar_SN: (b.items || []).map(i => i.sn).join(', '),
+        Dibuat_Oleh: b.createdBy,
+        Waktu_Catat: b.createdAt
+      }))), 'BAST Out');
 
       XLSX.writeFile(wb, `Laporan_SiPalingLogistik_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
 
     function confirmMonthlyReset() {
-      showCustomConfirm(
-        'Reset Riwayat Bulanan',
-        'Riwayat transaksi Checkout, Retur, Profiling, dan HUB akan dikosongkan untuk periode bulan baru (Stok Gudang & Akun Pengguna tetap aman). Lanjutkan?',
-        () => {
-          checkoutHistory = [];
-          returHistory = [];
-          profilingHistory = [];
-          hubRequests = [];
-          syncToCloud('app_checkout_history', checkoutHistory);
-          syncToCloud('app_retur_history', returHistory);
-          syncToCloud('app_profiling_bni', profilingHistory);
-          syncToCloud('app_hub_requests', hubRequests);
-          refreshAllActiveViews();
-          showCustomAlert('Reset Selesai', 'Riwayat transaksi bulanan berhasil dibersihkan.');
-        }
-      );
+      const modal = document.getElementById('monthlyResetModal');
+      if (!modal) return;
+      modal.querySelectorAll('input[name="resetTarget"]').forEach(cb => {
+        cb.checked = ['checkout', 'retur', 'profiling', 'hub', 'bast'].includes(cb.value);
+      });
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMonthlyResetModal() {
+      document.getElementById('monthlyResetModal')?.classList.add('hidden');
+    }
+
+    function executeMonthlyReset(e) {
+      e.preventDefault();
+      const checked = Array.from(document.querySelectorAll('#monthlyResetModal input[name="resetTarget"]:checked')).map(cb => cb.value);
+      if (checked.length === 0) {
+        showCustomAlert('Pilih Data', 'Silakan pilih minimal 1 jenis data yang ingin direset.');
+        return;
+      }
+      const labels = [];
+      if (checked.includes('checkout')) {
+        checkoutHistory = [];
+        syncToCloud('app_checkout_history', checkoutHistory);
+        labels.push('Checkout Teknisi');
+      }
+      if (checked.includes('retur')) {
+        returHistory = [];
+        syncToCloud('app_retur_history', returHistory);
+        labels.push('Retur EDC');
+      }
+      if (checked.includes('profiling')) {
+        profilingHistory = [];
+        syncToCloud('app_profiling_bni', profilingHistory);
+        labels.push('Profiling BNI');
+      }
+      if (checked.includes('hub')) {
+        hubRequests = [];
+        syncToCloud('app_hub_requests', hubRequests);
+        labels.push('Permintaan HUB');
+      }
+      if (checked.includes('bast')) {
+        bastHistory = [];
+        syncToCloud('app_bast_history', bastHistory);
+        labels.push('Riwayat BAST Out');
+      }
+      if (checked.includes('movement')) {
+        movementLogs = [];
+        selectedOutMovementIds.clear();
+        syncToCloud('app_movement_edc', movementLogs);
+        labels.push('Movement SN EDC');
+      }
+      if (checked.includes('stock')) {
+        warehouseStock = warehouseStock.map(item => ({ ...item, stock: 0 }));
+        syncToCloud('app_stock_cirebon', warehouseStock);
+        labels.push('Stok Gudang');
+      }
+      closeMonthlyResetModal();
+      refreshAllActiveViews();
+      showCustomAlert('Reset Bulanan Selesai', `Data berikut berhasil dibersihkan: ${labels.join(', ')}.`);
     }
 
     function showCustomAlert(title, message) {
@@ -5674,10 +5938,45 @@
       return typeVal === 'In' ? 'spkIn' : 'spkOut';
     }
 
+    const selectedOutMovementIds = new Set();
+
     function onMovementFormTypeChange(prefix) {
       const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
       const options = selectedType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut;
       populateMovementSelectOptions(`mov-${prefix}-spk`, options);
+
+      if (prefix === 'input') {
+        const inWrapper = document.getElementById('mov-in-fields-wrapper');
+        const outWrapper = document.getElementById('mov-out-fields-wrapper');
+        const submitLabel = document.getElementById('mov-submit-btn-label');
+        const outDestEl = document.getElementById('mov-out-destination');
+        const outDateEl = document.getElementById('mov-out-date');
+        const isOut = selectedType === 'Out';
+
+        if (inWrapper) {
+          inWrapper.classList.toggle('hidden', isOut);
+          inWrapper.querySelectorAll('[data-in-req="1"]').forEach(el => {
+            el.required = !isOut;
+          });
+        }
+        if (outWrapper) {
+          outWrapper.classList.toggle('hidden', !isOut);
+        }
+        if (outDestEl) outDestEl.required = isOut;
+        if (outDateEl) {
+          outDateEl.required = isOut;
+          if (isOut && !outDateEl.value) {
+            outDateEl.value = new Date().toISOString().slice(0, 10);
+          }
+        }
+        if (submitLabel) {
+          submitLabel.textContent = isOut ? 'Buat BAST & Keluarkan SN' : 'Simpan Movement';
+        }
+        if (isOut) {
+          renderMovementOutSnChecklist();
+        }
+      }
+
       onMovementFormSpkChange(prefix);
     }
 
@@ -5727,16 +6026,73 @@
     function resetMovementInputForm() {
       const form = document.getElementById('mov-movement-form');
       if (form) form.reset();
-      const outRadio = document.querySelector('input[name="mov-input-type"][value="Out"]');
-      if (outRadio) outRadio.checked = true;
+      selectedOutMovementIds.clear();
+      const searchOutEl = document.getElementById('mov-out-sn-search');
+      if (searchOutEl) searchOutEl.value = '';
+      const inRadio = document.querySelector('input[name="mov-input-type"][value="In"]');
+      if (inRadio) inRadio.checked = true;
       syncMovementDropdownUI();
-      onMovementFormSpkChange('input');
+      onMovementFormTypeChange('input');
     }
 
     function handleAddMovement(event) {
       event.preventDefault();
-      const type = document.querySelector('input[name="mov-input-type"]:checked').value;
+      const type = document.querySelector('input[name="mov-input-type"]:checked')?.value || 'In';
       const spk = document.getElementById('mov-input-spk').value;
+
+      if (type === 'Out') {
+        const tujuanKirim = document.getElementById('mov-out-destination').value.trim();
+        const tanggalKirim = document.getElementById('mov-out-date').value;
+        if (!spk || !tujuanKirim || !tanggalKirim) {
+          showMovementToast('Harap lengkapi Jenis SPK, Tujuan Kirim, dan Tanggal Kirim.', 'error');
+          return;
+        }
+        const selectedItems = movementLogs.filter(item => selectedOutMovementIds.has(item.id));
+        if (selectedItems.length === 0) {
+          showMovementToast('Pilih minimal 1 SN EDC yang akan dikeluarkan.', 'error');
+          return;
+        }
+
+        const dateCompact = tanggalKirim.replace(/-/g, '') || new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const randSuffix = String(Math.floor(1000 + Math.random() * 9000));
+        const bastNo = `BAST-OUT-${dateCompact}-${randSuffix}`;
+
+        const bastEntry = {
+          bastNo,
+          spk,
+          tujuanKirim,
+          tanggalKirim,
+          totalUnits: selectedItems.length,
+          items: selectedItems.map(item => ({
+            id: item.id,
+            itemType: item.itemType,
+            sn: item.sn,
+            iccid: item.iccid || '-',
+            tid: item.tid || '-',
+            servicePoint: item.servicePoint || '-',
+            prevStatus: item.status || '-'
+          })),
+          createdBy: currentUser?.name || 'Logistik',
+          createdAt: formatTimestampNow()
+        };
+
+        bastHistory.unshift(bastEntry);
+        movementLogs = movementLogs.filter(item => !selectedOutMovementIds.has(item.id));
+        selectedOutMovementIds.clear();
+
+        document.getElementById('mov-out-destination').value = '';
+        const searchOutEl = document.getElementById('mov-out-sn-search');
+        if (searchOutEl) searchOutEl.value = '';
+
+        syncToCloud('app_bast_history', bastHistory);
+        syncToCloud('app_movement_edc', movementLogs);
+        syncMovementToWarehouseStock(true);
+        refreshAllActiveViews();
+        showMovementToast(`BAST ${bastNo} dibuat & ${selectedItems.length} SN dikeluarkan dari Movement.`, 'success');
+        openBastModal(bastNo);
+        return;
+      }
+
       const itemType = document.getElementById('mov-input-item-type').value;
       const sn = document.getElementById('mov-input-sn').value.trim().toUpperCase();
       const iccid = document.getElementById('mov-input-iccid').value.trim();
@@ -5774,6 +6130,155 @@
       syncMovementToWarehouseStock(true);
       refreshAllActiveViews();
       showMovementToast(`Movement [${type} • ${itemType}] SN ${sn} berhasil dicatat.`, 'success');
+    }
+
+    function toggleMovementOutSn(id, checked) {
+      if (checked) {
+        selectedOutMovementIds.add(id);
+      } else {
+        selectedOutMovementIds.delete(id);
+      }
+      updateMovementOutSelectedCount();
+    }
+
+    function updateMovementOutSelectedCount() {
+      const badge = document.getElementById('mov-out-selected-count');
+      if (badge) badge.textContent = `${selectedOutMovementIds.size} SN dipilih`;
+    }
+
+    function renderMovementOutSnChecklist() {
+      const container = document.getElementById('mov-out-sn-list');
+      if (!container) return;
+
+      const validIds = new Set(movementLogs.map(m => m.id));
+      for (const id of Array.from(selectedOutMovementIds)) {
+        if (!validIds.has(id)) selectedOutMovementIds.delete(id);
+      }
+      updateMovementOutSelectedCount();
+
+      const query = (document.getElementById('mov-out-sn-search')?.value || '').trim().toLowerCase();
+      const filtered = movementLogs.filter(item => {
+        if (!query) return true;
+        return (
+          (item.sn || '').toLowerCase().includes(query) ||
+          (item.itemType || '').toLowerCase().includes(query) ||
+          (item.iccid || '').toLowerCase().includes(query) ||
+          (item.tid || '').toLowerCase().includes(query)
+        );
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Tidak ada SN EDC yang tersedia di Movement.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const checkedAttr = selectedOutMovementIds.has(item.id) ? 'checked' : '';
+        return `
+          <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 cursor-pointer transition">
+            <input type="checkbox" ${checkedAttr} onchange="toggleMovementOutSn('${item.id}', this.checked)" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-mono-code font-bold text-xs text-slate-900">${escapeHtml(item.sn)}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">${escapeHtml(item.itemType)}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${getMovementStatusPillStyle(item.status)}">${escapeHtml(item.status)}</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5 truncate">
+                ICCID: ${escapeHtml(item.iccid || '-')} • TID: ${escapeHtml(item.tid || '-')} • ${escapeHtml(item.servicePoint || '-')}
+              </div>
+            </div>
+          </label>
+        `;
+      }).join('');
+    }
+
+    function renderBastHistoryTable() {
+      const tbody = document.getElementById('mov-bast-table-body');
+      const countBadge = document.getElementById('mov-bast-count-badge');
+      if (!tbody) return;
+      const list = Array.isArray(bastHistory) ? bastHistory : [];
+      if (countBadge) countBadge.textContent = `${list.length} BAST`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">Belum ada BAST pengeluaran unit (Out).</td></tr>`;
+        return;
+      }
+
+      const isLead = currentUser && currentUser.role === 'Lead';
+      tbody.innerHTML = list.map(b => {
+        const snPreview = (b.items || []).slice(0, 2).map(i => escapeHtml(i.sn)).join(', ');
+        const extraSn = (b.items || []).length > 2 ? ` +${b.items.length - 2} lainnya` : '';
+        return `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="py-3.5 px-5">
+              <div class="font-mono-code font-bold text-indigo-700 text-xs">${escapeHtml(b.bastNo)}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(b.createdAt || '-')}</div>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">${escapeHtml(b.spk)}</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-800 text-xs">${escapeHtml(b.tujuanKirim)}</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Oleh: ${escapeHtml(b.createdBy || '-')}</div>
+            </td>
+            <td class="py-3.5 px-4 text-xs text-slate-700 font-medium">${escapeHtml(b.tanggalKirim)}</td>
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900 text-xs">${b.totalUnits || (b.items || []).length} Unit</div>
+              <div class="font-mono-code text-[11px] text-slate-500 mt-0.5">${snPreview}${extraSn}</div>
+            </td>
+            <td class="py-3.5 px-5 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <button type="button" onclick="openBastModal('${escapeHtml(b.bastNo)}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold transition">
+                  <i class="fa-solid fa-file-lines text-xs"></i> Lihat / Cetak BAST
+                </button>
+                ${isLead ? `<button type="button" onclick="deleteBastEntry('${escapeHtml(b.bastNo)}')" title="Hapus BAST" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition"><i class="fa-solid fa-trash-can text-xs"></i></button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openBastModal(bastNo) {
+      const bast = (bastHistory || []).find(b => b.bastNo === bastNo);
+      if (!bast) return;
+      document.getElementById('bastDocNo').textContent = bast.bastNo;
+      document.getElementById('bastDocCreatedAt').textContent = `Dibuat: ${bast.createdAt || '-'}`;
+      document.getElementById('bastDocSpk').textContent = bast.spk || '-';
+      document.getElementById('bastDocDate').textContent = bast.tanggalKirim || '-';
+      document.getElementById('bastDocOrigin').textContent = 'Logistik Cirebon';
+      document.getElementById('bastDocDest').textContent = bast.tujuanKirim || '-';
+      document.getElementById('bastDocTotalUnits').textContent = `${bast.totalUnits || (bast.items || []).length} Unit`;
+      document.getElementById('bastDocCreator').textContent = bast.createdBy || 'Logistik';
+
+      const itemsBody = document.getElementById('bastDocItemsBody');
+      if (itemsBody) {
+        itemsBody.innerHTML = (bast.items || []).map((item, idx) => `
+          <tr>
+            <td class="py-2 px-3 border-b border-slate-200 text-slate-600">${idx + 1}</td>
+            <td class="py-2 px-3 border-b border-slate-200 font-semibold text-slate-800">${escapeHtml(item.itemType)}</td>
+            <td class="py-2 px-3 border-b border-slate-200 font-mono-code font-bold text-slate-900">${escapeHtml(item.sn)}</td>
+            <td class="py-2 px-3 border-b border-slate-200 font-mono-code text-slate-600">${escapeHtml(item.iccid || '-')}</td>
+            <td class="py-2 px-3 border-b border-slate-200 font-mono-code text-slate-600">${escapeHtml(item.tid || '-')}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('bastModal')?.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeBastModal() {
+      document.getElementById('bastModal')?.classList.add('hidden');
+    }
+
+    function deleteBastEntry(bastNo) {
+      showCustomConfirm('Hapus Riwayat BAST', `Hapus dokumen ${bastNo} dari riwayat BAST?`, () => {
+        bastHistory = bastHistory.filter(b => b.bastNo !== bastNo);
+        syncToCloud('app_bast_history', bastHistory);
+        renderBastHistoryTable();
+        showMovementToast(`Riwayat BAST ${bastNo} dihapus.`, 'info');
+      });
     }
 
     function openMovementDropdownManagerModal(initialCategory = 'spkOut') {
@@ -6428,7 +6933,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       systemUsers = ensureMasterAdminExists(systemUsers);
       syncMovementDropdownUI();
-      onMovementFormSpkChange('input');
+      onMovementFormTypeChange('input');
       syncMovementToWarehouseStock(false);
       initRealtimeCloudListeners();
       restoreUserSession();
