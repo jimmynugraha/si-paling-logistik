@@ -11,13 +11,14 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <!-- Google Fonts: Inter, Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- Font Awesome 6 Icons -->
+  <!-- Font Awesome 6 Icons & Lucide Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- JsBarcode untuk Cetak Barcode Kwitansi -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -47,6 +48,16 @@
     }
     h1, h2, h3, .font-display {
       font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.2s ease-out forwards;
     }
     .no-scrollbar::-webkit-scrollbar {
       display: none;
@@ -775,6 +786,405 @@
         </div>
       </section>
 
+      <!-- TAB 8.5: MOVEMENT SN EDC (tab-movement) -->
+      <section id="tab-movement" class="hidden space-y-6">
+        <!-- Header Halaman & Aksi Cepat -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Movement SN EDC</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Pencatatan keluar masuk SN EDC, TID, ICCID, dan pemantauan status perangkat lapangan secara real-time.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button type="button" onclick="openMovementDropdownManagerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 shadow-2xs transition">
+              <i data-lucide="list-plus" class="w-4 h-4 text-indigo-600"></i>
+              <span>Kelola Pilihan Dropdown</span>
+            </button>
+            <button type="button" onclick="exportMovementToExcel()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span>Export Excel (.xlsx)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Kartu Ringkasan (KPI Cards Full-Width) -->
+        <div aria-label="Ringkasan Status EDC" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Log SN</p>
+              <p id="mov-kpi-total" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">0</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Perangkat tercatat</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">At Merchant</p>
+              <p id="mov-kpi-merchant" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1">0</p>
+              <p class="text-[11px] text-emerald-600/80 mt-0.5">Aktif di agen</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <i data-lucide="store" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Booked</p>
+              <p id="mov-kpi-booked" class="text-2xl sm:text-3xl font-extrabold text-blue-700 mt-1">0</p>
+              <p class="text-[11px] text-blue-600/80 mt-0.5">Alokasi / Kirim</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <i data-lucide="bookmark" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-teal-700 uppercase tracking-wider">Free</p>
+              <p id="mov-kpi-free" class="text-2xl sm:text-3xl font-extrabold text-teal-700 mt-1">0</p>
+              <p class="text-[11px] text-teal-600/80 mt-0.5">Ready di SP</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <i data-lucide="package-open" class="w-5 h-5"></i>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-rose-700 uppercase tracking-wider">Damaged</p>
+              <p id="mov-kpi-damaged" class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-1">0</p>
+              <p class="text-[11px] text-rose-600/80 mt-0.5">Rusak / Tarikan</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL INPUT MOVEMENT (INPUT SATUAN & UPLOAD EXCEL) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div class="bg-slate-50/80 border-b border-slate-200/80 px-4 sm:px-6 pt-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2" role="tablist">
+              <button type="button" id="mov-tab-btn-single" onclick="switchMovementInputTab('single')" role="tab" aria-selected="true" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-t border-x border-slate-200 bg-white text-indigo-600 -mb-px transition">
+                <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+                <span>Input Satuan</span>
+              </button>
+              <button type="button" id="mov-tab-btn-excel" onclick="switchMovementInputTab('excel')" role="tab" aria-selected="false" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 -mb-px transition">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                <span>Upload Excel (.xlsx)</span>
+                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Bulk</span>
+              </button>
+            </div>
+
+            <div id="mov-single-header-actions" class="pb-2 flex items-center gap-2">
+              <button type="button" onclick="openMovementDropdownManagerModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-700 bg-white border border-slate-200 hover:border-indigo-300 px-3 py-1.5 rounded-xl transition">
+                <i data-lucide="pencil-ruler" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Edit Daftar Dropdown</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 1: INPUT SATUAN -->
+          <div id="mov-tab-panel-single" class="p-5 sm:p-6">
+            <form id="mov-movement-form" onsubmit="handleAddMovement(event)" class="space-y-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                <!-- 1. Tipe Movement: In / Out -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Tipe Movement <span class="text-rose-500">*</span>
+                  </label>
+                  <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/90">
+                    <label class="cursor-pointer">
+                      <input type="radio" name="mov-input-type" value="In" onchange="onMovementFormTypeChange('input')" class="peer sr-only">
+                      <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-xs transition">
+                        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i>
+                        <span>In (Masuk)</span>
+                      </div>
+                    </label>
+                    <label class="cursor-pointer">
+                      <input type="radio" name="mov-input-type" value="Out" checked onchange="onMovementFormTypeChange('input')" class="peer sr-only">
+                      <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:shadow-xs transition">
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                        <span>Out (Keluar)</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- 2. Jenis SPK -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="mov-input-spk" class="text-xs font-semibold text-slate-700">
+                      Jenis SPK <span class="text-rose-500">*</span>
+                    </label>
+                    <button type="button" onclick="openMovementDropdownManagerModal(getMovementSpkCategoryKey('input'))" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <span>Edit Opsi</span>
+                    </button>
+                  </div>
+                  <select id="mov-input-spk" required onchange="onMovementFormSpkChange('input')" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                </div>
+
+                <!-- 3. Jenis Barang -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="mov-input-item-type" class="text-xs font-semibold text-slate-700">
+                      Jenis Barang <span class="text-rose-500">*</span>
+                    </label>
+                    <button type="button" onclick="openMovementDropdownManagerModal('itemTypes')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <span>Edit Opsi</span>
+                    </button>
+                  </div>
+                  <select id="mov-input-item-type" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                </div>
+
+                <!-- 4. SN EDC -->
+                <div>
+                  <label for="mov-input-sn" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    SN EDC <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="mov-input-sn" required oninput="this.value = this.value.toUpperCase()" placeholder="Contoh: P20098765432" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code uppercase text-slate-900 placeholder:normal-case placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                </div>
+
+                <!-- 5. ICCID -->
+                <div>
+                  <label for="mov-input-iccid" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    ICCID (Nomor Kartu SIM) <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="mov-input-iccid" required inputmode="numeric" placeholder="Contoh: 8962100045891234567" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                </div>
+
+                <!-- 6. TID -->
+                <div>
+                  <label for="mov-input-tid" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    TID <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="mov-input-tid" required maxlength="12" placeholder="Contoh: 71029384" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 placeholder:font-sans focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                </div>
+
+                <!-- 7. Service Point -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="mov-input-sp" class="text-xs font-semibold text-slate-700">
+                      Service Point <span class="text-rose-500">*</span>
+                    </label>
+                    <button type="button" onclick="openMovementDropdownManagerModal('servicePoints')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <span>Edit Opsi</span>
+                    </button>
+                  </div>
+                  <select id="mov-input-sp" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                </div>
+
+                <!-- 8. Nama Agen / Merchant -->
+                <div>
+                  <label for="mov-input-agent" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Nama Agen / Merchant / Tujuan <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="mov-input-agent" required placeholder="Contoh: Agen Sumber Rezeki / WH Pusat" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                </div>
+
+                <!-- 9. Teknisi -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="mov-input-tech" class="text-xs font-semibold text-slate-700">
+                      Teknisi <span class="text-rose-500">*</span>
+                    </label>
+                    <button type="button" onclick="openMovementDropdownManagerModal('technicians')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <span>Edit Opsi</span>
+                    </button>
+                  </div>
+                  <select id="mov-input-tech" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                </div>
+
+                <!-- 10. Status EDC -->
+                <div class="sm:col-span-2 lg:col-span-1">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="mov-input-status" class="text-xs font-semibold text-slate-700">
+                      Status EDC <span class="text-rose-500">*</span>
+                    </label>
+                    <button type="button" onclick="openMovementDropdownManagerModal('statuses')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <i data-lucide="pencil" class="w-3 h-3"></i>
+                      <span>Edit Opsi</span>
+                    </button>
+                  </div>
+                  <select id="mov-input-status" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition"></select>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p class="text-xs text-slate-400">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 inline mr-1 text-slate-400"></i>
+                  Timestamp transaksi dicatat otomatis di latar belakang saat data disimpan.
+                </p>
+                <div class="flex items-center justify-end gap-2.5">
+                  <button type="button" onclick="resetMovementInputForm()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+                    Reset Form
+                  </button>
+                  <button type="submit" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-sm shadow-indigo-600/20 transition">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Simpan Movement</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2: UPLOAD EXCEL (.XLSX) -->
+          <div id="mov-tab-panel-excel" class="hidden p-5 sm:p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+              <div class="lg:col-span-5 bg-slate-50 rounded-2xl p-5 border border-slate-200/80 flex flex-col justify-between space-y-4">
+                <div>
+                  <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-full mb-2">
+                    Langkah 1
+                  </span>
+                  <h3 class="font-bold text-slate-900 text-base">Unduh Template Excel (.xlsx)</h3>
+                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Template otomatis mengikuti daftar opsi dropdown terbaru (<code class="font-mono-code bg-white px-1 py-0.5 rounded border border-slate-200">In</code> / <code class="font-mono-code bg-white px-1 py-0.5 rounded border border-slate-200">Out</code>, termasuk <strong>Return to WH</strong> &amp; <strong>Send to HUB</strong>).
+                  </p>
+                </div>
+                <div class="pt-2">
+                  <button type="button" onclick="downloadMovementExcelTemplate()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Download Template Excel (.xlsx)</span>
+                  </button>
+                  <p class="text-[11px] text-slate-400 mt-2 text-center">Berisi Sheet <strong>Data_Movement</strong> &amp; Sheet <strong>Panduan_Isi</strong>.</p>
+                </div>
+              </div>
+
+              <div class="lg:col-span-7 flex flex-col">
+                <div id="mov-drop-zone" ondragover="handleMovementDragOver(event)" ondragleave="handleMovementDragLeave(event)" ondrop="handleMovementFileDrop(event)" onclick="document.getElementById('mov-excel-file-input').click()" class="flex-1 border-2 border-dashed border-slate-300 hover:border-indigo-500 bg-slate-50/50 hover:bg-indigo-50/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition">
+                  <input type="file" id="mov-excel-file-input" accept=".xlsx,.xls,.csv" onchange="handleMovementFileSelect(event)" class="hidden">
+                  <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
+                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-200/80 px-2.5 py-0.5 rounded-full mb-1.5">
+                    Langkah 2
+                  </span>
+                  <h4 class="font-bold text-slate-900 text-sm sm:text-base">Seret &amp; lepas file Excel ke sini, atau klik untuk memilih file</h4>
+                  <p class="text-xs text-slate-500 mt-1">Mendukung format <strong>.xlsx</strong>, <strong>.xls</strong>, dan <strong>.csv</strong></p>
+                  <p id="mov-selected-file-name" class="hidden mt-3 text-xs font-semibold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview Hasil Parsing Excel -->
+            <div id="mov-excel-preview-container" class="hidden border border-slate-200 rounded-2xl overflow-hidden bg-white animate-slide-in">
+              <div class="px-4 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm">Pratinjau Validasi Upload Excel</h4>
+                  <p id="mov-excel-preview-summary" class="text-xs text-slate-600 mt-0.5">0 baris valid siap diimpor.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="clearMovementExcelPreview()" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 transition">
+                    Batal
+                  </button>
+                  <button type="button" id="mov-btn-confirm-import" onclick="confirmMovementExcelImport()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    <span id="mov-btn-confirm-import-text">Import Data Valid</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto max-h-72">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-100 text-slate-600 uppercase font-bold sticky top-0">
+                    <tr>
+                      <th class="py-2.5 px-3">Validasi</th>
+                      <th class="py-2.5 px-3">Tipe &amp; SPK</th>
+                      <th class="py-2.5 px-3">Jenis Barang</th>
+                      <th class="py-2.5 px-3">SN EDC &amp; ICCID</th>
+                      <th class="py-2.5 px-3">TID</th>
+                      <th class="py-2.5 px-3">Service Point</th>
+                      <th class="py-2.5 px-3">Nama Agen</th>
+                      <th class="py-2.5 px-3">Teknisi</th>
+                      <th class="py-2.5 px-3">Status EDC</th>
+                    </tr>
+                  </thead>
+                  <tbody id="mov-excel-preview-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOG RIWAYAT MOVEMENT SN EDC -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div>
+              <h3 class="text-lg font-extrabold text-slate-900">Log Riwayat Movement SN EDC</h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Menampilkan <span id="mov-filtered-count" class="font-bold text-slate-800">0</span> dari <span id="mov-total-count-label" class="font-bold text-slate-800">0</span> catatan pergerakan unit lapangan.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 w-full xl:w-auto">
+              <div class="relative sm:col-span-2 lg:w-64">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="mov-filter-search" oninput="renderMovementTable()" placeholder="Cari SN, Barang, TID, Agen..." class="w-full rounded-full border border-slate-200 bg-slate-50/60 focus:bg-white pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+              </div>
+
+              <div>
+                <select id="mov-filter-type" onchange="renderMovementTable()" class="w-full rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-700 focus:border-indigo-500 outline-none transition">
+                  <option value="ALL">Semua Tipe (In &amp; Out)</option>
+                  <option value="In">In (Masuk)</option>
+                  <option value="Out">Out (Keluar)</option>
+                </select>
+              </div>
+
+              <div>
+                <select id="mov-filter-item-type" onchange="renderMovementTable()" class="w-full rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm text-slate-700 focus:border-indigo-500 outline-none transition">
+                  <option value="ALL">Semua Barang</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <select id="mov-filter-status" onchange="renderMovementTable()" class="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 outline-none transition">
+                  <option value="ALL">Semua Status</option>
+                </select>
+
+                <select id="mov-filter-sp" onchange="renderMovementTable()" class="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 outline-none transition">
+                  <option value="ALL">Semua SP</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto lg:overflow-x-visible">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3.5 px-5">Jenis Barang, SN &amp; ICCID</th>
+                  <th class="py-3.5 px-4">Tipe &amp; Jenis SPK</th>
+                  <th class="py-3.5 px-4">TID &amp; Nama Agen / Tujuan</th>
+                  <th class="py-3.5 px-4">Service Point &amp; Teknisi</th>
+                  <th class="py-3.5 px-4">Status EDC</th>
+                  <th class="py-3.5 px-4">Timestamp</th>
+                  <th class="py-3.5 px-5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="mov-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+            </table>
+          </div>
+
+          <div id="mov-empty-state" class="hidden py-14 px-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <i data-lucide="folder-open" class="w-6 h-6"></i>
+            </div>
+            <h4 class="font-bold text-slate-800">Belum ada data movement yang sesuai</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Ubah kata kunci pencarian/filter atau tambahkan log baru melalui Input Satuan maupun Upload Excel.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- TAB 9: MANAGEMENT AKSES & PENGGUNA DENGAN CUSTOM PER-USER PERMISSIONS (tab-users) -->
       <section id="tab-users" class="hidden space-y-6">
         <div>
@@ -846,7 +1256,11 @@
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="newUserPerm" value="profiling" checked class="rounded text-blue-600" />
-                  <span>Profiling BNI</span>
+                  <span>Profiling</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="newUserPerm" value="movement" class="rounded text-blue-600" />
+                  <span>Movement SN EDC</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="newUserPerm" value="scanner" class="rounded text-blue-600" />
@@ -1147,7 +1561,11 @@
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="editUserPerm" value="profiling" class="rounded text-blue-600" />
-              <span>Profiling BNI</span>
+              <span>Profiling</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="editUserPerm" value="movement" class="rounded text-blue-600" />
+              <span>Movement SN EDC</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="editUserPerm" value="scanner" class="rounded text-blue-600" />
@@ -1280,6 +1698,232 @@
     </div>
   </div>
 
+  <!-- 11. MODAL PILIH SN EDC SAAT READY PICKUP (SINKRON MOVEMENT) -->
+  <div id="checkoutSelectSnModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeCheckoutSelectSnModal()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <form onsubmit="handleConfirmCheckoutSnSelection(event)" class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop max-h-[90vh] flex flex-col">
+      <div class="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+            <i class="fa-solid fa-barcode"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-900">Pilih SN EDC dari Data Movement</h3>
+            <p id="checkoutSnModalSubtitle" class="text-[11px] font-mono text-blue-600 font-bold">-</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCheckoutSelectSnModal()" class="w-8 h-8 rounded-xl bg-slate-200/70 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="checkoutSnSelectionContainer" class="p-5 overflow-y-auto space-y-4 text-xs flex-1"></div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+        <button type="button" onclick="closeCheckoutSelectSnModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-xs">Batal</button>
+        <button type="submit" id="checkoutSnConfirmBtn" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-2xs">
+          Konfirmasi &amp; Set Booked
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 12. MODAL MOVEMENT: KELOLA PILIHAN DROPDOWN -->
+  <div id="mov-dropdown-manager-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-slide-in flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <i data-lucide="list-checks" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Kelola Pilihan Dropdown Movement</h3>
+            <p class="text-xs text-slate-500">Tambah, ubah nama, atau hapus opsi pilihan pada form Movement.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMovementDropdownManagerModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5 overflow-y-auto flex-1">
+        <div>
+          <label for="mov-dm-category-select" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            Pilih Kategori Dropdown yang Akan Diedit
+          </label>
+          <select id="mov-dm-category-select" onchange="renderMovementDropdownManagerList()" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+            <option value="spkIn">Jenis SPK — In (Masuk)</option>
+            <option value="spkOut">Jenis SPK — Out (Keluar)</option>
+            <option value="itemTypes">Jenis Barang</option>
+            <option value="servicePoints">Service Point</option>
+            <option value="technicians">Teknisi</option>
+            <option value="statuses">Status EDC</option>
+          </select>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+          <label for="mov-dm-new-item-input" class="block text-xs font-semibold text-slate-700 mb-1.5">
+            Tambah Pilihan Baru ke Kategori Ini
+          </label>
+          <div class="flex gap-2">
+            <input type="text" id="mov-dm-new-item-input" onkeydown="if(event.key==='Enter'){event.preventDefault(); addMovementDropdownOption();}" placeholder="Ketik nama opsi baru..." class="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+            <button type="button" onclick="addMovementDropdownOption()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shrink-0">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Tambah</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Opsi Aktif</span>
+            <span id="mov-dm-item-count" class="text-xs font-semibold text-indigo-600">0 opsi</span>
+          </div>
+          <div id="mov-dm-options-list" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <button type="button" onclick="resetMovementDropdownConfigsToDefault()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Kembalikan Semua ke Default</span>
+        </button>
+        <button type="button" onclick="closeMovementDropdownManagerModal()" class="px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 transition">
+          Selesai &amp; Terapkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. MODAL MOVEMENT: EDIT DATA BARIS TABEL -->
+  <div id="mov-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-slide-in">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Edit Data Movement EDC</h3>
+            <p id="mov-edit-modal-subtitle" class="text-xs text-slate-500">Perbarui detail pencatatan SN EDC</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeMovementEditModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="mov-edit-form" onsubmit="handleSaveMovementEdit(event)" class="p-6 space-y-4">
+        <input type="hidden" id="mov-edit-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tipe Movement <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <label class="cursor-pointer">
+                <input type="radio" name="mov-edit-type" value="In" onchange="onMovementFormTypeChange('edit')" class="peer sr-only">
+                <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white transition">
+                  <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i>
+                  <span>In (Masuk)</span>
+                </div>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="mov-edit-type" value="Out" onchange="onMovementFormTypeChange('edit')" class="peer sr-only">
+                <div class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-indigo-600 peer-checked:text-white transition">
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                  <span>Out (Keluar)</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="mov-edit-spk" class="block text-xs font-semibold text-slate-700 mb-1.5">Jenis SPK <span class="text-rose-500">*</span></label>
+            <select id="mov-edit-spk" required onchange="onMovementFormSpkChange('edit')" class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 outline-none transition"></select>
+          </div>
+
+          <div>
+            <label for="mov-edit-item-type" class="block text-xs font-semibold text-slate-700 mb-1.5">Jenis Barang <span class="text-rose-500">*</span></label>
+            <select id="mov-edit-item-type" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 outline-none transition"></select>
+          </div>
+
+          <div>
+            <label for="mov-edit-sn" class="block text-xs font-semibold text-slate-700 mb-1.5">SN EDC <span class="text-rose-500">*</span></label>
+            <input type="text" id="mov-edit-sn" required oninput="this.value = this.value.toUpperCase()" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code uppercase text-slate-900 focus:border-indigo-500 outline-none transition">
+          </div>
+
+          <div>
+            <label for="mov-edit-iccid" class="block text-xs font-semibold text-slate-700 mb-1.5">ICCID <span class="text-rose-500">*</span></label>
+            <input type="text" id="mov-edit-iccid" required inputmode="numeric" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 focus:border-indigo-500 outline-none transition">
+          </div>
+
+          <div>
+            <label for="mov-edit-tid" class="block text-xs font-semibold text-slate-700 mb-1.5">TID <span class="text-rose-500">*</span></label>
+            <input type="text" id="mov-edit-tid" required maxlength="12" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono-code text-slate-900 focus:border-indigo-500 outline-none transition">
+          </div>
+
+          <div>
+            <label for="mov-edit-sp" class="block text-xs font-semibold text-slate-700 mb-1.5">Service Point <span class="text-rose-500">*</span></label>
+            <select id="mov-edit-sp" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 outline-none transition"></select>
+          </div>
+
+          <div>
+            <label for="mov-edit-agent" class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Agen / Merchant / Tujuan <span class="text-rose-500">*</span></label>
+            <input type="text" id="mov-edit-agent" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 outline-none transition">
+          </div>
+
+          <div>
+            <label for="mov-edit-tech" class="block text-xs font-semibold text-slate-700 mb-1.5">Teknisi <span class="text-rose-500">*</span></label>
+            <select id="mov-edit-tech" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 outline-none transition"></select>
+          </div>
+
+          <div>
+            <label for="mov-edit-status" class="block text-xs font-semibold text-slate-700 mb-1.5">Status EDC <span class="text-rose-500">*</span></label>
+            <select id="mov-edit-status" required class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 outline-none transition"></select>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeMovementEditModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+            Batal
+          </button>
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 14. MODAL MOVEMENT: KONFIRMASI HAPUS -->
+  <div id="mov-delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-slide-in">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900 text-base">Hapus Log Movement?</h3>
+          <p id="mov-delete-modal-desc" class="text-xs sm:text-sm text-slate-600 mt-1">
+            Data SN EDC ini akan dihapus dari riwayat.
+          </p>
+        </div>
+      </div>
+      <div class="pt-2 flex items-center justify-end gap-2.5">
+        <button type="button" onclick="closeMovementDeleteModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">
+          Batal
+        </button>
+        <button type="button" onclick="confirmDeleteMovementItem()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 transition">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+          <span>Ya, Hapus Data</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVEMENT TOAST CONTAINER -->
+  <div id="mov-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
   <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="floatingToastContainer" class="fixed top-20 right-3 left-3 sm:left-auto sm:w-96 z-50 space-y-2 pointer-events-none"></div>
 
@@ -1316,15 +1960,16 @@
     // 1. STATE DATA UTAMA & DEFAULT DATA
     // ==========================================
     const ROLE_DEFAULT_PERMISSIONS = {
-      lead: ['checkout', 'retur', 'profiling', 'scanner', 'hub', 'stock', 'users'],
-      logistik: ['scanner', 'stock', 'retur', 'profiling', 'hub'],
+      lead: ['checkout', 'retur', 'profiling', 'movement', 'scanner', 'hub', 'stock', 'users'],
+      logistik: ['scanner', 'stock', 'movement', 'retur', 'profiling', 'hub'],
       teknisi: ['checkout', 'retur', 'profiling']
     };
 
     const PERMISSION_LABELS = {
       checkout: 'Checkout',
       retur: 'Retur',
-      profiling: 'Profiling BNI',
+      profiling: 'Profiling',
+      movement: 'Movement',
       scanner: 'Scanner',
       hub: 'HUB',
       stock: 'Stok',
@@ -1392,6 +2037,31 @@
     let hubRequests = loadLocal('spl_hub', []);
     let masterDropdowns = loadLocal('spl_dropdowns', DEFAULT_DROPDOWNS);
     let appNotifications = loadLocal('spl_notifications', []);
+
+    const DEFAULT_MOVEMENT_DROPDOWNS = {
+      spkIn: ['Kiriman WH Pusat', 'Kiriman HUB lain', 'Hasil Tarikan Teknisi'],
+      spkOut: ['Instal', 'Replace', 'Buffer', 'Return to WH', 'Send to HUB'],
+      itemTypes: ['EDC BNI 4G', 'EDC BNI 3G'],
+      servicePoints: ['01 Cirebon', 'Kuningan', 'Majalengka', 'Indramayu', 'Karawang', 'Cilamaya', 'Bekasi'],
+      technicians: ['Ayief Syuhada', 'Wahyudi', 'Bedul', 'Dayat', 'Kampleng', 'Coach', 'Achmad Kolik'],
+      statuses: ['At Merchant', 'Booked', 'Free', 'Damaged']
+    };
+    let movementLogs = loadLocal('spl_movement', []);
+    let movementDropdownConfig = (() => {
+      const saved = loadLocal('spl_movement_dropdowns', DEFAULT_MOVEMENT_DROPDOWNS);
+      return {
+        spkIn: Array.isArray(saved.spkIn) && saved.spkIn.length ? saved.spkIn : [...DEFAULT_MOVEMENT_DROPDOWNS.spkIn],
+        spkOut: Array.isArray(saved.spkOut) && saved.spkOut.length ? saved.spkOut : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOut],
+        itemTypes: Array.isArray(saved.itemTypes) && saved.itemTypes.length ? saved.itemTypes : [...DEFAULT_MOVEMENT_DROPDOWNS.itemTypes],
+        servicePoints: Array.isArray(saved.servicePoints) && saved.servicePoints.length ? saved.servicePoints : [...DEFAULT_MOVEMENT_DROPDOWNS.servicePoints],
+        technicians: Array.isArray(saved.technicians) && saved.technicians.length ? saved.technicians : [...DEFAULT_MOVEMENT_DROPDOWNS.technicians],
+        statuses: Array.isArray(saved.statuses) && saved.statuses.length ? saved.statuses : [...DEFAULT_MOVEMENT_DROPDOWNS.statuses]
+      };
+    })();
+    let parsedMovementExcelRows = [];
+    let pendingMovementDeleteId = null;
+    let pendingSnSelectionTicketNo = null;
+    let pendingSnSelectionTargetStatus = 'Ready Pickup';
 
     let currentUser = null;
     let currentTabId = 'tab-home';
@@ -1560,7 +2230,9 @@
         app_hub_requests: 'spl_hub',
         app_dropdown_options: 'spl_dropdowns',
         app_master_dropdown: 'spl_dropdowns',
-        app_notifications: 'spl_notifications'
+        app_notifications: 'spl_notifications',
+        app_movement_edc: 'spl_movement',
+        app_movement_dropdowns: 'spl_movement_dropdowns'
       };
       if (localMap[docKey]) {
         saveLocal(localMap[docKey], dataArrayOrObj);
@@ -1696,6 +2368,32 @@
           apply: (val) => {
             if (Array.isArray(val)) {
               handleIncomingNotificationsLive(val);
+            }
+          }
+        },
+        {
+          doc: 'app_movement_edc',
+          apply: (val) => {
+            if (Array.isArray(val)) {
+              movementLogs = val;
+              saveLocal('spl_movement', val);
+              syncMovementToWarehouseStock(false);
+            }
+          }
+        },
+        {
+          doc: 'app_movement_dropdowns',
+          apply: (val) => {
+            if (val && typeof val === 'object') {
+              movementDropdownConfig = {
+                spkIn: Array.isArray(val.spkIn) && val.spkIn.length ? val.spkIn : [...DEFAULT_MOVEMENT_DROPDOWNS.spkIn],
+                spkOut: Array.isArray(val.spkOut) && val.spkOut.length ? val.spkOut : [...DEFAULT_MOVEMENT_DROPDOWNS.spkOut],
+                itemTypes: Array.isArray(val.itemTypes) && val.itemTypes.length ? val.itemTypes : [...DEFAULT_MOVEMENT_DROPDOWNS.itemTypes],
+                servicePoints: Array.isArray(val.servicePoints) && val.servicePoints.length ? val.servicePoints : [...DEFAULT_MOVEMENT_DROPDOWNS.servicePoints],
+                technicians: Array.isArray(val.technicians) && val.technicians.length ? val.technicians : [...DEFAULT_MOVEMENT_DROPDOWNS.technicians],
+                statuses: Array.isArray(val.statuses) && val.statuses.length ? val.statuses : [...DEFAULT_MOVEMENT_DROPDOWNS.statuses]
+              };
+              saveLocal('spl_movement_dropdowns', movementDropdownConfig);
             }
           }
         }
@@ -1960,7 +2658,10 @@
           menuItems.push({ id: 'tab-retur', label: 'Pengembalian Barang (Retur)', icon: 'fa-rotate-left' });
         }
         if (userHasPermission('profiling')) {
-          menuItems.push({ id: 'tab-profiling', label: 'Profiling BNI', icon: 'fa-id-card-clip' });
+          menuItems.push({ id: 'tab-profiling', label: 'Profiling', icon: 'fa-id-card-clip' });
+        }
+        if (userHasPermission('movement')) {
+          menuItems.push({ id: 'tab-movement', label: 'Movement', icon: 'fa-right-left' });
         }
         if (userHasPermission('scanner')) {
           menuItems.push({ id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' });
@@ -1975,16 +2676,18 @@
         menuItems.push({ id: 'tab-home', label: 'Beranda', icon: 'fa-house' });
         if (userHasPermission('scanner')) menuItems.push({ id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' });
         if (userHasPermission('stock')) menuItems.push({ id: 'tab-stock', label: 'Stok Gudang', icon: 'fa-boxes-stacked' });
+        if (userHasPermission('movement')) menuItems.push({ id: 'tab-movement', label: 'Movement', icon: 'fa-right-left' });
         if (userHasPermission('retur')) menuItems.push({ id: 'tab-retur', label: 'Retur Barang', icon: 'fa-rotate-left' });
-        if (userHasPermission('profiling')) menuItems.push({ id: 'tab-profiling', label: 'Profiling BNI', icon: 'fa-id-card-clip' });
+        if (userHasPermission('profiling')) menuItems.push({ id: 'tab-profiling', label: 'Profiling', icon: 'fa-id-card-clip' });
         if (userHasPermission('hub')) menuItems.push({ id: 'tab-hub', label: 'Permintaan HUB', icon: 'fa-truck-ramp-box' });
         menuItems.push({ id: 'tab-history', label: 'History Checkout', icon: 'fa-list-check' });
       } else {
         menuItems = [
           { id: 'tab-home', label: 'Beranda', icon: 'fa-house' },
           { id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' },
+          { id: 'tab-movement', label: 'Movement', icon: 'fa-right-left' },
           { id: 'tab-retur', label: 'Retur', icon: 'fa-rotate-left' },
-          { id: 'tab-profiling', label: 'Profiling BNI', icon: 'fa-id-card-clip' },
+          { id: 'tab-profiling', label: 'Profiling', icon: 'fa-id-card-clip' },
           { id: 'tab-hub', label: 'Permintaan HUB', icon: 'fa-truck-ramp-box' },
           { id: 'tab-history', label: 'History Checkout', icon: 'fa-clock-rotate-left' }
         ];
@@ -2175,7 +2878,7 @@
       currentTabId = tabId;
       const allSections = [
         'tab-home', 'tab-checkout', 'tab-scanner', 'tab-retur',
-        'tab-profiling', 'tab-hub', 'tab-stock', 'tab-catalog',
+        'tab-profiling', 'tab-movement', 'tab-hub', 'tab-stock', 'tab-catalog',
         'tab-history', 'tab-users'
       ];
       allSections.forEach(secId => {
@@ -2227,7 +2930,11 @@
       renderStockManagementTable();
       renderCheckoutHistoryTable();
       renderUserManagementTable();
+      syncMovementDropdownUI();
+      updateMovementKPIs();
+      renderMovementTable();
       updateFloatingCartBadge();
+      if (window.lucide) lucide.createIcons();
     }
 
     // ==========================================
@@ -2338,6 +3045,14 @@
               bg: 'bg-cyan-50 text-cyan-600',
               title: 'Permintaan & Pengiriman HUB',
               desc: 'Kelola status Proses Email, Done Email, Proses Kirim, & Diterima'
+            },
+            {
+              show: userHasPermission('movement'),
+              tab: 'tab-movement',
+              icon: 'fa-right-left',
+              bg: 'bg-teal-50 text-teal-600',
+              title: 'Movement SN EDC',
+              desc: 'Catat keluar masuk SN EDC, ICCID, TID & status perangkat'
             },
             {
               show: userHasPermission('stock'),
@@ -2755,12 +3470,20 @@
       document.getElementById('receiptNotes').textContent = ticket.notes || '-';
 
       const itemsList = document.getElementById('receiptItemsList');
-      itemsList.innerHTML = ticket.items.map(i => `
-        <div class="px-3 py-2 flex items-center justify-between bg-white">
-          <span class="font-semibold text-slate-800">${escapeHtml(i.name)}</span>
-          <span class="font-bold text-blue-600">${i.qty} ${escapeHtml(i.unit)}</span>
-        </div>
-      `).join('');
+      itemsList.innerHTML = ticket.items.map(i => {
+        const sns = Array.isArray(ticket.assignedSNs)
+          ? ticket.assignedSNs.filter(s => s.itemId === i.id || s.itemName === i.name).map(s => s.sn)
+          : [];
+        return `
+          <div class="px-3 py-2 bg-white">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-800">${escapeHtml(i.name)}</span>
+              <span class="font-bold text-blue-600">${i.qty} ${escapeHtml(i.unit)}</span>
+            </div>
+            ${sns.length > 0 ? `<div class="text-[10px] font-mono text-indigo-600 mt-0.5">SN: ${escapeHtml(sns.join(', '))}</div>` : ''}
+          </div>
+        `;
+      }).join('');
 
       try {
         if (typeof JsBarcode !== 'undefined') {
@@ -2782,11 +3505,24 @@
     }
 
     // ==========================================
-    // 7. SCANNER, READY PICKUP (POTONG STOK) & DONE PICKUP
+    // 7. SCANNER, READY PICKUP (POTONG STOK & PILIH SN MOVEMENT) & DONE PICKUP
     // ==========================================
+    function getEdcTypeFilterForCatalogItem(itemName) {
+      const upper = String(itemName || '').toUpperCase();
+      if (!upper.includes('EDC')) return null;
+      if (upper.includes('4G')) return '4G';
+      if (upper.includes('3G')) return '3G';
+      return 'ALL_EDC';
+    }
+
     function deductWarehouseStockForTicket(ticket) {
       if (!ticket || ticket.stockDeducted) return;
+      const hasAssignedEdc = Array.isArray(ticket.assignedSNs) && ticket.assignedSNs.length > 0;
       (ticket.items || []).forEach(reqItem => {
+        // Jika item adalah EDC yang SN-nya sudah dipilih dari Movement, stok EDC disinkronkan otomatis dari Movement (status Free)
+        if (hasAssignedEdc && getEdcTypeFilterForCatalogItem(reqItem.name) !== null) {
+          return;
+        }
         const stockObj = warehouseStock.find(s => s.id === reqItem.id || s.name === reqItem.name);
         if (stockObj) {
           stockObj.stock = Math.max(0, Number(stockObj.stock) - Number(reqItem.qty || 0));
@@ -2796,40 +3532,206 @@
       syncToCloud('app_stock_cirebon', warehouseStock);
     }
 
+    function openCheckoutSelectSnModal(ticketNo, targetStatus = 'Ready Pickup') {
+      const ticket = checkoutHistory.find(c => c.ticketNo === ticketNo);
+      if (!ticket) return;
+
+      pendingSnSelectionTicketNo = ticketNo;
+      pendingSnSelectionTargetStatus = targetStatus;
+      document.getElementById('checkoutSnModalSubtitle').textContent = `${ticket.ticketNo} • ${ticket.techName}`;
+
+      const edcItems = (ticket.items || []).filter(i => getEdcTypeFilterForCatalogItem(i.name) !== null);
+      const freeMovements = movementLogs.filter(m => m.status === 'Free');
+      const container = document.getElementById('checkoutSnSelectionContainer');
+
+      let html = `
+        <div class="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-blue-800 text-[11px] leading-relaxed">
+          <i class="fa-solid fa-circle-info mr-1"></i>
+          Pilih <strong>SN EDC berstatus Free</strong> dari Data Movement untuk kwitansi ini. Status SN terpilih akan otomatis berubah menjadi <strong>Booked</strong>.
+        </div>
+      `;
+
+      let hasInsufficientFree = false;
+      edcItems.forEach((item, itemIdx) => {
+        const filterTag = getEdcTypeFilterForCatalogItem(item.name);
+        const matchingFree = freeMovements.filter(m => {
+          const mType = String(m.itemType || '').toUpperCase();
+          if (filterTag === '4G') return mType.includes('4G');
+          if (filterTag === '3G') return mType.includes('3G');
+          return true;
+        });
+
+        if (matchingFree.length < Number(item.qty || 1)) {
+          hasInsufficientFree = true;
+        }
+
+        const optionsHtml = matchingFree.length > 0
+          ? `<option value="">-- Pilih SN EDC (Status Free) --</option>` + matchingFree.map(m =>
+              `<option value="${escapeHtml(m.id)}">${escapeHtml(m.sn)} • ${escapeHtml(m.itemType || 'EDC')} (${escapeHtml(m.servicePoint || '-')})</option>`
+            ).join('')
+          : `<option value="">Tidak ada SN berstatus Free di Movement</option>`;
+
+        html += `
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900">${escapeHtml(item.name)}</span>
+              <span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px]">Butuh ${item.qty} SN (Tersedia Free: ${matchingFree.length})</span>
+            </div>
+            <div class="space-y-2">
+              ${Array.from({ length: Number(item.qty || 1) }).map((_, slotIdx) => `
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Unit #${slotIdx + 1}</label>
+                  <select required data-item-id="${escapeHtml(item.id)}" data-item-name="${escapeHtml(item.name)}"
+                    class="checkout-sn-select w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    ${optionsHtml}
+                  </select>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      if (hasInsufficientFree) {
+        html += `
+          <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-semibold">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+            Stok SN berstatus <strong>Free</strong> di Data Movement kurang dari jumlah permintaan. Tambahkan SN masuk terlebih dahulu di tab <strong>Movement</strong>.
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      document.getElementById('checkoutSelectSnModal').classList.remove('hidden');
+    }
+
+    function closeCheckoutSelectSnModal() {
+      pendingSnSelectionTicketNo = null;
+      document.getElementById('checkoutSelectSnModal').classList.add('hidden');
+    }
+
+    function handleConfirmCheckoutSnSelection(e) {
+      e.preventDefault();
+      if (!currentUser || !pendingSnSelectionTicketNo) return;
+
+      const ticket = checkoutHistory.find(c => c.ticketNo === pendingSnSelectionTicketNo);
+      if (!ticket) {
+        closeCheckoutSelectSnModal();
+        return;
+      }
+
+      const selects = Array.from(document.querySelectorAll('#checkoutSnSelectionContainer .checkout-sn-select'));
+      const chosenIds = [];
+      const assignedSNs = [];
+
+      for (const sel of selects) {
+        const movId = sel.value;
+        if (!movId) {
+          showCustomAlert('SN Belum Dipilih', 'Harap pilih SN EDC untuk semua unit yang diminta.');
+          return;
+        }
+        if (chosenIds.includes(movId)) {
+          showCustomAlert('SN Duplikat', 'Satu SN tidak boleh dipilih lebih dari satu kali pada kwitansi yang sama.');
+          return;
+        }
+        const mov = movementLogs.find(m => m.id === movId && m.status === 'Free');
+        if (!mov) {
+          showCustomAlert('SN Tidak Tersedia', 'Salah satu SN yang dipilih sudah tidak berstatus Free.');
+          return;
+        }
+        chosenIds.push(movId);
+        assignedSNs.push({
+          movementId: mov.id,
+          sn: mov.sn,
+          itemId: sel.dataset.itemId,
+          itemName: sel.dataset.itemName
+        });
+      }
+
+      // Ubah status SN terpilih di Movement dari Free -> Booked
+      assignedSNs.forEach(a => {
+        const mov = movementLogs.find(m => m.id === a.movementId);
+        if (mov) {
+          mov.status = 'Booked';
+          mov.technician = ticket.techName || mov.technician;
+        }
+      });
+
+      ticket.assignedSNs = assignedSNs;
+      const targetStatus = pendingSnSelectionTargetStatus || 'Ready Pickup';
+
+      syncToCloud('app_movement_edc', movementLogs);
+      syncMovementToWarehouseStock(true);
+      closeCheckoutSelectSnModal();
+
+      finalizeCheckoutTicketStatus(ticket, targetStatus);
+    }
+
+    function finalizeCheckoutTicketStatus(ticket, targetStatus) {
+      if (!currentUser || !ticket) return;
+      const ts = formatTimestampNow();
+      deductWarehouseStockForTicket(ticket);
+
+      ticket.status = targetStatus;
+      ticket.processedBy = `${currentUser.name} (${getRoleLabel(currentUser.role)})`;
+      ticket.processedAt = ts;
+      if (!Array.isArray(ticket.auditLogs)) ticket.auditLogs = [];
+
+      const snSummary = Array.isArray(ticket.assignedSNs) && ticket.assignedSNs.length > 0
+        ? ` • SN: ${ticket.assignedSNs.map(s => s.sn).join(', ')}`
+        : '';
+
+      if (targetStatus === 'Ready Pickup') {
+        ticket.auditLogs.push({
+          action: `Barang Disiapkan & Stok Gudang Dipotong (Ready Pickup)${snSummary}`,
+          actorName: currentUser.name,
+          actorRole: getRoleLabel(currentUser.role),
+          timestamp: ts
+        });
+        pushSystemNotification({
+          targetRoles: ['teknisi'],
+          targetUserId: ticket.techId,
+          targetUserName: ticket.techName,
+          title: `Barang Siap Diambil: ${ticket.ticketNo}`,
+          message: `Pesanan Anda sudah Ready Pickup disiapkan oleh ${currentUser.name}${snSummary}. Silakan ambil di logistik.`,
+          goToTab: 'tab-history'
+        });
+      } else {
+        ticket.auditLogs.push({
+          action: `Serah Terima Fisik Terverifikasi (Done Pickup)${snSummary}`,
+          actorName: currentUser.name,
+          actorRole: getRoleLabel(currentUser.role),
+          timestamp: ts
+        });
+        pushSystemNotification({
+          targetRoles: ['teknisi'],
+          targetUserId: ticket.techId,
+          targetUserName: ticket.techName,
+          title: `Serah Terima Selesai: ${ticket.ticketNo}`,
+          message: `Kwitansi ${ticket.ticketNo} telah selesai diverifikasi (Done Pickup) oleh ${currentUser.name}.`,
+          goToTab: 'tab-history'
+        });
+      }
+
+      syncToCloud('app_checkout_history', checkoutHistory);
+      refreshAllActiveViews();
+      if (document.getElementById('scanTicketInput')?.value.trim().toUpperCase() === ticket.ticketNo.toUpperCase()) {
+        handleScanTicket();
+      }
+    }
+
     function setCheckoutReadyPickup(ticketNo) {
       if (!currentUser) return;
       const ticket = checkoutHistory.find(c => c.ticketNo === ticketNo);
       if (!ticket || ticket.status !== 'Proses') return;
 
-      const ts = formatTimestampNow();
-      deductWarehouseStockForTicket(ticket);
-
-      ticket.status = 'Ready Pickup';
-      ticket.processedBy = `${currentUser.name} (${getRoleLabel(currentUser.role)})`;
-      ticket.processedAt = ts;
-      if (!Array.isArray(ticket.auditLogs)) ticket.auditLogs = [];
-      ticket.auditLogs.push({
-        action: 'Barang Disiapkan & Stok Gudang Dipotong (Ready Pickup)',
-        actorName: currentUser.name,
-        actorRole: getRoleLabel(currentUser.role),
-        timestamp: ts
-      });
-
-      syncToCloud('app_checkout_history', checkoutHistory);
-
-      pushSystemNotification({
-        targetRoles: ['teknisi'],
-        targetUserId: ticket.techId,
-        targetUserName: ticket.techName,
-        title: `Barang Siap Diambil: ${ticket.ticketNo}`,
-        message: `Pesanan Anda sudah Ready Pickup disiapkan oleh ${currentUser.name}. Silakan ambil di logistik.`,
-        goToTab: 'tab-history'
-      });
-
-      refreshAllActiveViews();
-      if (document.getElementById('scanTicketInput')?.value.trim().toUpperCase() === ticketNo.toUpperCase()) {
-        handleScanTicket();
+      const hasEdc = (ticket.items || []).some(i => getEdcTypeFilterForCatalogItem(i.name) !== null);
+      if (hasEdc && (!Array.isArray(ticket.assignedSNs) || ticket.assignedSNs.length === 0)) {
+        openCheckoutSelectSnModal(ticketNo, 'Ready Pickup');
+        return;
       }
+
+      finalizeCheckoutTicketStatus(ticket, 'Ready Pickup');
     }
 
     function confirmPickupTicket(ticketNo) {
@@ -2837,35 +3739,13 @@
       const ticket = checkoutHistory.find(c => c.ticketNo === ticketNo);
       if (!ticket || ticket.status === 'Done Pickup') return;
 
-      const ts = formatTimestampNow();
-      deductWarehouseStockForTicket(ticket);
-
-      ticket.status = 'Done Pickup';
-      ticket.processedBy = `${currentUser.name} (${getRoleLabel(currentUser.role)})`;
-      ticket.processedAt = ts;
-      if (!Array.isArray(ticket.auditLogs)) ticket.auditLogs = [];
-      ticket.auditLogs.push({
-        action: 'Serah Terima Fisik Terverifikasi (Done Pickup)',
-        actorName: currentUser.name,
-        actorRole: getRoleLabel(currentUser.role),
-        timestamp: ts
-      });
-
-      syncToCloud('app_checkout_history', checkoutHistory);
-
-      pushSystemNotification({
-        targetRoles: ['teknisi'],
-        targetUserId: ticket.techId,
-        targetUserName: ticket.techName,
-        title: `Serah Terima Selesai: ${ticket.ticketNo}`,
-        message: `Kwitansi ${ticket.ticketNo} telah selesai diverifikasi (Done Pickup) oleh ${currentUser.name}.`,
-        goToTab: 'tab-history'
-      });
-
-      refreshAllActiveViews();
-      if (document.getElementById('scanTicketInput')?.value.trim().toUpperCase() === ticketNo.toUpperCase()) {
-        handleScanTicket();
+      const hasEdc = (ticket.items || []).some(i => getEdcTypeFilterForCatalogItem(i.name) !== null);
+      if (ticket.status === 'Proses' && hasEdc && (!Array.isArray(ticket.assignedSNs) || ticket.assignedSNs.length === 0)) {
+        openCheckoutSelectSnModal(ticketNo, 'Done Pickup');
+        return;
       }
+
+      finalizeCheckoutTicketStatus(ticket, 'Done Pickup');
     }
 
     function handleScanTicket() {
@@ -2974,6 +3854,9 @@
         const isReady = c.status === 'Ready Pickup';
         const statusBadge = isReady ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700';
         const itemsText = c.items.map(i => `${i.name} (${i.qty} ${i.unit})`).join(', ');
+        const snBadgeText = Array.isArray(c.assignedSNs) && c.assignedSNs.length > 0
+          ? `<div class="text-[10px] font-mono text-indigo-600 mt-0.5">SN: ${escapeHtml(c.assignedSNs.map(s => s.sn).join(', '))}</div>`
+          : '';
 
         return `
           <tr class="hover:bg-slate-50/70">
@@ -2985,7 +3868,7 @@
               <div class="font-bold text-slate-800">${escapeHtml(c.techName)}</div>
               <div class="text-[11px] text-slate-500">${escapeHtml(c.servicePoint || '01 Cirebon')}</div>
             </td>
-            <td class="p-3.5 font-medium text-slate-700">${escapeHtml(itemsText)}</td>
+            <td class="p-3.5 font-medium text-slate-700">${escapeHtml(itemsText)}${snBadgeText}</td>
             <td class="p-3.5">
               <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${statusBadge}">${escapeHtml(c.status)}</span>
             </td>
@@ -3035,6 +3918,9 @@
             : 'bg-amber-100 text-amber-700';
 
         const itemsText = c.items.map(i => `${i.name} (${i.qty} ${i.unit})`).join(', ');
+        const snBadgeText = Array.isArray(c.assignedSNs) && c.assignedSNs.length > 0
+          ? `<div class="text-[10px] font-mono text-indigo-600 mt-0.5">SN: ${escapeHtml(c.assignedSNs.map(s => s.sn).join(', '))}</div>`
+          : '';
 
         return `
           <tr class="hover:bg-slate-50/70">
@@ -3046,7 +3932,7 @@
               <div class="font-bold text-slate-800">${escapeHtml(c.techName)}</div>
               <div class="text-[11px] text-slate-500">${escapeHtml(c.notes || '-')}</div>
             </td>
-            <td class="p-3.5 font-medium text-slate-700">${escapeHtml(itemsText)}</td>
+            <td class="p-3.5 font-medium text-slate-700">${escapeHtml(itemsText)}${snBadgeText}</td>
             <td class="p-3.5">
               <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${badgeCls}">${escapeHtml(c.status)}</span>
               ${c.processedBy ? `<div class="text-[10px] text-slate-400 mt-1">Oleh: ${escapeHtml(c.processedBy)}</div>` : ''}
@@ -3269,6 +4155,32 @@
       returHistory.unshift(newRetur);
       syncToCloud('app_retur_history', returHistory);
 
+      // Sinkronkan Retur EDC ke Data Movement
+      const lowerType = String(itemType || '').toLowerCase();
+      if (lowerType.includes('edc') && !lowerType.includes('baterai')) {
+        const existingMov = movementLogs.find(m => String(m.sn || '').toUpperCase() === sn);
+        let movItemType = existingMov?.itemType || 'EDC BNI 4G';
+        if (lowerType.includes('3g')) movItemType = 'EDC BNI 3G';
+        else if (lowerType.includes('4g')) movItemType = 'EDC BNI 4G';
+
+        movementLogs.unshift({
+          id: 'MOV-' + Date.now(),
+          timestamp: ts,
+          type: 'In',
+          spk: 'Hasil Tarikan Teknisi',
+          itemType: movItemType,
+          sn,
+          iccid: existingMov?.iccid || '-',
+          tid: existingMov?.tid || '-',
+          servicePoint: currentUser.servicePoint || '01 Cirebon',
+          agentName: `${customer} (Retur: ${returNo})`,
+          technician: currentUser.name,
+          status: 'Damaged'
+        });
+        syncToCloud('app_movement_edc', movementLogs);
+        syncMovementToWarehouseStock(true);
+      }
+
       pushSystemNotification({
         targetRoles: ['lead', 'logistik'],
         title: `Pengembalian Retur: ${returNo}`,
@@ -3425,6 +4337,9 @@
       profilingHistory.unshift(entry);
       syncToCloud('app_profiling_bni', profilingHistory);
 
+      // Sinkronkan SN Profiling BNI ke Movement (Free -> At Merchant)
+      syncProfilingSnToMovement(null, snBaru, entry);
+
       pushSystemNotification({
         targetRoles: ['lead', 'logistik'],
         title: `Profiling BNI Baru (TID: ${tid})`,
@@ -3463,6 +4378,7 @@
       if (!item) return;
 
       const prevStatus = item.status;
+      const prevSn = item.snBaru !== undefined ? item.snBaru : (item.sn || '0');
       const newStatus = document.getElementById('editProfStatus').value;
       const snBaru = document.getElementById('editProfSnBaru').value.trim().toUpperCase() || '0';
       const iccidBaru = document.getElementById('editProfIccidBaru').value.trim().toUpperCase() || '0';
@@ -3485,6 +4401,9 @@
       });
 
       syncToCloud('app_profiling_bni', profilingHistory);
+
+      // Sesuaikan ulang status SN di Movement jika SN di data profiling diedit
+      syncProfilingSnToMovement(prevSn, snBaru, item);
 
       pushSystemNotification({
         targetRoles: ['teknisi'],
@@ -4451,6 +5370,7 @@
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(returHistory), 'Retur');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(profilingHistory), 'Profiling BNI');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hubRequests), 'Permintaan HUB');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movementLogs), 'Movement SN EDC');
 
       XLSX.writeFile(wb, `Laporan_SiPalingLogistik_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
@@ -4513,12 +5433,928 @@
     });
 
     // ==========================================
-    // 16. INISIALISASI SAAT HALAMAN DIMUAT
+    // 16. MODUL MOVEMENT SN EDC & SINKRONISASI STOK / PROFILING
+    // ==========================================
+    function syncMovementToWarehouseStock(shouldSyncCloud = true) {
+      // Hitung hanya Qty EDC berstatus Free di Movement (tanpa menghitung data simcard/ICCID)
+      const freeEdcs = movementLogs.filter(m => m.status === 'Free');
+      const free4G = freeEdcs.filter(m => String(m.itemType || '').toUpperCase().includes('4G')).length;
+      const free3G = freeEdcs.filter(m => String(m.itemType || '').toUpperCase().includes('3G')).length;
+
+      let changed = false;
+
+      // Sinkronkan EDC BNI 4G
+      let edc4G = warehouseStock.find(s =>
+        s.id === 'ITM-04' || (String(s.name || '').toUpperCase().includes('EDC') && String(s.name || '').toUpperCase().includes('4G'))
+      );
+      if (edc4G) {
+        if (Number(edc4G.stock) !== free4G) {
+          edc4G.stock = free4G;
+          changed = true;
+        }
+      } else if (free4G > 0 || movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('4G'))) {
+        warehouseStock.push({
+          id: 'ITM-04',
+          name: 'EDC BNI 4G - Move 2500',
+          category: 'HARDWARE',
+          unit: 'Unit',
+          stock: free4G,
+          icon: 'fa-calculator',
+          color: 'blue'
+        });
+        changed = true;
+      }
+
+      // Sinkronkan EDC BNI 3G
+      let edc3G = warehouseStock.find(s =>
+        String(s.name || '').toUpperCase().includes('EDC') && String(s.name || '').toUpperCase().includes('3G')
+      );
+      if (edc3G) {
+        if (Number(edc3G.stock) !== free3G) {
+          edc3G.stock = free3G;
+          changed = true;
+        }
+      } else if (free3G > 0 || movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('3G'))) {
+        warehouseStock.push({
+          id: 'ITM-EDC3G',
+          name: 'EDC BNI 3G',
+          category: 'HARDWARE',
+          unit: 'Unit',
+          stock: free3G,
+          icon: 'fa-calculator',
+          color: 'amber'
+        });
+        changed = true;
+      }
+
+      if (changed) {
+        saveLocal('spl_stock', warehouseStock);
+        if (shouldSyncCloud) {
+          syncToCloud('app_stock_cirebon', warehouseStock);
+        }
+      }
+    }
+
+    function syncProfilingSnToMovement(prevSn, newSn, ticketData = {}) {
+      const cleanPrev = String(prevSn || '').trim().toUpperCase();
+      const cleanNew = String(newSn || '').trim().toUpperCase();
+      let changed = false;
+
+      // Jika SN diedit pada data profiling, kembalikan SN lama dari At Merchant -> Free
+      if (cleanPrev && cleanPrev !== '0' && cleanPrev !== cleanNew) {
+        const prevMov = movementLogs.find(m => String(m.sn || '').trim().toUpperCase() === cleanPrev);
+        if (prevMov && prevMov.status === 'At Merchant') {
+          prevMov.status = 'Free';
+          changed = true;
+        }
+      }
+
+      // Jika SN baru valid (bukan 0), ubah status SN di Movement menjadi At Merchant
+      if (cleanNew && cleanNew !== '0') {
+        const newMov = movementLogs.find(m => String(m.sn || '').trim().toUpperCase() === cleanNew);
+        if (newMov) {
+          if (newMov.status === 'Free' || newMov.status === 'Booked' || newMov.status !== 'At Merchant') {
+            newMov.status = 'At Merchant';
+            changed = true;
+          }
+          if (ticketData.tid) {
+            newMov.tid = ticketData.tid;
+            changed = true;
+          }
+          if (ticketData.iccidBaru && ticketData.iccidBaru !== '0') {
+            newMov.iccid = ticketData.iccidBaru;
+            changed = true;
+          }
+          if (ticketData.techName) {
+            newMov.technician = ticketData.techName;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        syncToCloud('app_movement_edc', movementLogs);
+        syncMovementToWarehouseStock(true);
+      }
+    }
+
+    function saveMovementDropdownConfig() {
+      saveLocal('spl_movement_dropdowns', movementDropdownConfig);
+      syncToCloud('app_movement_dropdowns', movementDropdownConfig);
+    }
+
+    function populateMovementSelectOptions(selectId, optionsList, preferredValue = null) {
+      const el = document.getElementById(selectId);
+      if (!el) return;
+      el.innerHTML = optionsList.map(opt => {
+        const selected = preferredValue === opt ? 'selected' : '';
+        return `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+      }).join('');
+    }
+
+    function syncMovementDropdownUI() {
+      const currentInputType = document.querySelector('input[name="mov-input-type"]:checked')?.value || 'Out';
+      const prevInputSpk = document.getElementById('mov-input-spk')?.value;
+      populateMovementSelectOptions('mov-input-spk', currentInputType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut, prevInputSpk);
+      populateMovementSelectOptions('mov-input-item-type', movementDropdownConfig.itemTypes, document.getElementById('mov-input-item-type')?.value);
+      populateMovementSelectOptions('mov-input-sp', movementDropdownConfig.servicePoints, document.getElementById('mov-input-sp')?.value);
+      populateMovementSelectOptions('mov-input-tech', movementDropdownConfig.technicians, document.getElementById('mov-input-tech')?.value);
+      populateMovementSelectOptions('mov-input-status', movementDropdownConfig.statuses, document.getElementById('mov-input-status')?.value);
+
+      const currentEditType = document.querySelector('input[name="mov-edit-type"]:checked')?.value || 'Out';
+      populateMovementSelectOptions('mov-edit-spk', currentEditType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut, document.getElementById('mov-edit-spk')?.value);
+      populateMovementSelectOptions('mov-edit-item-type', movementDropdownConfig.itemTypes, document.getElementById('mov-edit-item-type')?.value);
+      populateMovementSelectOptions('mov-edit-sp', movementDropdownConfig.servicePoints, document.getElementById('mov-edit-sp')?.value);
+      populateMovementSelectOptions('mov-edit-tech', movementDropdownConfig.technicians, document.getElementById('mov-edit-tech')?.value);
+      populateMovementSelectOptions('mov-edit-status', movementDropdownConfig.statuses, document.getElementById('mov-edit-status')?.value);
+
+      const filterItemTypeEl = document.getElementById('mov-filter-item-type');
+      if (filterItemTypeEl) {
+        const prev = filterItemTypeEl.value;
+        filterItemTypeEl.innerHTML = `<option value="ALL">Semua Barang</option>` +
+          movementDropdownConfig.itemTypes.map(it => `<option value="${escapeHtml(it)}" ${it === prev ? 'selected' : ''}>${escapeHtml(it)}</option>`).join('');
+      }
+      const filterStatusEl = document.getElementById('mov-filter-status');
+      if (filterStatusEl) {
+        const prev = filterStatusEl.value;
+        filterStatusEl.innerHTML = `<option value="ALL">Semua Status</option>` +
+          movementDropdownConfig.statuses.map(s => `<option value="${escapeHtml(s)}" ${s === prev ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+      }
+      const filterSpEl = document.getElementById('mov-filter-sp');
+      if (filterSpEl) {
+        const prev = filterSpEl.value;
+        filterSpEl.innerHTML = `<option value="ALL">Semua SP</option>` +
+          movementDropdownConfig.servicePoints.map(sp => `<option value="${escapeHtml(sp)}" ${sp === prev ? 'selected' : ''}>${escapeHtml(sp)}</option>`).join('');
+      }
+    }
+
+    function getMovementSpkCategoryKey(prefix) {
+      const typeVal = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
+      return typeVal === 'In' ? 'spkIn' : 'spkOut';
+    }
+
+    function onMovementFormTypeChange(prefix) {
+      const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'Out';
+      const options = selectedType === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut;
+      populateMovementSelectOptions(`mov-${prefix}-spk`, options);
+      onMovementFormSpkChange(prefix);
+    }
+
+    function onMovementFormSpkChange(prefix) {
+      const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value;
+      const selectedSpk = document.getElementById(`mov-${prefix}-spk`)?.value;
+      const statusSelect = document.getElementById(`mov-${prefix}-status`);
+      if (!statusSelect) return;
+
+      let targetStatus = 'At Merchant';
+      if (selectedType === 'In') {
+        targetStatus = selectedSpk === 'Hasil Tarikan Teknisi' ? 'Damaged' : 'Free';
+      } else if (selectedType === 'Out') {
+        if (selectedSpk === 'Buffer' || selectedSpk === 'Send to HUB' || selectedSpk === 'Return to WH') {
+          targetStatus = 'Booked';
+        } else {
+          targetStatus = 'At Merchant';
+        }
+      }
+      if (movementDropdownConfig.statuses.includes(targetStatus)) {
+        statusSelect.value = targetStatus;
+      }
+    }
+
+    function switchMovementInputTab(tabName) {
+      const btnSingle = document.getElementById('mov-tab-btn-single');
+      const btnExcel = document.getElementById('mov-tab-btn-excel');
+      const panelSingle = document.getElementById('mov-tab-panel-single');
+      const panelExcel = document.getElementById('mov-tab-panel-excel');
+      const headerActions = document.getElementById('mov-single-header-actions');
+
+      if (tabName === 'single') {
+        btnSingle.className = 'inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-t border-x border-slate-200 bg-white text-indigo-600 -mb-px transition';
+        btnExcel.className = 'inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 -mb-px transition';
+        panelSingle.classList.remove('hidden');
+        panelExcel.classList.add('hidden');
+        headerActions.classList.remove('hidden');
+      } else {
+        btnExcel.className = 'inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-t border-x border-slate-200 bg-white text-indigo-600 -mb-px transition';
+        btnSingle.className = 'inline-flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 -mb-px transition';
+        panelExcel.classList.remove('hidden');
+        panelSingle.classList.add('hidden');
+        headerActions.classList.add('hidden');
+      }
+    }
+
+    function resetMovementInputForm() {
+      const form = document.getElementById('mov-movement-form');
+      if (form) form.reset();
+      const outRadio = document.querySelector('input[name="mov-input-type"][value="Out"]');
+      if (outRadio) outRadio.checked = true;
+      syncMovementDropdownUI();
+      onMovementFormSpkChange('input');
+    }
+
+    function handleAddMovement(event) {
+      event.preventDefault();
+      const type = document.querySelector('input[name="mov-input-type"]:checked').value;
+      const spk = document.getElementById('mov-input-spk').value;
+      const itemType = document.getElementById('mov-input-item-type').value;
+      const sn = document.getElementById('mov-input-sn').value.trim().toUpperCase();
+      const iccid = document.getElementById('mov-input-iccid').value.trim();
+      const tid = document.getElementById('mov-input-tid').value.trim();
+      const servicePoint = document.getElementById('mov-input-sp').value;
+      const agentName = document.getElementById('mov-input-agent').value.trim();
+      const technician = document.getElementById('mov-input-tech').value;
+      const status = document.getElementById('mov-input-status').value;
+
+      if (!sn || !iccid || !tid || !agentName) {
+        showMovementToast('Harap lengkapi seluruh kolom wajib.', 'error');
+        return;
+      }
+
+      movementLogs.unshift({
+        id: 'MOV-' + Date.now(),
+        timestamp: formatTimestampNow(),
+        type,
+        spk,
+        itemType,
+        sn,
+        iccid,
+        tid,
+        servicePoint,
+        agentName,
+        technician,
+        status
+      });
+
+      document.getElementById('mov-input-sn').value = '';
+      document.getElementById('mov-input-iccid').value = '';
+      document.getElementById('mov-input-tid').value = '';
+
+      syncToCloud('app_movement_edc', movementLogs);
+      syncMovementToWarehouseStock(true);
+      refreshAllActiveViews();
+      showMovementToast(`Movement [${type} • ${itemType}] SN ${sn} berhasil dicatat.`, 'success');
+    }
+
+    function openMovementDropdownManagerModal(initialCategory = 'spkOut') {
+      const catSelect = document.getElementById('mov-dm-category-select');
+      if (catSelect && movementDropdownConfig[initialCategory]) {
+        catSelect.value = initialCategory;
+      }
+      document.getElementById('mov-dm-new-item-input').value = '';
+      renderMovementDropdownManagerList();
+      document.getElementById('mov-dropdown-manager-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMovementDropdownManagerModal() {
+      document.getElementById('mov-dropdown-manager-modal').classList.add('hidden');
+      syncMovementDropdownUI();
+      renderMovementTable();
+    }
+
+    function renderMovementDropdownManagerList() {
+      const catKey = document.getElementById('mov-dm-category-select').value;
+      const list = movementDropdownConfig[catKey] || [];
+      const container = document.getElementById('mov-dm-options-list');
+      document.getElementById('mov-dm-item-count').textContent = `${list.length} opsi`;
+
+      container.innerHTML = list.map((item, idx) => `
+        <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 hover:border-indigo-200 transition">
+          <span class="w-6 text-center text-xs font-bold text-slate-400">${idx + 1}.</span>
+          <input type="text" value="${escapeHtml(item)}" onchange="updateMovementDropdownOption('${catKey}', ${idx}, this.value)" class="flex-1 text-sm font-medium text-slate-800 bg-slate-50/70 focus:bg-white px-3 py-1.5 rounded-lg border border-transparent focus:border-indigo-400 outline-none transition">
+          <button type="button" onclick="deleteMovementDropdownOption('${catKey}', ${idx})" title="Hapus opsi ini" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function addMovementDropdownOption() {
+      const catKey = document.getElementById('mov-dm-category-select').value;
+      const inputEl = document.getElementById('mov-dm-new-item-input');
+      const newVal = inputEl.value.trim();
+
+      if (!newVal) {
+        showMovementToast('Nama opsi baru tidak boleh kosong.', 'error');
+        return;
+      }
+      const exists = movementDropdownConfig[catKey].some(opt => opt.toLowerCase() === newVal.toLowerCase());
+      if (exists) {
+        showMovementToast(`Opsi "${newVal}" sudah ada di daftar ini.`, 'info');
+        return;
+      }
+
+      movementDropdownConfig[catKey].push(newVal);
+      saveMovementDropdownConfig();
+      inputEl.value = '';
+      renderMovementDropdownManagerList();
+      syncMovementDropdownUI();
+      showMovementToast(`Opsi "${newVal}" berhasil ditambahkan.`, 'success');
+    }
+
+    function updateMovementDropdownOption(catKey, index, updatedText) {
+      const trimmed = updatedText.trim();
+      if (!trimmed) {
+        showMovementToast('Nama opsi tidak boleh kosong.', 'error');
+        renderMovementDropdownManagerList();
+        return;
+      }
+      movementDropdownConfig[catKey][index] = trimmed;
+      saveMovementDropdownConfig();
+      syncMovementDropdownUI();
+      showMovementToast(`Opsi diperbarui menjadi "${trimmed}".`, 'success');
+    }
+
+    function deleteMovementDropdownOption(catKey, index) {
+      if (movementDropdownConfig[catKey].length <= 1) {
+        showMovementToast('Minimal harus tersisa 1 opsi dalam kategori ini.', 'error');
+        return;
+      }
+      const removed = movementDropdownConfig[catKey][index];
+      movementDropdownConfig[catKey].splice(index, 1);
+      saveMovementDropdownConfig();
+      renderMovementDropdownManagerList();
+      syncMovementDropdownUI();
+      showMovementToast(`Opsi "${removed}" dihapus.`, 'info');
+    }
+
+    function resetMovementDropdownConfigsToDefault() {
+      movementDropdownConfig = JSON.parse(JSON.stringify(DEFAULT_MOVEMENT_DROPDOWNS));
+      saveMovementDropdownConfig();
+      renderMovementDropdownManagerList();
+      syncMovementDropdownUI();
+      showMovementToast('Seluruh daftar pilihan dropdown dikembalikan ke default.', 'info');
+    }
+
+    function downloadMovementExcelTemplate() {
+      if (typeof XLSX === 'undefined') {
+        showMovementToast('Library SheetJS belum siap.', 'error');
+        return;
+      }
+      const templateRows = [
+        {
+          Tipe_Movement: 'Out',
+          SPK: movementDropdownConfig.spkOut[0] || 'Instal',
+          Jenis_Barang: movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G',
+          SN_EDC: 'P20098412501',
+          ICCID: '8962100045891125001',
+          TID: '71029801',
+          Service_Point: movementDropdownConfig.servicePoints[0] || '01 Cirebon',
+          Nama_Agen: 'Agen Mitra Sejahtera',
+          Teknisi: movementDropdownConfig.technicians[0] || 'Ayief Syuhada',
+          Status_EDC: movementDropdownConfig.statuses[0] || 'At Merchant'
+        },
+        {
+          Tipe_Movement: 'In',
+          SPK: movementDropdownConfig.spkIn[0] || 'Kiriman WH Pusat',
+          Jenis_Barang: movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G',
+          SN_EDC: 'P20099123550',
+          ICCID: '8962100045892235501',
+          TID: '71029855',
+          Service_Point: '01 Cirebon',
+          Nama_Agen: 'Gudang SP Cirebon',
+          Teknisi: 'Wahyudi',
+          Status_EDC: 'Free'
+        }
+      ];
+      const guideRows = [
+        { Kolom: 'Tipe_Movement', Aturan_Valid: 'In | Out', Keterangan: 'Wajib diisi "In" atau "Out".' },
+        { Kolom: 'SPK', Aturan_Valid: `In: ${movementDropdownConfig.spkIn.join(' | ')} || Out: ${movementDropdownConfig.spkOut.join(' | ')}`, Keterangan: 'Harus sesuai tipe In atau Out.' },
+        { Kolom: 'Jenis_Barang', Aturan_Valid: movementDropdownConfig.itemTypes.join(' | '), Keterangan: 'Model/tipe perangkat EDC (misal EDC BNI 4G / EDC BNI 3G).' },
+        { Kolom: 'SN_EDC', Aturan_Valid: 'Serial Number EDC', Keterangan: 'Wajib diisi.' },
+        { Kolom: 'ICCID', Aturan_Valid: 'Nomor Kartu SIM', Keterangan: 'Wajib diisi.' },
+        { Kolom: 'TID', Aturan_Valid: 'Terminal ID', Keterangan: 'Wajib diisi.' },
+        { Kolom: 'Service_Point', Aturan_Valid: movementDropdownConfig.servicePoints.join(' | '), Keterangan: 'Sesuai daftar Service Point.' },
+        { Kolom: 'Nama_Agen', Aturan_Valid: 'Teks bebas', Keterangan: 'Nama agen, merchant, WH, atau HUB tujuan.' },
+        { Kolom: 'Teknisi', Aturan_Valid: movementDropdownConfig.technicians.join(' | '), Keterangan: 'Nama teknisi pelaksana.' },
+        { Kolom: 'Status_EDC', Aturan_Valid: movementDropdownConfig.statuses.join(' | '), Keterangan: 'Status perangkat EDC.' }
+      ];
+      const wb = XLSX.utils.book_new();
+      const wsData = XLSX.utils.json_to_sheet(templateRows);
+      const wsGuide = XLSX.utils.json_to_sheet(guideRows);
+      wsData['!cols'] = [{ wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 26 }, { wch: 18 }, { wch: 15 }];
+      wsGuide['!cols'] = [{ wch: 18 }, { wch: 76 }, { wch: 44 }];
+      XLSX.utils.book_append_sheet(wb, wsData, 'Data_Movement');
+      XLSX.utils.book_append_sheet(wb, wsGuide, 'Panduan_Isi');
+      XLSX.writeFile(wb, 'Template_Movement_EDC.xlsx');
+      showMovementToast('Template_Movement_EDC.xlsx berhasil diunduh.', 'success');
+    }
+
+    function exportMovementToExcel() {
+      if (typeof XLSX === 'undefined') return;
+      if (movementLogs.length === 0) {
+        showMovementToast('Tidak ada data movement untuk diekspor.', 'info');
+        return;
+      }
+      const exportData = movementLogs.map(item => ({
+        Timestamp: item.timestamp,
+        Tipe_Movement: item.type,
+        SPK: item.spk,
+        Jenis_Barang: item.itemType,
+        SN_EDC: item.sn,
+        ICCID: item.iccid,
+        TID: item.tid,
+        Service_Point: item.servicePoint,
+        Nama_Agen: item.agentName,
+        Teknisi: item.technician,
+        Status_EDC: item.status
+      }));
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      ws['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 28 }, { wch: 18 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Log_Movement_EDC');
+      XLSX.writeFile(wb, `Export_Movement_EDC_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showMovementToast(`Berhasil mengekspor ${exportData.length} baris ke Excel.`, 'success');
+    }
+
+    function handleMovementDragOver(e) {
+      e.preventDefault();
+      document.getElementById('mov-drop-zone').classList.add('border-indigo-500', 'bg-indigo-50/70');
+    }
+
+    function handleMovementDragLeave(e) {
+      e.preventDefault();
+      document.getElementById('mov-drop-zone').classList.remove('border-indigo-500', 'bg-indigo-50/70');
+    }
+
+    function handleMovementFileDrop(e) {
+      e.preventDefault();
+      document.getElementById('mov-drop-zone').classList.remove('border-indigo-500', 'bg-indigo-50/70');
+      if (e.dataTransfer.files?.length > 0) processMovementExcelFile(e.dataTransfer.files[0]);
+    }
+
+    function handleMovementFileSelect(e) {
+      if (e.target.files?.length > 0) processMovementExcelFile(e.target.files[0]);
+    }
+
+    function normalizeMovementExcelKey(key) {
+      return String(key).trim().toLowerCase().replace(/[\s_-]+/g, '');
+    }
+
+    function matchMovementCaseInsensitive(val, allowedList, fallback = null) {
+      if (!val) return fallback;
+      const clean = String(val).trim().toLowerCase();
+      return allowedList.find(item => item.toLowerCase() === clean) || fallback;
+    }
+
+    function processMovementExcelFile(file) {
+      const fileNameBadge = document.getElementById('mov-selected-file-name');
+      fileNameBadge.textContent = `File: ${file.name}`;
+      fileNameBadge.classList.remove('hidden');
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+          if (!rawRows || rawRows.length === 0) {
+            showMovementToast('File Excel kosong.', 'error');
+            return;
+          }
+
+          parsedMovementExcelRows = rawRows.map(row => {
+            const norm = {};
+            Object.keys(row).forEach(k => { norm[normalizeMovementExcelKey(k)] = String(row[k]).trim(); });
+
+            const rawType = norm['tipemovement'] || norm['tipe'] || '';
+            const rawSpk = norm['spk'] || norm['jenisspk'] || '';
+            const rawItemType = norm['jenisbarang'] || norm['barang'] || norm['tipeedc'] || '';
+            const sn = (norm['snedc'] || norm['sn'] || '').toUpperCase();
+            const iccid = norm['iccid'] || norm['nosim'] || '';
+            const tid = norm['tid'] || norm['terminalid'] || '';
+            const rawSp = norm['servicepoint'] || norm['sp'] || '';
+            const agentName = norm['namaagen'] || norm['agen'] || norm['merchant'] || '';
+            const technician = norm['teknisi'] || '';
+            const rawStatus = norm['statusedc'] || norm['status'] || '';
+
+            const type = matchMovementCaseInsensitive(rawType, ['In', 'Out'], null);
+            const allowedSpks = type === 'In' ? movementDropdownConfig.spkIn : (type === 'Out' ? movementDropdownConfig.spkOut : []);
+            const spk = type ? matchMovementCaseInsensitive(rawSpk, allowedSpks, null) : null;
+            const itemType = matchMovementCaseInsensitive(rawItemType, movementDropdownConfig.itemTypes, rawItemType || (movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G'));
+            const servicePoint = matchMovementCaseInsensitive(rawSp, movementDropdownConfig.servicePoints, rawSp || '');
+            const status = matchMovementCaseInsensitive(rawStatus, movementDropdownConfig.statuses, null);
+
+            const errors = [];
+            if (!type) errors.push('Tipe harus In/Out');
+            else if (!spk) errors.push(`SPK tidak valid (${type})`);
+            if (!itemType) errors.push('Jenis Barang kosong');
+            if (!sn) errors.push('SN kosong');
+            if (!iccid) errors.push('ICCID kosong');
+            if (!tid) errors.push('TID kosong');
+            if (!servicePoint) errors.push('SP kosong');
+            if (!agentName) errors.push('Agen kosong');
+            if (!technician) errors.push('Teknisi kosong');
+            if (!status) errors.push('Status EDC tidak valid');
+
+            return {
+              isValid: errors.length === 0,
+              errors,
+              type: type || rawType || '-',
+              spk: spk || rawSpk || '-',
+              itemType: itemType || '-',
+              sn,
+              iccid,
+              tid,
+              servicePoint: servicePoint || '-',
+              agentName,
+              technician,
+              status: status || rawStatus || '-'
+            };
+          });
+
+          renderMovementExcelPreview();
+        } catch (err) {
+          console.error(err);
+          showMovementToast('Gagal membaca file Excel.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderMovementExcelPreview() {
+      const container = document.getElementById('mov-excel-preview-container');
+      const tbody = document.getElementById('mov-excel-preview-tbody');
+      const summary = document.getElementById('mov-excel-preview-summary');
+      const btnImport = document.getElementById('mov-btn-confirm-import');
+      const btnImportText = document.getElementById('mov-btn-confirm-import-text');
+
+      const validCount = parsedMovementExcelRows.filter(r => r.isValid).length;
+      const invalidCount = parsedMovementExcelRows.length - validCount;
+
+      summary.innerHTML = `<span class="text-emerald-700 font-semibold">${validCount} baris valid</span> siap diimpor${invalidCount > 0 ? `, <span class="text-rose-600 font-semibold">${invalidCount} baris tidak valid</span>` : ''}.`;
+      btnImport.disabled = validCount === 0;
+      btnImportText.textContent = `Import ${validCount} Data Valid`;
+
+      tbody.innerHTML = parsedMovementExcelRows.map(r => {
+        const statusBadge = r.isValid
+          ? `<span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">Valid</span>`
+          : `<span title="${escapeHtml(r.errors.join(', '))}" class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-800">${escapeHtml(r.errors[0])}</span>`;
+
+        return `
+          <tr class="${r.isValid ? 'bg-white' : 'bg-rose-50/60'}">
+            <td class="py-2 px-3 whitespace-nowrap">${statusBadge}</td>
+            <td class="py-2 px-3 whitespace-nowrap"><strong>${escapeHtml(r.type)}</strong> • ${escapeHtml(r.spk)}</td>
+            <td class="py-2 px-3 whitespace-nowrap font-semibold text-indigo-700">${escapeHtml(r.itemType)}</td>
+            <td class="py-2 px-3 whitespace-nowrap font-mono-code">${escapeHtml(r.sn || '-')} <span class="text-slate-400">/ ${escapeHtml(r.iccid || '-')}</span></td>
+            <td class="py-2 px-3 whitespace-nowrap font-mono-code">${escapeHtml(r.tid || '-')}</td>
+            <td class="py-2 px-3 whitespace-nowrap">${escapeHtml(r.servicePoint)}</td>
+            <td class="py-2 px-3 whitespace-nowrap">${escapeHtml(r.agentName || '-')}</td>
+            <td class="py-2 px-3 whitespace-nowrap">${escapeHtml(r.technician || '-')}</td>
+            <td class="py-2 px-3 whitespace-nowrap font-semibold">${escapeHtml(r.status)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      container.classList.remove('hidden');
+    }
+
+    function confirmMovementExcelImport() {
+      const validRows = parsedMovementExcelRows.filter(r => r.isValid);
+      if (validRows.length === 0) return;
+
+      const batchTimestamp = formatTimestampNow();
+      [...validRows].reverse().forEach((r, index) => {
+        movementLogs.unshift({
+          id: `MOV-${Date.now()}-${index}`,
+          timestamp: batchTimestamp,
+          type: r.type,
+          spk: r.spk,
+          itemType: r.itemType,
+          sn: r.sn,
+          iccid: r.iccid,
+          tid: r.tid,
+          servicePoint: r.servicePoint,
+          agentName: r.agentName,
+          technician: r.technician,
+          status: r.status
+        });
+      });
+
+      clearMovementExcelPreview();
+      syncToCloud('app_movement_edc', movementLogs);
+      syncMovementToWarehouseStock(true);
+      refreshAllActiveViews();
+      showMovementToast(`Berhasil mengimpor ${validRows.length} data movement!`, 'success');
+    }
+
+    function clearMovementExcelPreview() {
+      parsedMovementExcelRows = [];
+      document.getElementById('mov-excel-preview-container').classList.add('hidden');
+      document.getElementById('mov-excel-file-input').value = '';
+      document.getElementById('mov-selected-file-name').classList.add('hidden');
+    }
+
+    function openMovementEditModal(id) {
+      const item = movementLogs.find(log => log.id === id);
+      if (!item) return;
+
+      document.getElementById('mov-edit-id').value = item.id;
+      document.getElementById('mov-edit-modal-subtitle').textContent = `SN: ${item.sn} • Dicatat: ${item.timestamp}`;
+
+      const typeRadio = document.querySelector(`input[name="mov-edit-type"][value="${item.type}"]`);
+      if (typeRadio) typeRadio.checked = true;
+
+      const spkList = item.type === 'In' ? movementDropdownConfig.spkIn : movementDropdownConfig.spkOut;
+      populateMovementSelectOptions('mov-edit-spk', spkList.includes(item.spk) ? spkList : [...spkList, item.spk], item.spk);
+
+      const itemTypeList = movementDropdownConfig.itemTypes;
+      const currentItemType = item.itemType || itemTypeList[0] || 'EDC BNI 4G';
+      populateMovementSelectOptions('mov-edit-item-type', itemTypeList.includes(currentItemType) ? itemTypeList : [...itemTypeList, currentItemType], currentItemType);
+
+      const spList = movementDropdownConfig.servicePoints;
+      populateMovementSelectOptions('mov-edit-sp', spList.includes(item.servicePoint) ? spList : [...spList, item.servicePoint], item.servicePoint);
+
+      const techList = movementDropdownConfig.technicians;
+      populateMovementSelectOptions('mov-edit-tech', techList.includes(item.technician) ? techList : [...techList, item.technician], item.technician);
+
+      const statusList = movementDropdownConfig.statuses;
+      populateMovementSelectOptions('mov-edit-status', statusList.includes(item.status) ? statusList : [...statusList, item.status], item.status);
+
+      document.getElementById('mov-edit-sn').value = item.sn;
+      document.getElementById('mov-edit-iccid').value = item.iccid;
+      document.getElementById('mov-edit-tid').value = item.tid;
+      document.getElementById('mov-edit-agent').value = item.agentName;
+
+      document.getElementById('mov-edit-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMovementEditModal() {
+      document.getElementById('mov-edit-modal').classList.add('hidden');
+    }
+
+    function handleSaveMovementEdit(event) {
+      event.preventDefault();
+      const id = document.getElementById('mov-edit-id').value;
+      const idx = movementLogs.findIndex(log => log.id === id);
+      if (idx === -1) return;
+
+      const updatedSn = document.getElementById('mov-edit-sn').value.trim().toUpperCase();
+      movementLogs[idx] = {
+        ...movementLogs[idx],
+        type: document.querySelector('input[name="mov-edit-type"]:checked').value,
+        spk: document.getElementById('mov-edit-spk').value,
+        itemType: document.getElementById('mov-edit-item-type').value,
+        sn: updatedSn,
+        iccid: document.getElementById('mov-edit-iccid').value.trim(),
+        tid: document.getElementById('mov-edit-tid').value.trim(),
+        servicePoint: document.getElementById('mov-edit-sp').value,
+        agentName: document.getElementById('mov-edit-agent').value.trim(),
+        technician: document.getElementById('mov-edit-tech').value,
+        status: document.getElementById('mov-edit-status').value
+      };
+
+      closeMovementEditModal();
+      syncToCloud('app_movement_edc', movementLogs);
+      syncMovementToWarehouseStock(true);
+      refreshAllActiveViews();
+      showMovementToast(`Perubahan pada SN ${updatedSn} berhasil disimpan.`, 'success');
+    }
+
+    function promptDeleteMovementItem(id) {
+      const target = movementLogs.find(item => item.id === id);
+      if (!target) return;
+      pendingMovementDeleteId = id;
+      document.getElementById('mov-delete-modal-desc').innerHTML = `Anda yakin ingin menghapus log SN <strong>${escapeHtml(target.sn)}</strong> (TID: ${escapeHtml(target.tid)})?`;
+      document.getElementById('mov-delete-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeMovementDeleteModal() {
+      pendingMovementDeleteId = null;
+      document.getElementById('mov-delete-modal').classList.add('hidden');
+    }
+
+    function confirmDeleteMovementItem() {
+      if (!pendingMovementDeleteId) return;
+      const target = movementLogs.find(item => item.id === pendingMovementDeleteId);
+      movementLogs = movementLogs.filter(item => item.id !== pendingMovementDeleteId);
+      closeMovementDeleteModal();
+      syncToCloud('app_movement_edc', movementLogs);
+      syncMovementToWarehouseStock(true);
+      refreshAllActiveViews();
+      if (target) showMovementToast(`Log SN ${target.sn} berhasil dihapus.`, 'info');
+    }
+
+    function updateMovementItemStatusInline(id, newStatus) {
+      const idx = movementLogs.findIndex(item => item.id === id);
+      if (idx !== -1) {
+        const sn = movementLogs[idx].sn;
+        movementLogs[idx].status = newStatus;
+        syncToCloud('app_movement_edc', movementLogs);
+        syncMovementToWarehouseStock(true);
+        refreshAllActiveViews();
+        showMovementToast(`Status SN ${sn} diubah menjadi "${newStatus}".`, 'success');
+      }
+    }
+
+    function updateMovementKPIs() {
+      const elTotal = document.getElementById('mov-kpi-total');
+      if (!elTotal) return;
+      elTotal.textContent = movementLogs.length;
+      document.getElementById('mov-kpi-merchant').textContent = movementLogs.filter(i => i.status === 'At Merchant').length;
+      document.getElementById('mov-kpi-booked').textContent = movementLogs.filter(i => i.status === 'Booked').length;
+      document.getElementById('mov-kpi-free').textContent = movementLogs.filter(i => i.status === 'Free').length;
+      document.getElementById('mov-kpi-damaged').textContent = movementLogs.filter(i => i.status === 'Damaged').length;
+    }
+
+    function getMovementStatusPillStyle(status) {
+      switch (status) {
+        case 'At Merchant': return 'bg-emerald-100/90 text-emerald-800 border-emerald-200';
+        case 'Booked': return 'bg-blue-100/90 text-blue-800 border-blue-200';
+        case 'Free': return 'bg-teal-100/90 text-teal-800 border-teal-200';
+        case 'Damaged': return 'bg-rose-100/90 text-rose-800 border-rose-200';
+        default: return 'bg-indigo-100/90 text-indigo-800 border-indigo-200';
+      }
+    }
+
+    function renderMovementTable() {
+      const tbody = document.getElementById('mov-table-body');
+      const emptyState = document.getElementById('mov-empty-state');
+      if (!tbody || !emptyState) return;
+
+      const query = (document.getElementById('mov-filter-search')?.value || '').toLowerCase().trim();
+      const typeFilter = document.getElementById('mov-filter-type')?.value || 'ALL';
+      const itemTypeFilter = document.getElementById('mov-filter-item-type')?.value || 'ALL';
+      const statusFilter = document.getElementById('mov-filter-status')?.value || 'ALL';
+      const spFilter = document.getElementById('mov-filter-sp')?.value || 'ALL';
+
+      const filtered = movementLogs.filter(item => {
+        const itemTypeVal = item.itemType || 'EDC BNI 4G';
+        const matchSearch =
+          String(item.sn || '').toLowerCase().includes(query) ||
+          itemTypeVal.toLowerCase().includes(query) ||
+          String(item.tid || '').toLowerCase().includes(query) ||
+          String(item.iccid || '').toLowerCase().includes(query) ||
+          String(item.spk || '').toLowerCase().includes(query) ||
+          String(item.agentName || '').toLowerCase().includes(query) ||
+          String(item.technician || '').toLowerCase().includes(query);
+
+        const matchType = typeFilter === 'ALL' || item.type === typeFilter;
+        const matchItemType = itemTypeFilter === 'ALL' || itemTypeVal === itemTypeFilter;
+        const matchStatus = statusFilter === 'ALL' || item.status === statusFilter;
+        const matchSp = spFilter === 'ALL' || item.servicePoint === spFilter;
+
+        return matchSearch && matchType && matchItemType && matchStatus && matchSp;
+      });
+
+      document.getElementById('mov-filtered-count').textContent = filtered.length;
+      document.getElementById('mov-total-count-label').textContent = movementLogs.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tbody.innerHTML = filtered.map(item => {
+        const isIn = item.type === 'In';
+        const typeBadge = isIn
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+               <i data-lucide="arrow-down-left" class="w-3 h-3"></i> IN
+             </span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">
+               <i data-lucide="arrow-up-right" class="w-3 h-3"></i> OUT
+             </span>`;
+
+        const itemTypeLabel = item.itemType || 'EDC BNI 4G';
+        const is4G = itemTypeLabel.toUpperCase().includes('4G');
+        const itemTypeBadge = is4G
+          ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80">${escapeHtml(itemTypeLabel)}</span>`
+          : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">${escapeHtml(itemTypeLabel)}</span>`;
+
+        const statusOptionsHtml = (movementDropdownConfig.statuses.includes(item.status)
+          ? movementDropdownConfig.statuses
+          : [...movementDropdownConfig.statuses, item.status]
+        ).map(st => `<option value="${escapeHtml(st)}" ${item.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('');
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition animate-slide-in">
+            <td class="py-4 px-5 align-middle">
+              <div class="mb-1">${itemTypeBadge}</div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono-code font-bold text-indigo-600 text-[13px]">${escapeHtml(item.sn)}</span>
+                <button type="button" onclick="copyMovementText('${escapeHtml(item.sn)}', 'SN EDC')" title="Salin SN EDC" class="text-slate-400 hover:text-indigo-600 p-0.5 rounded transition">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono-code mt-0.5">
+                ICCID: ${escapeHtml(item.iccid)}
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="flex items-center gap-2">
+                ${typeBadge}
+                <span class="font-bold text-slate-800 text-xs sm:text-[13px]">${escapeHtml(item.spk)}</span>
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="font-mono-code font-bold text-slate-900 text-xs sm:text-[13px]">
+                TID: ${escapeHtml(item.tid)}
+              </div>
+              <div class="text-xs text-slate-600 mt-0.5">${escapeHtml(item.agentName)}</div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="font-bold text-slate-800 text-xs sm:text-[13px]">${escapeHtml(item.servicePoint)}</div>
+              <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                <i data-lucide="wrench" class="w-3 h-3 text-slate-400"></i>
+                <span>${escapeHtml(item.technician)}</span>
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <select aria-label="Status ${escapeHtml(item.sn)}" onchange="updateMovementItemStatusInline('${item.id}', this.value)" class="rounded-full px-3 py-1 text-xs font-bold border cursor-pointer outline-none transition ${getMovementStatusPillStyle(item.status)}">
+                ${statusOptionsHtml}
+              </select>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="text-xs font-semibold text-slate-700">${escapeHtml(item.timestamp)}</div>
+              <div class="text-[11px] text-slate-400">WIB • Auto Log</div>
+            </td>
+            <td class="py-4 px-5 align-middle text-right">
+              <div class="inline-flex items-center gap-1.5">
+                <button type="button" onclick="openMovementEditModal('${item.id}')" title="Edit Data" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" onclick="promptDeleteMovementItem('${item.id}')" title="Hapus Data" class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function copyMovementText(text, label) {
+      const tempInput = document.createElement('textarea');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+        document.execCommand('copy');
+        showMovementToast(`${label} (${text}) disalin ke clipboard.`, 'info');
+      } catch (err) {
+        showMovementToast(`Gagal menyalin ${label}.`, 'error');
+      }
+      document.body.removeChild(tempInput);
+    }
+
+    function showMovementToast(message, type = 'success') {
+      const container = document.getElementById('mov-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+
+      let colors = 'bg-slate-900 text-white border-slate-700';
+      let iconName = 'check-circle-2';
+      let iconColor = 'text-emerald-400';
+
+      if (type === 'info') {
+        colors = 'bg-slate-800 text-white border-slate-700';
+        iconName = 'info';
+        iconColor = 'text-sky-400';
+      } else if (type === 'error') {
+        colors = 'bg-rose-900 text-white border-rose-700';
+        iconName = 'alert-circle';
+        iconColor = 'text-rose-300';
+      }
+
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-lg text-xs sm:text-sm font-medium animate-slide-in ${colors}`;
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+        <span class="flex-1">${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+      if (window.lucide) lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        toast.style.transition = 'all 0.2s ease';
+        setTimeout(() => toast.remove(), 200);
+      }, 3200);
+    }
+
+    // ==========================================
+    // 17. INISIALISASI SAAT HALAMAN DIMUAT
     // ==========================================
     window.addEventListener('DOMContentLoaded', () => {
       systemUsers = ensureMasterAdminExists(systemUsers);
+      syncMovementDropdownUI();
+      onMovementFormSpkChange('input');
+      syncMovementToWarehouseStock(false);
       initRealtimeCloudListeners();
       restoreUserSession();
+      if (window.lucide) lucide.createIcons();
     });
   </script>
 </body>
