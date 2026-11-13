@@ -798,7 +798,7 @@
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
-            <button type="button" onclick="openMovementDropdownManagerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 shadow-2xs transition">
+            <button type="button" onclick="openMovementDropdownManagerModal()" class="mov-admin-only-edit inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 shadow-2xs transition">
               <i data-lucide="list-plus" class="w-4 h-4 text-indigo-600"></i>
               <span>Kelola Pilihan Dropdown</span>
             </button>
@@ -888,7 +888,7 @@
             </div>
 
             <div id="mov-single-header-actions" class="pb-2 flex items-center gap-2">
-              <button type="button" onclick="openMovementDropdownManagerModal()" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-700 bg-white border border-slate-200 hover:border-indigo-300 px-3 py-1.5 rounded-xl transition">
+              <button type="button" onclick="openMovementDropdownManagerModal()" class="mov-admin-only-edit inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-700 bg-white border border-slate-200 hover:border-indigo-300 px-3 py-1.5 rounded-xl transition">
                 <i data-lucide="pencil-ruler" class="w-3.5 h-3.5 text-indigo-600"></i>
                 <span>Edit Daftar Dropdown</span>
               </button>
@@ -928,7 +928,7 @@
                     <label for="mov-input-spk" class="text-xs font-semibold text-slate-700">
                       Jenis SPK <span class="text-rose-500">*</span>
                     </label>
-                    <button type="button" onclick="openMovementDropdownManagerModal(getMovementSpkCategoryKey('input'))" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    <button type="button" onclick="openMovementDropdownManagerModal(getMovementSpkCategoryKey('input'))" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
                       <i class="fa-solid fa-pen text-[10px]"></i>
                       <span>Edit Opsi</span>
                     </button>
@@ -944,7 +944,7 @@
                       <label for="mov-input-item-type" class="text-xs font-semibold text-slate-700">
                         Jenis Barang <span class="text-rose-500">*</span>
                       </label>
-                      <button type="button" onclick="openMovementDropdownManagerModal('itemTypes')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <button type="button" onclick="openMovementDropdownManagerModal('itemTypes')" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
                         <i class="fa-solid fa-pen text-[10px]"></i>
                         <span>Edit Opsi</span>
                       </button>
@@ -982,7 +982,7 @@
                       <label for="mov-input-sp" class="text-xs font-semibold text-slate-700">
                         Service Point <span class="text-rose-500">*</span>
                       </label>
-                      <button type="button" onclick="openMovementDropdownManagerModal('servicePoints')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <button type="button" onclick="openMovementDropdownManagerModal('servicePoints')" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
                         <i class="fa-solid fa-pen text-[10px]"></i>
                         <span>Edit Opsi</span>
                       </button>
@@ -1004,7 +1004,7 @@
                       <label for="mov-input-tech" class="text-xs font-semibold text-slate-700">
                         Teknisi <span class="text-rose-500">*</span>
                       </label>
-                      <button type="button" onclick="openMovementDropdownManagerModal('technicians')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <button type="button" onclick="openMovementDropdownManagerModal('technicians')" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
                         <i class="fa-solid fa-pen text-[10px]"></i>
                         <span>Edit Opsi</span>
                       </button>
@@ -1018,7 +1018,7 @@
                       <label for="mov-input-status" class="text-xs font-semibold text-slate-700">
                         Status EDC <span class="text-rose-500">*</span>
                       </label>
-                      <button type="button" onclick="openMovementDropdownManagerModal('statuses')" class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                      <button type="button" onclick="openMovementDropdownManagerModal('statuses')" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
                         <i class="fa-solid fa-pen text-[10px]"></i>
                         <span>Edit Opsi</span>
                       </button>
@@ -5946,6 +5946,14 @@
         filterSpEl.innerHTML = `<option value="ALL">Semua SP</option>` +
           movementDropdownConfig.servicePoints.map(sp => `<option value="${escapeHtml(sp)}" ${sp === prev ? 'selected' : ''}>${escapeHtml(sp)}</option>`).join('');
       }
+      applyMovementRolePermissions();
+    }
+
+    function applyMovementRolePermissions() {
+      const canEdit = isBastAdminUser();
+      document.querySelectorAll('.mov-admin-only-edit').forEach(el => {
+        el.classList.toggle('hidden', !canEdit);
+      });
     }
 
     function getMovementSpkCategoryKey(prefix) {
@@ -6344,6 +6352,10 @@
     }
 
     function openMovementDropdownManagerModal(initialCategory = 'spkOut') {
+      if (!isBastAdminUser()) {
+        showMovementToast('Akses ditolak. Hanya TL dan Admin yang dapat mengedit opsi Movement.', 'error');
+        return;
+      }
       const catSelect = document.getElementById('mov-dm-category-select');
       if (catSelect && movementDropdownConfig[initialCategory]) {
         catSelect.value = initialCategory;
@@ -6698,6 +6710,10 @@
     }
 
     function openMovementEditModal(id) {
+      if (!isBastAdminUser()) {
+        showMovementToast('Akses ditolak. Hanya TL dan Admin yang dapat mengedit data Movement.', 'error');
+        return;
+      }
       const item = movementLogs.find(log => log.id === id);
       if (!item) return;
 
@@ -6765,6 +6781,10 @@
     }
 
     function promptDeleteMovementItem(id) {
+      if (!isBastAdminUser()) {
+        showMovementToast('Akses ditolak. Hanya TL dan Admin yang dapat menghapus data Movement.', 'error');
+        return;
+      }
       const target = movementLogs.find(item => item.id === id);
       if (!target) return;
       pendingMovementDeleteId = id;
@@ -6822,9 +6842,11 @@
     }
 
     function renderMovementTable() {
+      applyMovementRolePermissions();
       const tbody = document.getElementById('mov-table-body');
       const emptyState = document.getElementById('mov-empty-state');
       if (!tbody || !emptyState) return;
+      const canEditMovement = isBastAdminUser();
 
       const query = (document.getElementById('mov-filter-search')?.value || '').toLowerCase().trim();
       const typeFilter = document.getElementById('mov-filter-type')?.value || 'ALL';
@@ -6925,6 +6947,7 @@
               <div class="text-[11px] text-slate-400">WIB • Auto Log</div>
             </td>
             <td class="py-4 px-5 align-middle text-right">
+              ${canEditMovement ? `
               <div class="inline-flex items-center gap-1.5">
                 <button type="button" onclick="openMovementEditModal('${item.id}')" title="Edit Data" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition">
                   <i class="fa-solid fa-pen text-xs"></i>
@@ -6933,6 +6956,7 @@
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               </div>
+              ` : `<span class="text-[11px] text-slate-400">Hanya TL/Admin</span>`}
             </td>
           </tr>
         `;
