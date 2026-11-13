@@ -289,6 +289,8 @@
 
         <div id="tekHomeStatsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"></div>
 
+        <div id="homeMovementDashboard" class="hidden space-y-2.5"></div>
+
         <div>
           <h3 id="homeQuickMenuTitle" class="text-sm font-extrabold text-slate-800 mb-3">Menu Operasional</h3>
           <div id="tekHomeMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
@@ -428,9 +430,16 @@
           </form>
 
           <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 class="font-bold text-sm text-slate-800">Riwayat & Status Pengembalian Barang</h3>
-              <span id="returCountBadge" class="text-xs font-bold text-slate-500">0 Data Retur</span>
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="font-bold text-sm text-slate-800">Riwayat & Status Pengembalian Barang</h3>
+                <span id="returCountBadge" class="text-xs font-bold text-slate-500 shrink-0">0 Data Retur</span>
+              </div>
+              <div class="relative w-full sm:w-60">
+                <i class="fa-solid fa-magnifying-glass text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="text" id="returSearchInput" oninput="renderReturTable()" placeholder="Cari No. Retur, SN, Teknisi..."
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none transition" />
+              </div>
             </div>
             <div class="overflow-x-auto max-w-full">
               <table class="w-full text-left border-collapse">
@@ -565,9 +574,16 @@
 
         <!-- TABEL DAFTAR TIKET PROFILING BNI -->
         <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
-          <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="font-bold text-sm text-slate-800">Daftar Tiket &amp; Monitoring Profiling BNI</h3>
-            <span id="profilingCountBadge" class="text-xs font-bold text-slate-500">0 Tiket</span>
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="font-bold text-sm text-slate-800">Daftar Tiket &amp; Monitoring Profiling BNI</h3>
+              <span id="profilingCountBadge" class="text-xs font-bold text-slate-500 shrink-0">0 Tiket</span>
+            </div>
+            <div class="relative w-full sm:w-64">
+              <i class="fa-solid fa-magnifying-glass text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="profilingSearchInput" oninput="renderProfilingBNITable()" placeholder="Cari Tiket, TID, SN, Teknisi..."
+                class="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none transition" />
+            </div>
           </div>
           <div class="overflow-x-auto max-w-full">
             <table class="w-full text-left border-collapse">
@@ -645,9 +661,16 @@
           </form>
 
           <div class="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 class="font-bold text-sm text-slate-800">Daftar Permintaan & Pengiriman HUB</h3>
-              <span id="hubCountBadge" class="text-xs font-bold text-slate-500">0 Pengajuan</span>
+            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="font-bold text-sm text-slate-800">Daftar Permintaan & Pengiriman HUB</h3>
+                <span id="hubCountBadge" class="text-xs font-bold text-slate-500 shrink-0">0 Pengajuan</span>
+              </div>
+              <div class="relative w-full sm:w-60">
+                <i class="fa-solid fa-magnifying-glass text-xs text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                <input type="text" id="hubSearchInput" oninput="renderHubRequestTable()" placeholder="Cari No. PO, Barang, Pemohon..."
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none transition" />
+              </div>
             </div>
             <div class="overflow-x-auto max-w-full">
               <table class="w-full text-left border-collapse">
@@ -793,9 +816,6 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Movement SN EDC</h2>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">
-              Pencatatan keluar masuk SN EDC, TID, ICCID, dan pemantauan status perangkat lapangan secara real-time.
-            </p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
             <button type="button" onclick="openMovementDropdownManagerModal()" class="mov-admin-only-edit inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-700 shadow-2xs transition">
@@ -809,63 +829,8 @@
           </div>
         </div>
 
-        <!-- 5 Kartu Ringkasan (KPI Cards Full-Width) -->
-        <div aria-label="Ringkasan Status EDC" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
-            <div>
-              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Log SN</p>
-              <p id="mov-kpi-total" class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">0</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Perangkat tercatat</p>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-              <i data-lucide="layers" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">At Merchant</p>
-              <p id="mov-kpi-merchant" class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1">0</p>
-              <p class="text-[11px] text-emerald-600/80 mt-0.5">Aktif di agen</p>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <i data-lucide="store" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Booked</p>
-              <p id="mov-kpi-booked" class="text-2xl sm:text-3xl font-extrabold text-blue-700 mt-1">0</p>
-              <p class="text-[11px] text-blue-600/80 mt-0.5">Alokasi / Kirim</p>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-              <i data-lucide="bookmark" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-teal-700 uppercase tracking-wider">Free</p>
-              <p id="mov-kpi-free" class="text-2xl sm:text-3xl font-extrabold text-teal-700 mt-1">0</p>
-              <p class="text-[11px] text-teal-600/80 mt-0.5">Ready di SP</p>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-              <i data-lucide="package-open" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-rose-700 uppercase tracking-wider">Damaged</p>
-              <p id="mov-kpi-damaged" class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-1">0</p>
-              <p class="text-[11px] text-rose-600/80 mt-0.5">Rusak / Tarikan</p>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-            </div>
-          </div>
-        </div>
+        <!-- Kartu Ringkasan Dinamis sesuai Status EDC -->
+        <div id="mov-kpi-grid" aria-label="Ringkasan Status EDC" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
         <!-- PANEL INPUT MOVEMENT (INPUT SATUAN & UPLOAD EXCEL) -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
@@ -2068,6 +2033,28 @@
     </div>
   </div>
 
+  <!-- 14.5 MODAL RIWAYAT EDIT SN MOVEMENT -->
+  <div id="mov-history-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeMovementEditHistoryModal()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop max-h-[85vh] flex flex-col">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm sm:text-base font-extrabold text-slate-900">Riwayat Edit SN EDC</h3>
+          <p id="mov-history-modal-subtitle" class="text-xs text-slate-500 mt-0.5">-</p>
+        </div>
+        <button type="button" onclick="closeMovementEditHistoryModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+      <div id="mov-history-modal-body" class="p-5 overflow-y-auto space-y-2.5 text-xs"></div>
+      <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+        <button type="button" onclick="closeMovementEditHistoryModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 15. MODAL BAST PENGELUARAN UNIT (PRINTABLE) -->
   <div id="bastModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div onclick="closeBastModal()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
@@ -2238,7 +2225,8 @@
     const ROLE_DEFAULT_PERMISSIONS = {
       lead: ['checkout', 'retur', 'profiling', 'movement', 'scanner', 'hub', 'stock', 'users'],
       logistik: ['scanner', 'stock', 'movement', 'retur', 'profiling', 'hub'],
-      teknisi: ['checkout', 'retur', 'profiling']
+      teknisi: ['checkout', 'retur', 'profiling'],
+      viewer: ['checkout', 'retur', 'profiling', 'movement', 'scanner', 'hub', 'stock', 'users']
     };
 
     const PERMISSION_LABELS = {
@@ -2257,7 +2245,8 @@
     const DEFAULT_USERS = [
       { id: 'admin', name: 'Administrator', pass: 'admin666', role: 'lead', servicePoint: '01 Cirebon', active: true, permissions: ROLE_DEFAULT_PERMISSIONS.lead },
       { id: 'log01', name: 'Staf Logistik Cirebon', pass: '123456', role: 'logistik', servicePoint: '01 Cirebon', active: true, permissions: ROLE_DEFAULT_PERMISSIONS.logistik },
-      { id: 'tek01', name: 'Adang Kustiawan', pass: '123456', role: 'teknisi', servicePoint: '01 Cirebon', active: true, permissions: ROLE_DEFAULT_PERMISSIONS.teknisi }
+      { id: 'tek01', name: 'Adang Kustiawan', pass: '123456', role: 'teknisi', servicePoint: '01 Cirebon', active: true, permissions: ROLE_DEFAULT_PERMISSIONS.teknisi },
+      { id: 'dummy', name: 'Akun Viewer (Read-Only)', pass: 'dummy123', role: 'viewer', servicePoint: '01 Cirebon', active: true, permissions: ROLE_DEFAULT_PERMISSIONS.viewer }
     ];
 
     const DEFAULT_STOCK = [
@@ -2382,7 +2371,12 @@
     function getRoleLabel(role) {
       if (role === 'lead') return 'Team Leader';
       if (role === 'logistik') return 'Logistik';
+      if (role === 'viewer') return 'Viewer (Read-Only)';
       return 'Teknisi';
+    }
+
+    function isReadOnlyViewer() {
+      return Boolean(currentUser && (currentUser.role === 'viewer' || String(currentUser.id || '').toLowerCase() === 'dummy'));
     }
 
     function getUserPermissions(user) {
@@ -2413,7 +2407,7 @@
 
     function isOwnedByCurrentUser(techId, techName) {
       if (!currentUser) return false;
-      if (currentUser.role === 'lead' || currentUser.role === 'logistik') return true;
+      if (currentUser.role === 'lead' || currentUser.role === 'logistik' || currentUser.role === 'viewer') return true;
       const idMatch = techId && String(techId).toLowerCase() === String(currentUser.id).toLowerCase();
       const nameMatch = techName && String(techName).toLowerCase() === String(currentUser.name).toLowerCase();
       return Boolean(idMatch || nameMatch);
@@ -2494,10 +2488,29 @@
         list[adminIdx].permissions = ROLE_DEFAULT_PERMISSIONS.lead;
         if (!list[adminIdx].pass) list[adminIdx].pass = 'admin666';
       }
+
+      const dummyIdx = list.findIndex(u => String(u.id).toLowerCase() === 'dummy');
+      if (dummyIdx === -1) {
+        list.push({
+          id: 'dummy',
+          name: 'Akun Viewer (Read-Only)',
+          pass: 'dummy123',
+          role: 'viewer',
+          servicePoint: '01 Cirebon',
+          active: true,
+          permissions: ROLE_DEFAULT_PERMISSIONS.viewer
+        });
+      } else {
+        list[dummyIdx].active = true;
+        list[dummyIdx].role = 'viewer';
+        list[dummyIdx].permissions = ROLE_DEFAULT_PERMISSIONS.viewer;
+        if (!list[dummyIdx].pass) list[dummyIdx].pass = 'dummy123';
+      }
       return list;
     }
 
     function syncToCloud(docKey, dataArrayOrObj) {
+      if (isReadOnlyViewer()) return;
       const localMap = {
         app_system_users: 'spl_users',
         app_stock_cirebon: 'spl_stock',
@@ -3297,7 +3310,47 @@
           renderBastHistoryTable();
           break;
       }
+      applyReadOnlyViewerMode();
     }
+
+    function applyReadOnlyViewerMode() {
+      const ro = isReadOnlyViewer();
+      const cartBtn = document.getElementById('floatingCartBtn');
+      if (cartBtn && ro) cartBtn.classList.add('hidden');
+
+      const mainEl = document.querySelector('main');
+      if (!mainEl) return;
+
+      mainEl.querySelectorAll('button[type="submit"], button[onclick*="delete"], button[onclick*="Delete"], button[onclick*="Edit"], button[onclick*="edit"], button[onclick*="validate"], button[onclick*="Reset"], button[onclick*="openAdd"], button[onclick*="addToCart"], button[onclick*="openCheckoutSn"], button[onclick*="finalizeCheckout"], button[onclick*="quickEditDropdown"], button[onclick*="openMovementDropdownManagerModal"], button[onclick*="clearAllBastHistory"], select[onchange*="Status"], select[onchange*="status"]').forEach(el => {
+        if (ro) {
+          el.dataset.roHidden = '1';
+          el.classList.add('hidden');
+          el.disabled = true;
+        } else if (el.dataset.roHidden === '1') {
+          delete el.dataset.roHidden;
+          el.classList.remove('hidden');
+          el.disabled = false;
+        }
+      });
+
+      mainEl.querySelectorAll('form input, form select, form textarea').forEach(el => {
+        if (ro) {
+          el.dataset.roDisabled = '1';
+          el.disabled = true;
+        } else if (el.dataset.roDisabled === '1') {
+          delete el.dataset.roDisabled;
+          el.disabled = false;
+        }
+      });
+    }
+
+    document.addEventListener('submit', function (e) {
+      if (isReadOnlyViewer() && e.target && e.target.id !== 'loginForm') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        showCustomAlert('Mode Read-Only', 'Akun dummy hanya dapat melihat data dan tidak bisa melakukan input atau edit.');
+      }
+    }, true);
 
     // ==========================================
     // 5. BERANDA (TEKNISI, TEAM LEADER, ADMIN & LOGISTIK)
@@ -3344,7 +3397,9 @@
       const menuGrid = document.getElementById('tekHomeMenuGrid');
       const role = currentUser.role;
 
-      if (role === 'lead' || role === 'logistik') {
+      renderHomeMovementDashboard();
+
+      if (role === 'lead' || role === 'logistik' || role === 'viewer') {
         if (elQuoteFoot) elQuoteFoot.textContent = `— Semangat Koordinasi & Operasional ${getRoleLabel(role)}`;
         if (elMenuTitle) elMenuTitle.textContent = `Pintasan Operasional ${getRoleLabel(role)}`;
 
@@ -3593,6 +3648,7 @@
           menuGrid.innerHTML = menuCards.join('');
         }
       }
+      renderHomeMovementDashboard();
     }
 
     // ==========================================
@@ -4355,16 +4411,7 @@
             <input type="radio" name="profKategoriJo" value="${escapeHtml(opt)}" ${idx === 0 ? 'checked' : ''} class="text-blue-600" />
             <span>${escapeHtml(opt)}</span>
           </label>
-        `).join('') + `
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80">
-            <label class="flex items-center gap-2 cursor-pointer shrink-0">
-              <input type="radio" name="profKategoriJo" value="Yang lain" class="text-blue-600" />
-              <span>Lainnya:</span>
-            </label>
-            <input type="text" id="profKategoriJoOther" placeholder="Isi kategori lain..."
-              class="flex-1 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600" />
-          </div>
-        `;
+        `).join('');
       }
 
       const kebContainer = document.getElementById('profKebutuhanContainer');
@@ -4601,11 +4648,22 @@
 
       const isLead = currentUser.role === 'lead';
       const canValidate = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      const list = returHistory.filter(r => isOwnedByCurrentUser(r.techId, r.techName));
+      const ownedList = returHistory.filter(r => isOwnedByCurrentUser(r.techId, r.techName));
+      const q = (document.getElementById('returSearchInput')?.value || '').trim().toLowerCase();
+      const list = q
+        ? ownedList.filter(r =>
+            String(r.returNo || '').toLowerCase().includes(q) ||
+            String(r.techName || '').toLowerCase().includes(q) ||
+            String(r.itemType || '').toLowerCase().includes(q) ||
+            String(r.sn || '').toLowerCase().includes(q) ||
+            String(r.customer || '').toLowerCase().includes(q) ||
+            String(r.status || '').toLowerCase().includes(q)
+          )
+        : ownedList;
 
       if (badge) badge.textContent = `${list.length} Data Retur`;
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Belum ada data pengembalian barang retur.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">${q ? 'Tidak ada data retur yang cocok dengan pencarian.' : 'Belum ada data pengembalian barang retur.'}</td></tr>`;
         return;
       }
 
@@ -4795,11 +4853,24 @@
 
       const isLead = currentUser.role === 'lead';
       const canProcess = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      const list = profilingHistory.filter(p => isOwnedByCurrentUser(p.techId, p.techName));
+      const ownedList = profilingHistory.filter(p => isOwnedByCurrentUser(p.techId, p.techName));
+      const q = (document.getElementById('profilingSearchInput')?.value || '').trim().toLowerCase();
+      const list = q
+        ? ownedList.filter(p =>
+            String(p.id || '').toLowerCase().includes(q) ||
+            String(p.techName || '').toLowerCase().includes(q) ||
+            String(p.tid || '').toLowerCase().includes(q) ||
+            String(p.snBaru !== undefined ? p.snBaru : (p.sn || '')).toLowerCase().includes(q) ||
+            String(p.iccidBaru || '').toLowerCase().includes(q) ||
+            String(p.kategoriJo || '').toLowerCase().includes(q) ||
+            String(p.kendalaEdc || p.notes || '').toLowerCase().includes(q) ||
+            String(p.status || '').toLowerCase().includes(q)
+          )
+        : ownedList;
 
       if (badge) badge.textContent = `${list.length} Tiket`;
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">Belum ada pengajuan Profiling BNI.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">${q ? 'Tidak ada tiket profiling yang cocok dengan pencarian.' : 'Belum ada pengajuan Profiling BNI.'}</td></tr>`;
         return;
       }
 
@@ -4995,14 +5066,25 @@
 
       const isLead = currentUser.role === 'lead';
       const canManageStatus = currentUser.role === 'lead' || currentUser.role === 'logistik';
-      if (badge) badge.textContent = `${hubRequests.length} Pengajuan`;
+      const q = (document.getElementById('hubSearchInput')?.value || '').trim().toLowerCase();
+      const filteredHubs = q
+        ? hubRequests.filter(h =>
+            String(h.poNo || '').toLowerCase().includes(q) ||
+            String(h.requesterName || '').toLowerCase().includes(q) ||
+            String(h.itemName || '').toLowerCase().includes(q) ||
+            String(h.asalHub || '').toLowerCase().includes(q) ||
+            String(h.notes || '').toLowerCase().includes(q) ||
+            String(h.status || '').toLowerCase().includes(q)
+          )
+        : hubRequests;
+      if (badge) badge.textContent = `${filteredHubs.length} Pengajuan`;
 
-      if (hubRequests.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">Belum ada pengajuan restock HUB.</td></tr>`;
+      if (filteredHubs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">${q ? 'Tidak ada permintaan HUB yang cocok dengan pencarian.' : 'Belum ada pengajuan restock HUB.'}</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = hubRequests.map(h => {
+      tbody.innerHTML = filteredHubs.map(h => {
         const normalizedStatus = h.status === 'Diterima Gudang' ? 'Diterima' : (h.status === 'Proses HUB' ? 'Proses Email' : h.status);
         const statusBadge = getHubStatusBadgeClass(normalizedStatus);
         const prioBadge = h.priority === 'Urgent'
@@ -6221,6 +6303,12 @@
         }
 
         const target = movementLogs[targetIdx];
+        const nextHistory = Array.isArray(target.editHistory) ? [...target.editHistory] : [];
+        nextHistory.unshift({
+          editedAt: formatTimestampNow(),
+          editedBy: currentUser?.name || 'System',
+          summary: `Out to SPK (${spk}): Agen ${agentName}, TID ${tid}, Status ${target.status} → ${status}`
+        });
         movementLogs[targetIdx] = {
           ...target,
           type: 'Out',
@@ -6230,7 +6318,8 @@
           servicePoint,
           technician,
           status,
-          timestamp: formatTimestampNow()
+          timestamp: formatTimestampNow(),
+          editHistory: nextHistory
         };
 
         document.getElementById('mov-outspk-tid').value = '';
@@ -6938,8 +7027,8 @@
       if (idx === -1) return;
 
       const updatedSn = document.getElementById('mov-edit-sn').value.trim().toUpperCase();
-      movementLogs[idx] = {
-        ...movementLogs[idx],
+      const prev = movementLogs[idx];
+      const nextData = {
         type: document.querySelector('input[name="mov-edit-type"]:checked').value,
         spk: document.getElementById('mov-edit-spk').value,
         itemType: document.getElementById('mov-edit-item-type').value,
@@ -6950,6 +7039,28 @@
         agentName: document.getElementById('mov-edit-agent').value.trim(),
         technician: document.getElementById('mov-edit-tech').value,
         status: document.getElementById('mov-edit-status').value
+      };
+
+      const diffs = [];
+      if (prev.status !== nextData.status) diffs.push(`Status: ${prev.status} → ${nextData.status}`);
+      if (prev.agentName !== nextData.agentName) diffs.push(`Agen: ${prev.agentName || '-'} → ${nextData.agentName}`);
+      if (prev.tid !== nextData.tid) diffs.push(`TID: ${prev.tid || '-'} → ${nextData.tid}`);
+      if (prev.spk !== nextData.spk) diffs.push(`SPK: ${prev.spk} → ${nextData.spk}`);
+      if (prev.technician !== nextData.technician) diffs.push(`Teknisi: ${prev.technician} → ${nextData.technician}`);
+      if (prev.servicePoint !== nextData.servicePoint) diffs.push(`SP: ${prev.servicePoint} → ${nextData.servicePoint}`);
+      if (prev.sn !== nextData.sn) diffs.push(`SN: ${prev.sn} → ${nextData.sn}`);
+
+      const nextHistory = Array.isArray(prev.editHistory) ? [...prev.editHistory] : [];
+      nextHistory.unshift({
+        editedAt: formatTimestampNow(),
+        editedBy: currentUser?.name || 'System',
+        summary: diffs.length > 0 ? diffs.join(' • ') : 'Edit Data Movement'
+      });
+
+      movementLogs[idx] = {
+        ...prev,
+        ...nextData,
+        editHistory: nextHistory
       };
 
       closeMovementEditModal();
@@ -6991,7 +7102,18 @@
     function updateMovementItemStatusInline(id, newStatus) {
       const idx = movementLogs.findIndex(item => item.id === id);
       if (idx !== -1) {
-        const sn = movementLogs[idx].sn;
+        const prevItem = movementLogs[idx];
+        const sn = prevItem.sn;
+        const oldStatus = prevItem.status;
+        if (oldStatus !== newStatus) {
+          const nextHistory = Array.isArray(prevItem.editHistory) ? [...prevItem.editHistory] : [];
+          nextHistory.unshift({
+            editedAt: formatTimestampNow(),
+            editedBy: currentUser?.name || 'System',
+            summary: `Status diubah: ${oldStatus} → ${newStatus}`
+          });
+          movementLogs[idx].editHistory = nextHistory;
+        }
         movementLogs[idx].status = newStatus;
         syncToCloud('app_movement_edc', movementLogs);
         syncMovementToWarehouseStock(true);
@@ -7000,14 +7122,126 @@
       }
     }
 
+    function openMovementEditHistoryModal(id) {
+      const item = movementLogs.find(m => m.id === id);
+      if (!item) return;
+      document.getElementById('mov-history-modal-subtitle').textContent = `SN: ${item.sn} • ${item.itemType || 'EDC'}`;
+      const body = document.getElementById('mov-history-modal-body');
+      const list = Array.isArray(item.editHistory) ? item.editHistory : [];
+      if (list.length === 0) {
+        body.innerHTML = `<div class="py-6 text-center text-slate-400">Belum ada riwayat edit untuk SN ini.</div>`;
+      } else {
+        body.innerHTML = list.map(entry => `
+          <div class="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-slate-800">${escapeHtml(entry.editedBy || 'System')}</span>
+              <span class="text-[11px] text-slate-400">${escapeHtml(entry.editedAt || '-')}</span>
+            </div>
+            <p class="text-slate-600 leading-relaxed">${escapeHtml(entry.summary || '-')}</p>
+          </div>
+        `).join('');
+      }
+      document.getElementById('mov-history-modal')?.classList.remove('hidden');
+    }
+
+    function closeMovementEditHistoryModal() {
+      document.getElementById('mov-history-modal')?.classList.add('hidden');
+    }
+
+    function getMovementStatusCardTheme(status) {
+      const key = String(status || '').toLowerCase();
+      if (key.includes('merchant')) return { text: 'text-emerald-700', sub: 'Aktif di agen', box: 'bg-emerald-50 text-emerald-600', icon: 'fa-store' };
+      if (key.includes('book')) return { text: 'text-blue-700', sub: 'Alokasi / Kirim', box: 'bg-blue-50 text-blue-600', icon: 'fa-bookmark' };
+      if (key.includes('free') || key.includes('ready')) return { text: 'text-teal-700', sub: 'Ready di SP', box: 'bg-teal-50 text-teal-600', icon: 'fa-box-open' };
+      if (key.includes('damag') || key.includes('rusak')) return { text: 'text-rose-700', sub: 'Rusak / Tarikan', box: 'bg-rose-50 text-rose-600', icon: 'fa-triangle-exclamation' };
+      return { text: 'text-indigo-700', sub: 'Status aktif', box: 'bg-indigo-50 text-indigo-600', icon: 'fa-tag' };
+    }
+
+    function getMovementStatusBreakdown() {
+      const configured = Array.isArray(movementDropdownConfig?.statuses) ? movementDropdownConfig.statuses : [];
+      const allStatuses = [...configured];
+      movementLogs.forEach(item => {
+        if (item.status && !allStatuses.includes(item.status)) allStatuses.push(item.status);
+      });
+      return allStatuses.map(st => ({
+        status: st,
+        count: movementLogs.filter(i => i.status === st).length,
+        theme: getMovementStatusCardTheme(st)
+      }));
+    }
+
     function updateMovementKPIs() {
-      const elTotal = document.getElementById('mov-kpi-total');
-      if (!elTotal) return;
-      elTotal.textContent = movementLogs.length;
-      document.getElementById('mov-kpi-merchant').textContent = movementLogs.filter(i => i.status === 'At Merchant').length;
-      document.getElementById('mov-kpi-booked').textContent = movementLogs.filter(i => i.status === 'Booked').length;
-      document.getElementById('mov-kpi-free').textContent = movementLogs.filter(i => i.status === 'Free').length;
-      document.getElementById('mov-kpi-damaged').textContent = movementLogs.filter(i => i.status === 'Damaged').length;
+      const grid = document.getElementById('mov-kpi-grid');
+      if (!grid) return;
+      const breakdown = getMovementStatusBreakdown();
+      const totalCard = `
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Log SN</p>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Perangkat tercatat</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-layer-group text-base"></i>
+          </div>
+        </div>
+      `;
+      const statusCards = breakdown.map(item => `
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div class="min-w-0 pr-2">
+            <p class="text-xs font-semibold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
+            <p class="text-2xl sm:text-3xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(item.theme.sub)}</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl ${item.theme.box} flex items-center justify-center shrink-0">
+            <i class="fa-solid ${item.theme.icon} text-base"></i>
+          </div>
+        </div>
+      `).join('');
+      grid.innerHTML = totalCard + statusCards;
+    }
+
+    function renderHomeMovementDashboard() {
+      const container = document.getElementById('homeMovementDashboard');
+      if (!container || !currentUser) return;
+      const canSee = currentUser.role === 'lead' || currentUser.role === 'logistik' || isReadOnlyViewer() || userHasPermission('movement');
+      if (!canSee) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+      container.classList.remove('hidden');
+      const breakdown = getMovementStatusBreakdown();
+      container.innerHTML = `
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
+          <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
+            Buka Movement &rarr;
+          </button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-indigo-300 transition flex items-center justify-between col-span-2 sm:col-span-1">
+            <div>
+              <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">TOTAL LOG SN</p>
+              <p class="text-2xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+          </div>
+          ${breakdown.map(item => `
+            <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs hover:border-indigo-300 transition flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                <p class="text-[10px] sm:text-xs font-bold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
+                <p class="text-2xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl ${item.theme.box} flex items-center justify-center shrink-0">
+                <i class="fa-solid ${item.theme.icon}"></i>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
     }
 
     function getMovementStatusPillStyle(status) {
@@ -7124,6 +7358,12 @@
             <td class="py-4 px-4 align-middle">
               <div class="text-xs font-semibold text-slate-700">${escapeHtml(item.timestamp)}</div>
               <div class="text-[11px] text-slate-400">WIB • Auto Log</div>
+              ${Array.isArray(item.editHistory) && item.editHistory.length > 0 ? `
+                <button type="button" onclick="openMovementEditHistoryModal('${item.id}')" class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full transition">
+                  <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                  <span>Riwayat Edit (${item.editHistory.length})</span>
+                </button>
+              ` : ''}
             </td>
             <td class="py-4 px-5 align-middle text-right">
               ${canEditMovement ? `
