@@ -1162,8 +1162,31 @@
             </form>
           </div>
 
-          <!-- TAB 2: UPLOAD EXCEL (.XLSX) -->
-          <div id="mov-tab-panel-excel" class="hidden p-5 sm:p-6 space-y-6">
+          <!-- TAB 2: UPLOAD DATA (BULK IN / BULK OUT TO SPK) -->
+          <div id="mov-tab-panel-excel" class="hidden p-5 sm:p-6 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/90 border border-slate-200/80 rounded-2xl p-3.5">
+              <div>
+                <p class="text-xs font-bold text-slate-800">Pilih Mode Upload Data (Bulk)</p>
+                <p id="mov-excel-mode-desc" class="text-[11px] text-slate-500 mt-0.5">Mode In (Masuk): Menambahkan daftar SN EDC baru secara massal ke Movement.</p>
+              </div>
+              <div class="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-slate-200 shrink-0">
+                <label class="cursor-pointer">
+                  <input type="radio" name="mov-excel-mode" value="In" checked onchange="onMovementExcelModeChange()" class="peer sr-only">
+                  <div class="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-emerald-600 peer-checked:text-white transition whitespace-nowrap">
+                    <i class="fa-solid fa-arrow-down-left text-[10px]"></i>
+                    <span>In (Masuk)</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="mov-excel-mode" value="OutSpk" onchange="onMovementExcelModeChange()" class="peer sr-only">
+                  <div class="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold text-slate-600 peer-checked:bg-sky-600 peer-checked:text-white transition whitespace-nowrap">
+                    <i class="fa-solid fa-store text-[10px]"></i>
+                    <span>Out to SPK</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
               <div class="lg:col-span-5 bg-slate-50 rounded-2xl p-5 border border-slate-200/80 flex flex-col justify-between space-y-4">
                 <div>
@@ -1171,14 +1194,14 @@
                     Langkah 1
                   </span>
                   <h3 class="font-bold text-slate-900 text-base">Unduh Template Excel (.xlsx)</h3>
-                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                    Template otomatis mengikuti daftar opsi dropdown terbaru (<code class="font-mono-code bg-white px-1 py-0.5 rounded border border-slate-200">In</code> / <code class="font-mono-code bg-white px-1 py-0.5 rounded border border-slate-200">Out</code>, termasuk <strong>Return to WH</strong> &amp; <strong>Send to HUB</strong>).
+                  <p id="mov-excel-template-desc" class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Template otomatis mengikuti daftar opsi dropdown terbaru untuk <strong>In (Masuk)</strong>.
                   </p>
                 </div>
                 <div class="pt-2">
                   <button type="button" onclick="downloadMovementExcelTemplate()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition">
                     <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>Download Template Excel (.xlsx)</span>
+                    <span id="mov-excel-template-btn-label">Download Template In (Masuk)</span>
                   </button>
                   <p class="text-[11px] text-slate-400 mt-2 text-center">Berisi Sheet <strong>Data_Movement</strong> &amp; Sheet <strong>Panduan_Isi</strong>.</p>
                 </div>
@@ -6297,6 +6320,10 @@
     function onMovementFormSpkChange(prefix) {
       const selectedType = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value;
       const selectedSpk = document.getElementById(`mov-${prefix}-spk`)?.value;
+      if (prefix === 'input' && selectedType === 'Out') {
+        renderMovementOutSnChecklist();
+        return;
+      }
       const statusSelect = document.getElementById(`mov-${prefix}-status`);
       if (!statusSelect) return;
 
@@ -6527,14 +6554,20 @@
       const container = document.getElementById('mov-out-sn-list');
       if (!container) return;
 
-      const validIds = new Set(movementLogs.map(m => m.id));
+      const selectedOriginSp = (document.getElementById('mov-input-spk')?.value || '').trim().toLowerCase();
+      const originMatches = movementLogs.filter(item => {
+        if (!selectedOriginSp) return true;
+        return String(item.servicePoint || '').trim().toLowerCase() === selectedOriginSp;
+      });
+
+      const validIds = new Set(originMatches.map(m => m.id));
       for (const id of Array.from(selectedOutMovementIds)) {
         if (!validIds.has(id)) selectedOutMovementIds.delete(id);
       }
       updateMovementOutSelectedCount();
 
       const query = (document.getElementById('mov-out-sn-search')?.value || '').trim().toLowerCase();
-      const filtered = movementLogs.filter(item => {
+      const filtered = originMatches.filter(item => {
         if (!query) return true;
         return (
           (item.sn || '').toLowerCase().includes(query) ||
@@ -6545,7 +6578,8 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Tidak ada SN EDC yang tersedia di Movement.</div>`;
+        const spLabel = document.getElementById('mov-input-spk')?.value || '-';
+        container.innerHTML = `<div class="col-span-full p-4 text-center text-xs text-slate-400">Tidak ada SN EDC pada Service Point / HUB <strong>${escapeHtml(spLabel)}</strong>.</div>`;
         return;
       }
 
@@ -6800,58 +6834,100 @@
       showMovementToast('Seluruh daftar pilihan dropdown dikembalikan ke default.', 'info');
     }
 
+    function getMovementExcelMode() {
+      return document.querySelector('input[name="mov-excel-mode"]:checked')?.value || 'In';
+    }
+
+    function onMovementExcelModeChange() {
+      const mode = getMovementExcelMode();
+      const modeDesc = document.getElementById('mov-excel-mode-desc');
+      const tplDesc = document.getElementById('mov-excel-template-desc');
+      const btnLabel = document.getElementById('mov-excel-template-btn-label');
+      if (mode === 'OutSpk') {
+        if (modeDesc) modeDesc.textContent = 'Mode Out to SPK: Mengupdate data SN EDC yang sudah ada di Movement ke tujuan merchant/SPK secara massal.';
+        if (tplDesc) tplDesc.innerHTML = 'Template khusus update massal <strong>Out to SPK</strong> (cocokkan berdasarkan <strong>SN_EDC</strong> yang ada di Movement).';
+        if (btnLabel) btnLabel.textContent = 'Download Template Out to SPK';
+      } else {
+        if (modeDesc) modeDesc.textContent = 'Mode In (Masuk): Menambahkan daftar SN EDC baru secara massal ke Movement.';
+        if (tplDesc) tplDesc.innerHTML = 'Template otomatis mengikuti daftar opsi dropdown terbaru untuk <strong>In (Masuk)</strong>.';
+        if (btnLabel) btnLabel.textContent = 'Download Template In (Masuk)';
+      }
+      clearMovementExcelPreview();
+    }
+
     function downloadMovementExcelTemplate() {
       if (typeof XLSX === 'undefined') {
         showMovementToast('Library SheetJS belum siap.', 'error');
         return;
       }
-      const templateRows = [
-        {
-          Tipe_Movement: 'Out',
-          SPK: movementDropdownConfig.spkOut[0] || 'Instal',
-          Jenis_Barang: movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G',
-          SN_EDC: 'P20098412501',
-          ICCID: '8962100045891125001',
-          TID: '71029801',
-          Service_Point: movementDropdownConfig.servicePoints[0] || '01 Cirebon',
-          Nama_Agen: 'Agen Mitra Sejahtera',
-          Teknisi: movementDropdownConfig.technicians[0] || 'Ayief Syuhada',
-          Status_EDC: movementDropdownConfig.statuses[0] || 'At Merchant'
-        },
-        {
-          Tipe_Movement: 'In',
-          SPK: movementDropdownConfig.spkIn[0] || 'Kiriman WH Pusat',
-          Jenis_Barang: movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G',
-          SN_EDC: 'P20099123550',
-          ICCID: '8962100045892235501',
-          TID: '71029855',
-          Service_Point: '01 Cirebon',
-          Nama_Agen: 'Gudang SP Cirebon',
-          Teknisi: 'Wahyudi',
-          Status_EDC: 'Free'
-        }
-      ];
-      const guideRows = [
-        { Kolom: 'Tipe_Movement', Aturan_Valid: 'In | Out', Keterangan: 'Wajib diisi "In" atau "Out".' },
-        { Kolom: 'SPK', Aturan_Valid: `In: ${movementDropdownConfig.spkIn.join(' | ')} || Out: ${movementDropdownConfig.spkOut.join(' | ')}`, Keterangan: 'Harus sesuai tipe In atau Out.' },
-        { Kolom: 'Jenis_Barang', Aturan_Valid: movementDropdownConfig.itemTypes.join(' | '), Keterangan: 'Model/tipe perangkat EDC (misal EDC BNI 4G / EDC BNI 3G).' },
-        { Kolom: 'SN_EDC', Aturan_Valid: 'Serial Number EDC', Keterangan: 'Wajib diisi.' },
-        { Kolom: 'ICCID', Aturan_Valid: 'Nomor Kartu SIM', Keterangan: 'Wajib diisi.' },
-        { Kolom: 'TID', Aturan_Valid: 'Terminal ID', Keterangan: 'Wajib diisi.' },
-        { Kolom: 'Service_Point', Aturan_Valid: movementDropdownConfig.servicePoints.join(' | '), Keterangan: 'Sesuai daftar Service Point.' },
-        { Kolom: 'Nama_Agen', Aturan_Valid: 'Teks bebas', Keterangan: 'Nama agen, merchant, WH, atau HUB tujuan.' },
-        { Kolom: 'Teknisi', Aturan_Valid: movementDropdownConfig.technicians.join(' | '), Keterangan: 'Nama teknisi pelaksana.' },
-        { Kolom: 'Status_EDC', Aturan_Valid: movementDropdownConfig.statuses.join(' | '), Keterangan: 'Status perangkat EDC.' }
-      ];
+      const mode = getMovementExcelMode();
+      let templateRows = [];
+      let guideRows = [];
+      let cols = [];
+      let fileName = 'Template_Movement_In_Bulk.xlsx';
+
+      if (mode === 'OutSpk') {
+        fileName = 'Template_Out_to_SPK_Bulk.xlsx';
+        templateRows = [
+          {
+            SN_EDC: movementLogs[0]?.sn || 'P20098412501',
+            Jenis_SPK: movementDropdownConfig.spkOutSpk[0] || 'Instal',
+            TID: '71029801',
+            Nama_Agen: 'Agen Mitra Sejahtera',
+            Service_Point: movementDropdownConfig.servicePoints[0] || '01 Cirebon',
+            Teknisi: movementDropdownConfig.technicians[0] || 'Ayief Syuhada',
+            Status_EDC: 'At Merchant'
+          }
+        ];
+        guideRows = [
+          { Kolom: 'SN_EDC', Aturan_Valid: 'SN yang sudah tercatat di Movement', Keterangan: 'Wajib ada di data Movement.' },
+          { Kolom: 'Jenis_SPK', Aturan_Valid: movementDropdownConfig.spkOutSpk.join(' | '), Keterangan: 'Jenis SPK pemasangan / maintenance.' },
+          { Kolom: 'TID', Aturan_Valid: 'Terminal ID', Keterangan: 'Wajib diisi.' },
+          { Kolom: 'Nama_Agen', Aturan_Valid: 'Teks bebas', Keterangan: 'Nama agen / merchant tujuan.' },
+          { Kolom: 'Service_Point', Aturan_Valid: movementDropdownConfig.servicePoints.join(' | '), Keterangan: 'Sesuai daftar Service Point.' },
+          { Kolom: 'Teknisi', Aturan_Valid: movementDropdownConfig.technicians.join(' | '), Keterangan: 'Nama teknisi pelaksana.' },
+          { Kolom: 'Status_EDC', Aturan_Valid: movementDropdownConfig.statuses.join(' | '), Keterangan: 'Default: At Merchant.' }
+        ];
+        cols = [{ wch: 22 }, { wch: 22 }, { wch: 14 }, { wch: 28 }, { wch: 18 }, { wch: 20 }, { wch: 16 }];
+      } else {
+        templateRows = [
+          {
+            Tipe_Movement: 'In',
+            SPK: movementDropdownConfig.spkIn[0] || 'Kiriman WH Pusat',
+            Jenis_Barang: movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G',
+            SN_EDC: 'P20099123550',
+            ICCID: '8962100045892235501',
+            TID: '-',
+            Service_Point: movementDropdownConfig.servicePoints[0] || '01 Cirebon',
+            Nama_Agen: 'Gudang SP Cirebon',
+            Teknisi: '-',
+            Status_EDC: 'Free'
+          }
+        ];
+        guideRows = [
+          { Kolom: 'Tipe_Movement', Aturan_Valid: 'In', Keterangan: 'Diisi "In" untuk tambah SN masuk secara bulk.' },
+          { Kolom: 'SPK', Aturan_Valid: movementDropdownConfig.spkIn.join(' | '), Keterangan: 'Sesuai daftar SPK In (Masuk).' },
+          { Kolom: 'Jenis_Barang', Aturan_Valid: movementDropdownConfig.itemTypes.join(' | '), Keterangan: 'Model/tipe perangkat EDC (misal EDC BNI 4G / EDC BNI 3G).' },
+          { Kolom: 'SN_EDC', Aturan_Valid: 'Serial Number EDC', Keterangan: 'Wajib diisi.' },
+          { Kolom: 'ICCID', Aturan_Valid: 'Nomor Kartu SIM', Keterangan: 'Wajib diisi.' },
+          { Kolom: 'TID', Aturan_Valid: 'Terminal ID / -', Keterangan: 'Isi "-" jika belum ada TID.' },
+          { Kolom: 'Service_Point', Aturan_Valid: movementDropdownConfig.servicePoints.join(' | '), Keterangan: 'Sesuai daftar Service Point.' },
+          { Kolom: 'Nama_Agen', Aturan_Valid: 'Teks bebas', Keterangan: 'Nama gudang / sumber barang.' },
+          { Kolom: 'Teknisi', Aturan_Valid: movementDropdownConfig.technicians.join(' | ') + ' | -', Keterangan: 'Nama teknisi atau "-".' },
+          { Kolom: 'Status_EDC', Aturan_Valid: movementDropdownConfig.statuses.join(' | '), Keterangan: 'Status perangkat EDC (umumnya Free).' }
+        ];
+        cols = [{ wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 20 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 26 }, { wch: 18 }, { wch: 15 }];
+      }
+
       const wb = XLSX.utils.book_new();
       const wsData = XLSX.utils.json_to_sheet(templateRows);
       const wsGuide = XLSX.utils.json_to_sheet(guideRows);
-      wsData['!cols'] = [{ wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 24 }, { wch: 12 }, { wch: 16 }, { wch: 26 }, { wch: 18 }, { wch: 15 }];
+      wsData['!cols'] = cols;
       wsGuide['!cols'] = [{ wch: 18 }, { wch: 76 }, { wch: 44 }];
       XLSX.utils.book_append_sheet(wb, wsData, 'Data_Movement');
       XLSX.utils.book_append_sheet(wb, wsGuide, 'Panduan_Isi');
-      XLSX.writeFile(wb, 'Template_Movement_EDC.xlsx');
-      showMovementToast('Template_Movement_EDC.xlsx berhasil diunduh.', 'success');
+      XLSX.writeFile(wb, fileName);
+      showMovementToast(`${fileName} berhasil diunduh.`, 'success');
     }
 
     function exportMovementToExcel() {
@@ -6929,6 +7005,7 @@
             return;
           }
 
+          const uploadMode = getMovementExcelMode();
           parsedMovementExcelRows = rawRows.map(row => {
             const norm = {};
             Object.keys(row).forEach(k => { norm[normalizeMovementExcelKey(k)] = String(row[k]).trim(); });
@@ -6944,16 +7021,51 @@
             const technician = norm['teknisi'] || '';
             const rawStatus = norm['statusedc'] || norm['status'] || '';
 
-            const type = matchMovementCaseInsensitive(rawType, ['In', 'Out'], null);
-            const allowedSpks = type === 'In' ? movementDropdownConfig.spkIn : (type === 'Out' ? movementDropdownConfig.spkOut : []);
-            const spk = type ? matchMovementCaseInsensitive(rawSpk, allowedSpks, null) : null;
+            const isOutSpkRow = uploadMode === 'OutSpk' || ['outspk', 'out to spk', 'outtospk'].includes(rawType.toLowerCase());
+
+            if (isOutSpkRow) {
+              const matchedLog = sn ? movementLogs.find(m => String(m.sn || '').trim().toUpperCase() === sn) : null;
+              const spk = matchMovementCaseInsensitive(rawSpk, movementDropdownConfig.spkOutSpk, rawSpk || '');
+              const servicePoint = matchMovementCaseInsensitive(rawSp, movementDropdownConfig.servicePoints, matchedLog?.servicePoint || rawSp || '');
+              const status = matchMovementCaseInsensitive(rawStatus, movementDropdownConfig.statuses, 'At Merchant');
+
+              const errors = [];
+              if (!sn) errors.push('SN kosong');
+              else if (!matchedLog) errors.push('SN tidak ada di Movement');
+              if (!spk) errors.push('Jenis SPK kosong');
+              if (!tid) errors.push('TID kosong');
+              if (!agentName) errors.push('Nama Agen kosong');
+              if (!servicePoint) errors.push('SP kosong');
+              if (!technician) errors.push('Teknisi kosong');
+              if (!status) errors.push('Status EDC tidak valid');
+
+              return {
+                mode: 'OutSpk',
+                targetId: matchedLog ? matchedLog.id : null,
+                isValid: errors.length === 0,
+                errors,
+                type: 'Out',
+                spk: spk || '-',
+                itemType: matchedLog?.itemType || rawItemType || '-',
+                sn,
+                iccid: matchedLog?.iccid || iccid || '-',
+                tid: tid || '-',
+                servicePoint: servicePoint || '-',
+                agentName,
+                technician,
+                status: status || rawStatus || '-'
+              };
+            }
+
+            const type = matchMovementCaseInsensitive(rawType || 'In', ['In'], null);
+            const spk = type ? matchMovementCaseInsensitive(rawSpk, movementDropdownConfig.spkIn, null) : null;
             const itemType = matchMovementCaseInsensitive(rawItemType, movementDropdownConfig.itemTypes, rawItemType || (movementDropdownConfig.itemTypes[0] || 'EDC BNI 4G'));
             const servicePoint = matchMovementCaseInsensitive(rawSp, movementDropdownConfig.servicePoints, rawSp || '');
             const status = matchMovementCaseInsensitive(rawStatus, movementDropdownConfig.statuses, null);
 
             const errors = [];
-            if (!type) errors.push('Tipe harus In/Out');
-            else if (!spk) errors.push(`SPK tidak valid (${type})`);
+            if (!type) errors.push('Tipe harus In');
+            else if (!spk) errors.push('SPK tidak valid (In)');
             if (!itemType) errors.push('Jenis Barang kosong');
             if (!sn) errors.push('SN kosong');
             if (!iccid) errors.push('ICCID kosong');
@@ -6964,9 +7076,10 @@
             if (!status) errors.push('Status EDC tidak valid');
 
             return {
+              mode: 'In',
               isValid: errors.length === 0,
               errors,
-              type: type || rawType || '-',
+              type: 'In',
               spk: spk || rawSpk || '-',
               itemType: itemType || '-',
               sn,
@@ -7030,28 +7143,61 @@
       if (validRows.length === 0) return;
 
       const batchTimestamp = formatTimestampNow();
+      let addedCount = 0;
+      let updatedCount = 0;
+
       [...validRows].reverse().forEach((r, index) => {
-        movementLogs.unshift({
-          id: `MOV-${Date.now()}-${index}`,
-          timestamp: batchTimestamp,
-          type: r.type,
-          spk: r.spk,
-          itemType: r.itemType,
-          sn: r.sn,
-          iccid: r.iccid,
-          tid: r.tid,
-          servicePoint: r.servicePoint,
-          agentName: r.agentName,
-          technician: r.technician,
-          status: r.status
-        });
+        if (r.mode === 'OutSpk') {
+          const idx = movementLogs.findIndex(m => m.id === r.targetId || String(m.sn || '').trim().toUpperCase() === r.sn);
+          if (idx !== -1) {
+            const prev = movementLogs[idx];
+            const nextHistory = Array.isArray(prev.editHistory) ? [...prev.editHistory] : [];
+            nextHistory.unshift({
+              editedAt: batchTimestamp,
+              editedBy: currentUser?.name || 'System',
+              summary: `Bulk Out to SPK (${r.spk}): Agen ${r.agentName}, TID ${r.tid}, Status ${prev.status} → ${r.status}`
+            });
+            movementLogs[idx] = {
+              ...prev,
+              type: 'Out',
+              spk: r.spk,
+              tid: r.tid,
+              agentName: r.agentName,
+              servicePoint: r.servicePoint,
+              technician: r.technician,
+              status: r.status,
+              timestamp: batchTimestamp,
+              editHistory: nextHistory
+            };
+            updatedCount++;
+          }
+        } else {
+          movementLogs.unshift({
+            id: `MOV-${Date.now()}-${index}`,
+            timestamp: batchTimestamp,
+            type: r.type,
+            spk: r.spk,
+            itemType: r.itemType,
+            sn: r.sn,
+            iccid: r.iccid,
+            tid: r.tid,
+            servicePoint: r.servicePoint,
+            agentName: r.agentName,
+            technician: r.technician,
+            status: r.status
+          });
+          addedCount++;
+        }
       });
 
       clearMovementExcelPreview();
       syncToCloud('app_movement_edc', movementLogs);
       syncMovementToWarehouseStock(true);
       refreshAllActiveViews();
-      showMovementToast(`Berhasil mengimpor ${validRows.length} data movement!`, 'success');
+      const parts = [];
+      if (addedCount > 0) parts.push(`${addedCount} SN baru ditambahkan`);
+      if (updatedCount > 0) parts.push(`${updatedCount} SN diupdate ke SPK`);
+      showMovementToast(`Upload selesai: ${parts.join(', ')}!`, 'success');
     }
 
     function clearMovementExcelPreview() {
