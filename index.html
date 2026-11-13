@@ -3721,12 +3721,19 @@
         });
       }
 
-      // Ubah status SN terpilih di Movement dari Free -> Booked
+      // Ubah data SN terpilih di Movement menjadi Out • Buffer • Booked sesuai teknisi yang checkout
+      const movTs = formatTimestampNow();
       assignedSNs.forEach(a => {
         const mov = movementLogs.find(m => m.id === a.movementId);
         if (mov) {
+          mov.timestamp = movTs;
+          mov.type = 'Out';
+          mov.spk = 'Buffer';
           mov.status = 'Booked';
-          mov.technician = ticket.techName || mov.technician;
+          mov.tid = mov.tid || '-';
+          mov.servicePoint = ticket.servicePoint || mov.servicePoint || '01 Cirebon';
+          mov.agentName = '-';
+          mov.technician = ticket.techName || ticket.techId || mov.technician;
         }
       });
 
