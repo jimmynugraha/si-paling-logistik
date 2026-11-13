@@ -3373,6 +3373,7 @@
       if (!mainEl) return;
 
       mainEl.querySelectorAll('button[type="submit"], button[onclick*="delete"], button[onclick*="Delete"], button[onclick*="Edit"], button[onclick*="edit"], button[onclick*="validate"], button[onclick*="Reset"], button[onclick*="openAdd"], button[onclick*="addToCart"], button[onclick*="openCheckoutSn"], button[onclick*="finalizeCheckout"], button[onclick*="quickEditDropdown"], button[onclick*="openMovementDropdownManagerModal"], button[onclick*="clearAllBastHistory"], select[onchange*="Status"], select[onchange*="status"]').forEach(el => {
+        if ((el.getAttribute('onclick') || '').includes('History')) return;
         if (ro) {
           el.dataset.roHidden = '1';
           el.classList.add('hidden');
@@ -4738,9 +4739,9 @@
               <div class="font-semibold text-slate-700">${escapeHtml(r.customer)}</div>
               <div class="text-[11px] text-slate-500">${escapeHtml(r.kelengkapan)} — ${escapeHtml(r.notes)}</div>
             </td>
-            <td class="p-3.5">
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${statusBadge}">${escapeHtml(r.status)}</span>
-              ${r.processedBy ? `<div class="text-[10px] text-slate-400 mt-1">Oleh: ${escapeHtml(r.processedBy)}</div>` : ''}
+            <td class="p-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-bold ${statusBadge}">${escapeHtml(r.status)}</span>
+              ${r.processedBy ? `<div class="text-[10px] text-slate-400 mt-1 whitespace-normal">Oleh: ${escapeHtml(r.processedBy)}</div>` : ''}
             </td>
             <td class="p-3.5 text-right whitespace-nowrap space-x-1">
               <button type="button" onclick="openAuditHistoryModal('retur', '${r.returNo}')" class="p-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100" title="Riwayat Pemroses">
@@ -7418,24 +7419,21 @@
             <td class="py-4 px-4 align-middle">
               <div class="text-xs font-semibold text-slate-700">${escapeHtml(item.timestamp)}</div>
               <div class="text-[11px] text-slate-400">WIB • Auto Log</div>
-              ${Array.isArray(item.editHistory) && item.editHistory.length > 0 ? `
-                <button type="button" onclick="openMovementEditHistoryModal('${item.id}')" class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full transition">
-                  <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
-                  <span>Riwayat Edit (${item.editHistory.length})</span>
-                </button>
-              ` : ''}
             </td>
             <td class="py-4 px-5 align-middle text-right">
-              ${canEditMovement ? `
               <div class="inline-flex items-center gap-1.5">
+                <button type="button" onclick="openMovementEditHistoryModal('${item.id}')" title="Riwayat Edit" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition">
+                  <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                </button>
+                ${canEditMovement ? `
                 <button type="button" onclick="openMovementEditModal('${item.id}')" title="Edit Data" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition">
                   <i class="fa-solid fa-pen text-xs"></i>
                 </button>
                 <button type="button" onclick="promptDeleteMovementItem('${item.id}')" title="Hapus Data" class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
+                ` : ''}
               </div>
-              ` : `<span class="text-[11px] text-slate-400">Hanya TL/Admin</span>`}
             </td>
           </tr>
         `;
