@@ -2940,7 +2940,9 @@
       setupRoleNavigation();
       cleanupExpiredNotifications();
       updateNotificationUI();
-      refreshAllActiveViews();
+      requestAnimationFrame(() => {
+        refreshAllActiveViews();
+      });
     }
 
     function logout(reasonMsg) {
@@ -3258,7 +3260,9 @@
         }
       }
 
-      refreshAllActiveViews();
+      requestAnimationFrame(() => {
+        refreshAllActiveViews();
+      });
     }
 
     let masterDropdownsDirty = true;
@@ -3334,22 +3338,34 @@
         case 'tab-users':
           renderUserManagementTable();
           break;
-        case 'tab-movement':
+        case 'tab-movement': {
           if (movementDropdownsDirty) {
             syncMovementDropdownUI();
             movementDropdownsDirty = false;
           }
           updateMovementKPIs();
           renderMovementTable();
-          renderMovementOutSnChecklist();
-          renderBastHistoryTable();
+          const activeMovType = document.querySelector('input[name="mov-input-type"]:checked')?.value;
+          if (activeMovType === 'Out') {
+            renderMovementOutSnChecklist();
+          }
+          const bastPanel = document.getElementById('mov-tab-panel-bast');
+          if (bastPanel && !bastPanel.classList.contains('hidden')) {
+            renderBastHistoryTable();
+          } else {
+            const countBadge = document.getElementById('mov-bast-count-badge');
+            if (countBadge) countBadge.textContent = String(Array.isArray(bastHistory) ? bastHistory.length : 0);
+          }
           break;
+        }
       }
       applyReadOnlyViewerMode();
     }
 
     function applyReadOnlyViewerMode() {
       const ro = isReadOnlyViewer();
+      if (!ro && document.body.dataset.roActive !== '1') return;
+      document.body.dataset.roActive = ro ? '1' : '0';
       const cartBtn = document.getElementById('floatingCartBtn');
       if (cartBtn && ro) cartBtn.classList.add('hidden');
 
@@ -4673,7 +4689,9 @@
         goToTab: 'tab-retur'
       });
 
-      refreshAllActiveViews();
+      requestAnimationFrame(() => {
+        refreshAllActiveViews();
+      });
     }
 
     function renderReturTable() {
@@ -7331,6 +7349,14 @@
       }
 
       emptyState.classList.add('hidden');
+      const configuredStatuses = movementDropdownConfig.statuses || [];
+      const baseStatusOptionsMap = {};
+      configuredStatuses.forEach(st => {
+        baseStatusOptionsMap[st] = configuredStatuses.map(opt =>
+          `<option value="${escapeHtml(opt)}" ${opt === st ? 'selected' : ''}>${escapeHtml(opt)}</option>`
+        ).join('');
+      });
+
       tbody.innerHTML = filtered.map(item => {
         const isIn = item.type === 'In';
         const typeBadge = isIn
@@ -7347,10 +7373,9 @@
           ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80">${escapeHtml(itemTypeLabel)}</span>`
           : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">${escapeHtml(itemTypeLabel)}</span>`;
 
-        const statusOptionsHtml = (movementDropdownConfig.statuses.includes(item.status)
-          ? movementDropdownConfig.statuses
-          : [...movementDropdownConfig.statuses, item.status]
-        ).map(st => `<option value="${escapeHtml(st)}" ${item.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('');
+        const statusOptionsHtml = baseStatusOptionsMap[item.status] || [...configuredStatuses, item.status].map(st =>
+          `<option value="${escapeHtml(st)}" ${item.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`
+        ).join('');
 
         return `
           <tr class="hover:bg-slate-50/90">
