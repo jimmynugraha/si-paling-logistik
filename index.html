@@ -932,10 +932,10 @@
                   </div>
                 </div>
 
-                <!-- 2. Jenis SPK -->
+                <!-- 2. Jenis SPK / Service Point Asal -->
                 <div>
                   <div class="flex items-center justify-between mb-1.5">
-                    <label for="mov-input-spk" class="text-xs font-semibold text-slate-700">
+                    <label id="mov-input-spk-label" for="mov-input-spk" class="text-xs font-semibold text-slate-700">
                       Jenis SPK <span class="text-rose-500">*</span>
                     </label>
                     <button type="button" onclick="openMovementDropdownManagerModal(getMovementSpkCategoryKey('input'))" class="mov-admin-only-edit inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition">
@@ -1112,6 +1112,15 @@
                     </label>
                     <input type="date" id="mov-out-date"
                       class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition" />
+                  </div>
+
+                  <!-- Catatan (Freetext) -->
+                  <div class="sm:col-span-2 lg:col-span-3">
+                    <label for="mov-out-notes" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Catatan
+                    </label>
+                    <input type="text" id="mov-out-notes" placeholder="Tulis catatan tambahan pengiriman / keterangan BAST (opsional)..."
+                      class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition" />
                   </div>
 
                   <!-- Pilih SN EDC yang Dikeluarkan -->
@@ -2114,8 +2123,9 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
           <div><span class="text-slate-500">Jenis SPK:</span> <strong id="bastDocSpk" class="text-slate-900">-</strong></div>
           <div><span class="text-slate-500">Tanggal Kirim:</span> <strong id="bastDocDate" class="text-slate-900">-</strong></div>
-          <div><span class="text-slate-500">Asal SP:</span> <strong id="bastDocOrigin" class="text-slate-900">-</strong></div>
+          <div><span class="text-slate-500">Asal SP / HUB:</span> <strong id="bastDocOrigin" class="text-slate-900">-</strong></div>
           <div><span class="text-slate-500">Tujuan Kirim:</span> <strong id="bastDocDest" class="text-slate-900">-</strong></div>
+          <div class="sm:col-span-2"><span class="text-slate-500">Catatan:</span> <strong id="bastDocNotes" class="text-slate-900">-</strong></div>
         </div>
 
         <div>
@@ -6171,7 +6181,7 @@
       const typeVal = document.querySelector(`input[name="mov-${prefix}-type"]:checked`)?.value || 'In';
       if (typeVal === 'In') return 'spkIn';
       if (typeVal === 'OutSpk') return 'spkOutSpk';
-      return 'spkOut';
+      return prefix === 'input' ? 'servicePoints' : 'spkOut';
     }
 
     const selectedOutMovementIds = new Set();
@@ -6183,6 +6193,12 @@
       populateMovementSelectOptions(`mov-${prefix}-spk`, options, document.getElementById(`mov-${prefix}-spk`)?.value);
 
       if (prefix === 'input') {
+        const spkLabelEl = document.getElementById('mov-input-spk-label');
+        if (spkLabelEl) {
+          spkLabelEl.innerHTML = selectedType === 'Out'
+            ? 'Service Point / HUB Asal <span class="text-rose-500">*</span>'
+            : 'Jenis SPK <span class="text-rose-500">*</span>';
+        }
         const inWrapper = document.getElementById('mov-in-fields-wrapper');
         const outSpkWrapper = document.getElementById('mov-out-spk-fields-wrapper');
         const outWrapper = document.getElementById('mov-out-fields-wrapper');
@@ -6396,10 +6412,12 @@
       }
 
       if (type === 'Out') {
+        const asalSpHub = document.getElementById('mov-input-spk').value;
         const tujuanKirim = document.getElementById('mov-out-destination').value.trim();
         const tanggalKirim = document.getElementById('mov-out-date').value;
-        if (!spk || !tujuanKirim || !tanggalKirim) {
-          showMovementToast('Harap lengkapi Jenis SPK, Tujuan Kirim, dan Tanggal Kirim.', 'error');
+        const catatan = document.getElementById('mov-out-notes')?.value.trim() || '-';
+        if (!asalSpHub || !tujuanKirim || !tanggalKirim) {
+          showMovementToast('Harap lengkapi Service Point / HUB Asal, Tujuan Kirim, dan Tanggal Kirim.', 'error');
           return;
         }
         const selectedItems = movementLogs.filter(item => selectedOutMovementIds.has(item.id));
@@ -6414,9 +6432,11 @@
 
         const bastEntry = {
           bastNo,
-          spk,
+          spk: 'Out to Others',
+          asalSpHub,
           tujuanKirim,
           tanggalKirim,
+          catatan,
           totalUnits: selectedItems.length,
           items: selectedItems.map(item => ({
             id: item.id,
@@ -6436,6 +6456,8 @@
         selectedOutMovementIds.clear();
 
         document.getElementById('mov-out-destination').value = '';
+        const notesEl = document.getElementById('mov-out-notes');
+        if (notesEl) notesEl.value = '';
         const searchOutEl = document.getElementById('mov-out-sn-search');
         if (searchOutEl) searchOutEl.value = '';
 
@@ -6644,8 +6666,10 @@
       document.getElementById('bastDocCreatedAt').textContent = `Dibuat: ${bast.createdAt || '-'}`;
       document.getElementById('bastDocSpk').textContent = bast.spk || '-';
       document.getElementById('bastDocDate').textContent = bast.tanggalKirim || '-';
-      document.getElementById('bastDocOrigin').textContent = 'Logistik Cirebon';
+      document.getElementById('bastDocOrigin').textContent = bast.asalSpHub || 'Logistik Cirebon';
       document.getElementById('bastDocDest').textContent = bast.tujuanKirim || '-';
+      const bastNotesEl = document.getElementById('bastDocNotes');
+      if (bastNotesEl) bastNotesEl.textContent = bast.catatan || '-';
       document.getElementById('bastDocTotalUnits').textContent = `${bast.totalUnits || (bast.items || []).length} Unit`;
       document.getElementById('bastDocCreator').textContent = bast.createdBy || 'Logistik';
 
