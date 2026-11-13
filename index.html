@@ -3791,17 +3791,67 @@
               </div>
             </div>
 
-            <button type="button" ${isOut ? 'disabled' : ''} onclick="addItemToCart('${item.id}')"
-              class="w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition ${isOut ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-2xs'}">
-              <i class="fa-solid fa-cart-plus"></i>
-              <span>${isOut ? 'Stok Kosong' : '+ Ambil'}</span>
-            </button>
+            ${inCart && inCart.qty > 0 ? `
+              <div class="flex items-center justify-center gap-2">
+                <button type="button" onclick="setCartItemQty('${item.id}', ${inCart.qty - 1})"
+                  class="w-10 h-10 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 font-bold text-base flex items-center justify-center shadow-2xs transition">
+                  &minus;
+                </button>
+                <input type="number" min="0" max="${item.stock}" value="${inCart.qty}"
+                  onchange="setCartItemQty('${item.id}', this.value)"
+                  aria-label="Jumlah ${escapeHtml(item.name)}"
+                  class="w-16 h-10 rounded-2xl border border-slate-200 bg-white text-center font-bold text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                <button type="button" onclick="setCartItemQty('${item.id}', ${inCart.qty + 1})"
+                  class="w-10 h-10 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-700 font-bold text-base flex items-center justify-center shadow-2xs transition">
+                  +
+                </button>
+              </div>
+            ` : `
+              <button type="button" ${isOut ? 'disabled' : ''} onclick="addItemToCart('${item.id}')"
+                class="w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition ${isOut ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-2xs'}">
+                <i class="fa-solid fa-cart-plus"></i>
+                <span>${isOut ? 'Stok Kosong' : '+ Ambil'}</span>
+              </button>
+            `}
           </div>
         `;
       }).join('');
     }
 
+    function setCartItemQty(itemId, rawQty) {
+      if (isReadOnlyViewer()) return;
+      const stockObj = warehouseStock.find(s => s.id === itemId);
+      if (!stockObj) return;
+      const maxStock = Number(stockObj.stock || 0);
+      let nextQty = parseInt(rawQty, 10);
+
+      if (isNaN(nextQty) || nextQty <= 0) {
+        cartItems = cartItems.filter(c => c.id !== itemId);
+      } else {
+        if (nextQty > maxStock) {
+          showCustomAlert('Batas Stok Maksimal', `Jumlah permintaan tidak dapat melebihi stok gudang (${maxStock} ${stockObj.unit}).`);
+          nextQty = maxStock;
+        }
+        const existing = cartItems.find(c => c.id === itemId);
+        if (existing) {
+          existing.qty = nextQty;
+        } else if (nextQty > 0) {
+          cartItems.push({
+            id: stockObj.id,
+            name: stockObj.name,
+            unit: stockObj.unit,
+            icon: stockObj.icon || 'fa-box',
+            color: stockObj.color || 'blue',
+            qty: nextQty
+          });
+        }
+      }
+      updateFloatingCartBadge();
+      renderCheckoutCatalog();
+    }
+
     function addItemToCart(itemId) {
+      if (isReadOnlyViewer()) return;
       const stockObj = warehouseStock.find(s => s.id === itemId);
       if (!stockObj || Number(stockObj.stock) <= 0) return;
 
