@@ -1420,6 +1420,80 @@
         </div>
       </section>
 
+      <!-- TAB 8.6: MOVEMENT HUB KHUSUS TEKNISI HUB (HANYA LIHAT / READ-ONLY) -->
+      <section id="tab-movement-hub" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Movement SN EDC</h2>
+              <span id="mov-hub-sp-badge" class="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80 text-xs font-bold">HUB</span>
+              <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">Hanya Lihat</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Pantau stok dan riwayat SN EDC yang tersedia saat ini di Service Point / HUB Anda.</p>
+          </div>
+        </div>
+
+        <!-- Ringkasan Status EDC HUB -->
+        <div id="mov-hub-kpi-grid" aria-label="Ringkasan Status EDC HUB" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+
+        <!-- Tabel Log Riwayat Movement SN EDC (Read-Only) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-200/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-base">Log Riwayat Movement SN EDC</h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Menampilkan <strong id="mov-hub-filtered-count" class="text-slate-800">0</strong> dari <strong id="mov-hub-total-count-label" class="text-slate-800">0</strong> unit di <span id="mov-hub-sp-label" class="font-semibold text-indigo-700">HUB Anda</span>.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div class="relative flex-1 sm:flex-initial sm:w-56">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="mov-hub-filter-search" oninput="renderMovementHubReadOnlyTable()" placeholder="Cari SN, Barang, TID, Agen..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+              </div>
+
+              <select id="mov-hub-filter-type" onchange="renderMovementHubReadOnlyTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">Semua Tipe (In &amp; Out)</option>
+                <option value="In">In (Masuk)</option>
+                <option value="Out">Out (Keluar)</option>
+              </select>
+
+              <select id="mov-hub-filter-item-type" onchange="renderMovementHubReadOnlyTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">Semua Barang</option>
+              </select>
+
+              <select id="mov-hub-filter-status" onchange="renderMovementHubReadOnlyTable()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">Semua Status</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-w-full">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th class="py-3.5 px-5">Jenis Barang, SN &amp; ICCID</th>
+                  <th class="py-3.5 px-4">Tipe &amp; Jenis SPK</th>
+                  <th class="py-3.5 px-4">TID &amp; Nama Agen / Tujuan</th>
+                  <th class="py-3.5 px-4">Service Point &amp; Teknisi</th>
+                  <th class="py-3.5 px-4">Status EDC</th>
+                  <th class="py-3.5 px-5">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="mov-hub-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+            </table>
+          </div>
+
+          <div id="mov-hub-empty-state" class="hidden py-14 px-4 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <i class="fa-regular fa-folder-open text-xl"></i>
+            </div>
+            <h4 class="font-bold text-slate-800">Belum ada data SN EDC di HUB ini</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Data akan muncul otomatis saat stok unit sudah tercatat untuk Service Point / HUB Anda.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- TAB 9: MANAGEMENT AKSES & PENGGUNA DENGAN CUSTOM PER-USER PERMISSIONS (tab-users) -->
       <section id="tab-users" class="hidden space-y-6">
         <div>
@@ -1496,6 +1570,10 @@
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="newUserPerm" value="movement" class="rounded text-blue-600" />
                   <span>Movement SN EDC</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="newUserPerm" value="movement_hub" class="rounded text-blue-600" />
+                  <span>Movement HUB (Lihat)</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" name="newUserPerm" value="scanner" class="rounded text-blue-600" />
@@ -1801,6 +1879,10 @@
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="editUserPerm" value="movement" class="rounded text-blue-600" />
               <span>Movement SN EDC</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="editUserPerm" value="movement_hub" class="rounded text-blue-600" />
+              <span>Movement HUB (Lihat)</span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="editUserPerm" value="scanner" class="rounded text-blue-600" />
@@ -2359,6 +2441,7 @@
       retur: 'Retur',
       profiling: 'Profiling',
       movement: 'Movement',
+      movement_hub: 'Movement HUB (Lihat)',
       scanner: 'Scanner',
       hub: 'HUB',
       stock: 'Stok',
@@ -3101,6 +3184,8 @@
         }
         if (userHasPermission('movement')) {
           menuItems.push({ id: 'tab-movement', label: 'Movement', icon: 'fa-right-left' });
+        } else if (userHasPermission('movement_hub')) {
+          menuItems.push({ id: 'tab-movement-hub', label: 'Movement', icon: 'fa-right-left' });
         }
         if (userHasPermission('scanner')) {
           menuItems.push({ id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' });
@@ -3116,6 +3201,7 @@
         if (userHasPermission('scanner')) menuItems.push({ id: 'tab-scanner', label: 'Scan & Verifikasi', icon: 'fa-barcode' });
         if (userHasPermission('stock')) menuItems.push({ id: 'tab-stock', label: 'Stok Gudang', icon: 'fa-boxes-stacked' });
         if (userHasPermission('movement')) menuItems.push({ id: 'tab-movement', label: 'Movement', icon: 'fa-right-left' });
+        else if (userHasPermission('movement_hub')) menuItems.push({ id: 'tab-movement-hub', label: 'Movement HUB', icon: 'fa-right-left' });
         if (userHasPermission('retur')) menuItems.push({ id: 'tab-retur', label: 'Retur Barang', icon: 'fa-rotate-left' });
         if (userHasPermission('profiling')) menuItems.push({ id: 'tab-profiling', label: 'Profiling', icon: 'fa-id-card-clip' });
         if (userHasPermission('hub')) menuItems.push({ id: 'tab-hub', label: 'Permintaan HUB', icon: 'fa-truck-ramp-box' });
@@ -3451,6 +3537,9 @@
           }
           break;
         }
+        case 'tab-movement-hub':
+          renderMovementHubReadOnlyView();
+          break;
       }
       applyReadOnlyViewerMode();
     }
@@ -3662,6 +3751,7 @@
       const canHub = userHasPermission('hub');
       const canScanner = userHasPermission('scanner');
       const canStock = userHasPermission('stock');
+      const canMovementHub = userHasPermission('movement_hub') && !userHasPermission('movement');
 
       if (statsGrid) {
         const statCards = [];
@@ -3781,6 +3871,19 @@
             </button>
           `);
         }
+        if (canMovementHub) {
+          menuCards.push(`
+            <button type="button" onclick="switchTab('tab-movement-hub')" class="p-4 bg-white hover:bg-indigo-50/40 border border-slate-200/90 hover:border-indigo-300 rounded-2xl flex items-center gap-4 text-left transition shadow-2xs">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0">
+                <i class="fa-solid fa-right-left"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-slate-900">Movement SN EDC (${escapeHtml(currentUser.servicePoint || 'HUB')})</h4>
+                <p class="text-xs text-slate-500 mt-0.5">Lihat stok & status SN EDC di HUB Anda</p>
+              </div>
+            </button>
+          `);
+        }
 
         if (menuCards.length === 0) {
           menuGrid.innerHTML = `
@@ -3870,7 +3973,6 @@
         `;
       }).join('');
     }
-
     function setCartItemQty(itemId, rawQty) {
       if (isReadOnlyViewer()) return;
       const stockObj = warehouseStock.find(s => s.id === itemId);
@@ -3980,7 +4082,6 @@
         `;
       }).join('');
     }
-
     function adjustCartItemQty(itemId, delta) {
       const idx = cartItems.findIndex(c => c.id === itemId);
       if (idx === -1) return;
@@ -4507,7 +4608,6 @@
         `;
       }).join('');
     }
-
     function renderCheckoutHistoryTable() {
       const tbody = document.getElementById('checkoutHistoryTableBody');
       if (!tbody || !currentUser) return;
@@ -4572,7 +4672,6 @@
         `;
       }).join('');
     }
-
     // ==========================================
     // 8. PENGEMBALIAN BARANG / RETUR & MASTER DROPDOWN
     // ==========================================
@@ -4905,7 +5004,6 @@
         `;
       }).join('');
     }
-
     // ==========================================
     // 9. PROFILING BNI
     // ==========================================
@@ -5131,7 +5229,6 @@
         `;
       }).join('');
     }
-
     // ==========================================
     // 10. PERMINTAAN BARANG HUB (4 TAHAPAN STATUS) & MANAJEMEN STOK GUDANG
     // ==========================================
@@ -5332,7 +5429,6 @@
         `;
       }).join('');
     }
-
     function renderStockManagementTable() {
       const tbody = document.getElementById('stockManagementTableBody');
       if (!tbody) return;
@@ -5388,7 +5484,6 @@
         `;
       }).join('');
     }
-
     function applyManualStockAdjust(itemId) {
       const inp = document.getElementById(`stockAdjustInput_${itemId}`);
       if (!inp) return;
@@ -5452,7 +5547,6 @@
         `;
       }).join('');
     }
-
     function renderCatalogIconPicker() {
       const grid = document.getElementById('catalogIconPickerGrid');
       if (!grid) return;
@@ -5471,7 +5565,6 @@
         `;
       }).join('');
     }
-
     function selectCatalogIconOption(icon, color) {
       selectedCatalogIcon = icon;
       selectedCatalogColor = color;
@@ -5808,7 +5901,6 @@
         `;
       }).join('');
     }
-
     // ==========================================
     // 14. SISTEM NOTIFIKASI REAL-TIME & AUTO-HAPUS 24 JAM
     // ==========================================
@@ -6705,7 +6797,6 @@
         `;
       }).join('');
     }
-
     function isBastAdminUser() {
       if (!currentUser) return false;
       const uid = String(currentUser.id || '').toLowerCase();
@@ -6785,7 +6876,6 @@
         `;
       }).join('');
     }
-
     function clearAllBastHistory() {
       if (!isBastAdminUser()) return;
       showCustomConfirm('Hapus Semua Riwayat BAST', `Hapus seluruh ${bastHistory.length} dokumen BAST dari riwayat (uji coba)?`, () => {
@@ -7597,18 +7687,22 @@
     function renderHomeMovementDashboard() {
       const container = document.getElementById('homeMovementDashboard');
       if (!container || !currentUser) return;
-      const canSee = currentUser.role === 'lead' || currentUser.role === 'logistik' || isReadOnlyViewer() || userHasPermission('movement');
+      const hasFullMovement = currentUser.role === 'lead' || currentUser.role === 'logistik' || isReadOnlyViewer() || userHasPermission('movement');
+      const hasHubReadOnly = !hasFullMovement && userHasPermission('movement_hub');
+      const canSee = hasFullMovement || hasHubReadOnly;
       if (!canSee) {
         container.classList.add('hidden');
         container.innerHTML = '';
         return;
       }
       container.classList.remove('hidden');
+      const targetTab = hasHubReadOnly ? 'tab-movement-hub' : 'tab-movement';
+      const activeFilter = hasHubReadOnly ? (currentUser.servicePoint || '01 Cirebon') : homeMovementSpFilter;
       const spOptions = getMovementDashboardSpOptions();
-      if (homeMovementSpFilter !== 'ALL' && !spOptions.some(sp => sp.toLowerCase() === homeMovementSpFilter.toLowerCase())) {
+      if (!hasHubReadOnly && homeMovementSpFilter !== 'ALL' && !spOptions.some(sp => sp.toLowerCase() === homeMovementSpFilter.toLowerCase())) {
         homeMovementSpFilter = 'ALL';
       }
-      const { total, breakdown } = getMovementStatusBreakdown(homeMovementSpFilter);
+      const { total, breakdown } = getMovementStatusBreakdown(hasHubReadOnly ? activeFilter : homeMovementSpFilter);
       const totalCols = Math.min(Math.max(breakdown.length + 1, 2), 6);
       const lgColsClass = {
         2: 'lg:grid-cols-2',
@@ -7622,24 +7716,27 @@
           const isSel = homeMovementSpFilter.toLowerCase() === sp.toLowerCase();
           return `<option value="${escapeHtml(sp)}"${isSel ? ' selected' : ''}>${escapeHtml(sp)}</option>`;
         }).join('');
+      const activeBadgeLabel = hasHubReadOnly ? activeFilter : (homeMovementSpFilter !== 'ALL' ? homeMovementSpFilter : '');
       container.innerHTML = `
         <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
-              ${homeMovementSpFilter !== 'ALL' ? `<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">${escapeHtml(homeMovementSpFilter)}</span>` : ''}
+              ${activeBadgeLabel ? `<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">${escapeHtml(activeBadgeLabel)}</span>` : ''}
             </div>
             <div class="flex items-center justify-between sm:justify-end gap-2.5">
-              <select id="homeMovementSpFilter" onchange="onHomeMovementSpFilterChange(this.value)" aria-label="Filter Service Point Dashboard Movement" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                ${spSelectOptionsHtml}
-              </select>
-              <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition whitespace-nowrap">
+              ${hasHubReadOnly ? '' : `
+                <select id="homeMovementSpFilter" onchange="onHomeMovementSpFilterChange(this.value)" aria-label="Filter Service Point Dashboard Movement" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                  ${spSelectOptionsHtml}
+                </select>
+              `}
+              <button type="button" onclick="switchTab('${targetTab}')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition whitespace-nowrap">
                 Buka Movement &rarr;
               </button>
             </div>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 ${lgColsClass} gap-2.5 sm:gap-3">
-            <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-slate-50/80 hover:bg-indigo-50/50 p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
+            <div onclick="switchTab('${targetTab}')" class="cursor-pointer bg-slate-50/80 hover:bg-indigo-50/50 p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
               <div>
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL LOG SN</p>
                 <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${total}</p>
@@ -7649,7 +7746,7 @@
               </div>
             </div>
             ${breakdown.map(item => `
-              <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
+              <div onclick="switchTab('${targetTab}')" class="cursor-pointer bg-slate-50/80 hover:bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
                 <div class="min-w-0 pr-2">
                   <p class="text-[10px] font-bold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
                   <p class="text-xl sm:text-2xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
@@ -7800,6 +7897,169 @@
                 </button>
                 ` : ''}
               </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderMovementHubReadOnlyView() {
+      if (!currentUser) return;
+      const userSp = String(currentUser.servicePoint || '01 Cirebon').trim();
+      const badge = document.getElementById('mov-hub-sp-badge');
+      const spLabel = document.getElementById('mov-hub-sp-label');
+      if (badge) badge.textContent = userSp;
+      if (spLabel) spLabel.textContent = userSp;
+
+      const itemTypeSelect = document.getElementById('mov-hub-filter-item-type');
+      if (itemTypeSelect) {
+        const prevItem = itemTypeSelect.value || 'ALL';
+        const itemTypes = Array.isArray(movementDropdownConfig?.itemTypes) ? movementDropdownConfig.itemTypes : [];
+        itemTypeSelect.innerHTML = `<option value="ALL">Semua Barang</option>` +
+          itemTypes.map(it => `<option value="${escapeHtml(it)}">${escapeHtml(it)}</option>`).join('');
+        itemTypeSelect.value = itemTypes.includes(prevItem) ? prevItem : 'ALL';
+      }
+
+      const statusSelect = document.getElementById('mov-hub-filter-status');
+      if (statusSelect) {
+        const prevStatus = statusSelect.value || 'ALL';
+        const statuses = Array.isArray(movementDropdownConfig?.statuses) ? movementDropdownConfig.statuses : [];
+        statusSelect.innerHTML = `<option value="ALL">Semua Status</option>` +
+          statuses.map(st => `<option value="${escapeHtml(st)}">${escapeHtml(st)}</option>`).join('');
+        statusSelect.value = statuses.includes(prevStatus) ? prevStatus : 'ALL';
+      }
+
+      const grid = document.getElementById('mov-hub-kpi-grid');
+      if (grid) {
+        const { total, breakdown } = getMovementStatusBreakdown(userSp);
+        const totalCard = `
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
+            <div class="min-w-0 pr-2">
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Log SN</p>
+              <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">${total}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5 truncate">${escapeHtml(userSp)}</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-layer-group text-base"></i>
+            </div>
+          </div>
+        `;
+        const statusCards = breakdown.map(item => `
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+            <div class="min-w-0 pr-2">
+              <p class="text-xs font-semibold ${item.theme.text} uppercase tracking-wider truncate">${escapeHtml(item.status)}</p>
+              <p class="text-2xl sm:text-3xl font-extrabold ${item.theme.text} mt-1">${item.count}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(item.theme.sub)}</p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl ${item.theme.box} flex items-center justify-center shrink-0">
+              <i class="fa-solid ${item.theme.icon} text-base"></i>
+            </div>
+          </div>
+        `).join('');
+        grid.innerHTML = totalCard + statusCards;
+      }
+
+      renderMovementHubReadOnlyTable();
+    }
+
+    function renderMovementHubReadOnlyTable() {
+      const tbody = document.getElementById('mov-hub-table-body');
+      const emptyState = document.getElementById('mov-hub-empty-state');
+      if (!tbody || !emptyState || !currentUser) return;
+
+      const userSpNorm = String(currentUser.servicePoint || '01 Cirebon').trim().toLowerCase();
+      const hubLogs = movementLogs.filter(item =>
+        String(item.servicePoint || '').trim().toLowerCase() === userSpNorm
+      );
+
+      const query = (document.getElementById('mov-hub-filter-search')?.value || '').toLowerCase().trim();
+      const typeFilter = document.getElementById('mov-hub-filter-type')?.value || 'ALL';
+      const itemTypeFilter = document.getElementById('mov-hub-filter-item-type')?.value || 'ALL';
+      const statusFilter = document.getElementById('mov-hub-filter-status')?.value || 'ALL';
+
+      const filtered = hubLogs.filter(item => {
+        const itemTypeVal = item.itemType || 'EDC BNI 4G';
+        const matchSearch = !query ||
+          String(item.sn || '').toLowerCase().includes(query) ||
+          itemTypeVal.toLowerCase().includes(query) ||
+          String(item.tid || '').toLowerCase().includes(query) ||
+          String(item.iccid || '').toLowerCase().includes(query) ||
+          String(item.spk || '').toLowerCase().includes(query) ||
+          String(item.agentName || '').toLowerCase().includes(query) ||
+          String(item.technician || '').toLowerCase().includes(query);
+        const matchType = typeFilter === 'ALL' || item.type === typeFilter;
+        const matchItemType = itemTypeFilter === 'ALL' || itemTypeVal === itemTypeFilter;
+        const matchStatus = statusFilter === 'ALL' || item.status === statusFilter;
+        return matchSearch && matchType && matchItemType && matchStatus;
+      });
+
+      const filteredCountEl = document.getElementById('mov-hub-filtered-count');
+      const totalCountEl = document.getElementById('mov-hub-total-count-label');
+      if (filteredCountEl) filteredCountEl.textContent = filtered.length;
+      if (totalCountEl) totalCountEl.textContent = hubLogs.length;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tbody.innerHTML = filtered.map(item => {
+        const isIn = item.type === 'In';
+        const typeBadge = isIn
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+               <i class="fa-solid fa-arrow-down-left text-[10px]"></i> IN
+             </span>`
+          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">
+               <i class="fa-solid fa-arrow-up-right text-[10px]"></i> OUT
+             </span>`;
+
+        const itemTypeLabel = item.itemType || 'EDC BNI 4G';
+        const is4G = itemTypeLabel.toUpperCase().includes('4G');
+        const itemTypeBadge = is4G
+          ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200/80">${escapeHtml(itemTypeLabel)}</span>`
+          : `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200/80">${escapeHtml(itemTypeLabel)}</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50/90">
+            <td class="py-4 px-5 align-middle">
+              <div class="mb-1">${itemTypeBadge}</div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono-code font-bold text-indigo-600 text-[13px]">${escapeHtml(item.sn)}</span>
+                <button type="button" onclick="copyMovementText('${escapeHtml(item.sn)}', 'SN EDC')" title="Salin SN EDC" class="text-slate-400 hover:text-indigo-600 p-0.5 rounded transition">
+                  <i class="fa-regular fa-copy text-xs"></i>
+                </button>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono-code mt-0.5">
+                ICCID: ${escapeHtml(item.iccid)}
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="flex items-center gap-2">
+                ${typeBadge}
+                <span class="font-bold text-slate-800 text-xs sm:text-[13px]">${escapeHtml(item.spk)}</span>
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="font-mono-code font-bold text-slate-900 text-xs sm:text-[13px]">
+                TID: ${escapeHtml(item.tid)}
+              </div>
+              <div class="text-xs text-slate-600 mt-0.5">${escapeHtml(item.agentName)}</div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <div class="font-bold text-slate-800 text-xs sm:text-[13px]">${escapeHtml(item.servicePoint)}</div>
+              <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                <i class="fa-solid fa-wrench text-[10px] text-slate-400"></i>
+                <span>${escapeHtml(item.technician)}</span>
+              </div>
+            </td>
+            <td class="py-4 px-4 align-middle">
+              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border ${getMovementStatusPillStyle(item.status)}">${escapeHtml(item.status)}</span>
+            </td>
+            <td class="py-4 px-5 align-middle">
+              <div class="text-xs font-semibold text-slate-700">${escapeHtml(item.timestamp)}</div>
+              <div class="text-[11px] text-slate-400">WIB • Auto Log</div>
             </td>
           </tr>
         `;
