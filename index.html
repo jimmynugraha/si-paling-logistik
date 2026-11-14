@@ -3403,7 +3403,7 @@
       currentTabId = tabId;
       const allSections = [
         'tab-home', 'tab-checkout', 'tab-scanner', 'tab-retur',
-        'tab-profiling', 'tab-movement', 'tab-hub', 'tab-stock', 'tab-catalog',
+        'tab-profiling', 'tab-movement', 'tab-movement-hub', 'tab-hub', 'tab-stock', 'tab-catalog',
         'tab-history', 'tab-users'
       ];
       allSections.forEach(secId => {
@@ -7605,10 +7605,10 @@
     function getMovementStatusBreakdown(spFilter = 'ALL') {
       const configured = Array.isArray(movementDropdownConfig?.statuses) ? movementDropdownConfig.statuses : [];
       const allStatuses = [...configured];
-      const normFilter = String(spFilter || 'ALL').trim().toLowerCase();
+      const normFilter = String(spFilter || 'ALL').trim().replace(/\s+/g, ' ').toLowerCase();
       const filteredLogs = normFilter === 'all'
         ? movementLogs
-        : movementLogs.filter(i => String(i.servicePoint || '').trim().toLowerCase() === normFilter);
+        : movementLogs.filter(i => String(i.servicePoint || '').trim().replace(/\s+/g, ' ').toLowerCase() === normFilter);
 
       movementLogs.forEach(item => {
         if (item.status && !allStatuses.includes(item.status)) allStatuses.push(item.status);
@@ -7967,9 +7967,9 @@
       const emptyState = document.getElementById('mov-hub-empty-state');
       if (!tbody || !emptyState || !currentUser) return;
 
-      const userSpNorm = String(currentUser.servicePoint || '01 Cirebon').trim().toLowerCase();
+      const userSpNorm = String(currentUser.servicePoint || '01 Cirebon').trim().replace(/\s+/g, ' ').toLowerCase();
       const hubLogs = movementLogs.filter(item =>
-        String(item.servicePoint || '').trim().toLowerCase() === userSpNorm
+        String(item.servicePoint || '').trim().replace(/\s+/g, ' ').toLowerCase() === userSpNorm
       );
 
       const query = (document.getElementById('mov-hub-filter-search')?.value || '').toLowerCase().trim();
