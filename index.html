@@ -901,6 +901,25 @@
           </div>
         </div>
 
+        <!-- Filter Service Point / HUB untuk Ringkasan Status -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white rounded-2xl px-4 py-3 border border-slate-200/80 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-building text-xs"></i>
+            </span>
+            <div>
+              <p class="text-xs font-bold text-slate-800">Tampilan Dashboard Service Point / HUB</p>
+              <p class="text-[11px] text-slate-400">Pilih 01 Cirebon, HUB tertentu, atau Semua untuk melihat ringkasan SN EDC</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <label for="movKpiSpFilter" class="text-[11px] font-semibold text-slate-500 hidden sm:inline">Lokasi:</label>
+            <select id="movKpiSpFilter" onchange="onMovKpiSpFilterChange(this.value)" class="w-full sm:w-56 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+              <option value="ALL">Semua SP / HUB</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Kartu Ringkasan Dinamis sesuai Status EDC -->
         <div id="mov-kpi-grid" aria-label="Ringkasan Status EDC" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
 
@@ -7471,29 +7490,89 @@
       return { text: 'text-indigo-700', sub: 'Status aktif', box: 'bg-indigo-50 text-indigo-600', icon: 'fa-tag' };
     }
 
-    function getMovementStatusBreakdown() {
+    let homeMovementSpFilter = 'ALL';
+    let movKpiSpFilter = 'ALL';
+
+    function getMovementDashboardSpOptions() {
+      const seen = new Map();
+      const addSp = (val) => {
+        const clean = String(val || '').trim();
+        if (!clean) return;
+        const key = clean.toLowerCase();
+        if (!seen.has(key)) seen.set(key, clean);
+      };
+      (Array.isArray(movementDropdownConfig?.servicePoints) ? movementDropdownConfig.servicePoints : []).forEach(addSp);
+      movementLogs.forEach(item => addSp(item.servicePoint));
+      return Array.from(seen.values()).sort((a, b) => {
+        const aCirebon = a.toLowerCase() === '01 cirebon';
+        const bCirebon = b.toLowerCase() === '01 cirebon';
+        if (aCirebon && !bCirebon) return -1;
+        if (!aCirebon && bCirebon) return 1;
+        return a.localeCompare(b, 'id', { sensitivity: 'base' });
+      });
+    }
+
+    function getMovementStatusBreakdown(spFilter = 'ALL') {
       const configured = Array.isArray(movementDropdownConfig?.statuses) ? movementDropdownConfig.statuses : [];
       const allStatuses = [...configured];
+      const normFilter = String(spFilter || 'ALL').trim().toLowerCase();
+      const filteredLogs = normFilter === 'all'
+        ? movementLogs
+        : movementLogs.filter(i => String(i.servicePoint || '').trim().toLowerCase() === normFilter);
+
       movementLogs.forEach(item => {
         if (item.status && !allStatuses.includes(item.status)) allStatuses.push(item.status);
       });
-      return allStatuses.map(st => ({
+      const breakdown = allStatuses.map(st => ({
         status: st,
-        count: movementLogs.filter(i => i.status === st).length,
+        count: filteredLogs.filter(i => i.status === st).length,
         theme: getMovementStatusCardTheme(st)
       }));
+      return { total: filteredLogs.length, breakdown };
+    }
+
+    function onMovKpiSpFilterChange(value) {
+      movKpiSpFilter = value || 'ALL';
+      updateMovementKPIs();
+      const tableSpEl = document.getElementById('mov-filter-sp');
+      if (tableSpEl) {
+        const hasOpt = Array.from(tableSpEl.options).some(opt => opt.value === movKpiSpFilter);
+        if (movKpiSpFilter === 'ALL') {
+          tableSpEl.value = 'ALL';
+        } else if (hasOpt) {
+          tableSpEl.value = movKpiSpFilter;
+        }
+        if (typeof renderMovementTable === 'function') renderMovementTable();
+      }
+    }
+
+    function onHomeMovementSpFilterChange(value) {
+      homeMovementSpFilter = value || 'ALL';
+      renderHomeMovementDashboard();
     }
 
     function updateMovementKPIs() {
+      const spSelect = document.getElementById('movKpiSpFilter');
+      const spOptions = getMovementDashboardSpOptions();
+      if (movKpiSpFilter !== 'ALL' && !spOptions.some(sp => sp.toLowerCase() === movKpiSpFilter.toLowerCase())) {
+        movKpiSpFilter = 'ALL';
+      }
+      if (spSelect) {
+        spSelect.innerHTML = `<option value="ALL">Semua SP / HUB</option>` +
+          spOptions.map(sp => `<option value="${escapeHtml(sp)}">${escapeHtml(sp)}</option>`).join('');
+        spSelect.value = movKpiSpFilter;
+      }
+
       const grid = document.getElementById('mov-kpi-grid');
       if (!grid) return;
-      const breakdown = getMovementStatusBreakdown();
+      const { total, breakdown } = getMovementStatusBreakdown(movKpiSpFilter);
+      const totalSub = movKpiSpFilter === 'ALL' ? 'Semua SP / HUB' : escapeHtml(movKpiSpFilter);
       const totalCard = `
         <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1">
-          <div>
+          <div class="min-w-0 pr-2">
             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Log SN</p>
-            <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">Perangkat tercatat</p>
+            <p class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">${total}</p>
+            <p class="text-[11px] text-slate-400 mt-0.5 truncate">${totalSub}</p>
           </div>
           <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
             <i class="fa-solid fa-layer-group text-base"></i>
@@ -7525,7 +7604,11 @@
         return;
       }
       container.classList.remove('hidden');
-      const breakdown = getMovementStatusBreakdown();
+      const spOptions = getMovementDashboardSpOptions();
+      if (homeMovementSpFilter !== 'ALL' && !spOptions.some(sp => sp.toLowerCase() === homeMovementSpFilter.toLowerCase())) {
+        homeMovementSpFilter = 'ALL';
+      }
+      const { total, breakdown } = getMovementStatusBreakdown(homeMovementSpFilter);
       const totalCols = Math.min(Math.max(breakdown.length + 1, 2), 6);
       const lgColsClass = {
         2: 'lg:grid-cols-2',
@@ -7534,19 +7617,32 @@
         5: 'lg:grid-cols-5',
         6: 'lg:grid-cols-6'
       }[totalCols] || 'lg:grid-cols-6';
+      const spSelectOptionsHtml = `<option value="ALL"${homeMovementSpFilter === 'ALL' ? ' selected' : ''}>Semua SP / HUB</option>` +
+        spOptions.map(sp => {
+          const isSel = homeMovementSpFilter.toLowerCase() === sp.toLowerCase();
+          return `<option value="${escapeHtml(sp)}"${isSel ? ' selected' : ''}>${escapeHtml(sp)}</option>`;
+        }).join('');
       container.innerHTML = `
         <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
-            <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition">
-              Buka Movement &rarr;
-            </button>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-extrabold text-slate-800">Dashboard Movement SN EDC</h3>
+              ${homeMovementSpFilter !== 'ALL' ? `<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">${escapeHtml(homeMovementSpFilter)}</span>` : ''}
+            </div>
+            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+              <select id="homeMovementSpFilter" onchange="onHomeMovementSpFilterChange(this.value)" aria-label="Filter Service Point Dashboard Movement" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                ${spSelectOptionsHtml}
+              </select>
+              <button type="button" onclick="switchTab('tab-movement')" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition whitespace-nowrap">
+                Buka Movement &rarr;
+              </button>
+            </div>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 ${lgColsClass} gap-2.5 sm:gap-3">
             <div onclick="switchTab('tab-movement')" class="cursor-pointer bg-slate-50/80 hover:bg-indigo-50/50 p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 transition flex items-center justify-between">
               <div>
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL LOG SN</p>
-                <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${movementLogs.length}</p>
+                <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${total}</p>
               </div>
               <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-layer-group text-sm"></i>
