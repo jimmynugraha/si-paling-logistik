@@ -5012,11 +5012,7 @@
       if (!currentUser) return;
 
       const tid = document.getElementById('profTid').value.trim().toUpperCase();
-      const selectedKat = document.querySelector('input[name="profKategoriJo"]:checked')?.value || 'CM (Perbaikan)';
-      const otherKatText = document.getElementById('profKategoriJoOther').value.trim();
-      const kategoriJo = selectedKat === 'Yang lain'
-        ? (otherKatText ? `Yang lain: ${otherKatText}` : 'Yang lain')
-        : selectedKat;
+      const kategoriJo = document.querySelector('input[name="profKategoriJo"]:checked')?.value || 'CM (Perbaikan)';
 
       const kebutuhanChecked = Array.from(document.querySelectorAll('input[name="profKebutuhan"]:checked')).map(cb => cb.value);
       if (kebutuhanChecked.length === 0) {
