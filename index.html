@@ -4114,6 +4114,23 @@
       switchTab('tab-stock');
     }
 
+    function getEdcFreeCountsByArea(area) {
+      const targetArea = normalizeStockAreaName(area).toLowerCase();
+      const freeAreaLogs = movementLogs.filter(m =>
+        String(m.status || '').trim().toLowerCase() === 'free' &&
+        normalizeStockAreaName(m.servicePoint || '01 Cirebon').toLowerCase() === targetArea
+      );
+      const count4G = freeAreaLogs.filter(m => {
+        const it = String(m.itemType || '').toUpperCase();
+        return it.includes('4G') && !it.includes('SIM');
+      }).length;
+      const count3G = freeAreaLogs.filter(m => {
+        const it = String(m.itemType || '').toUpperCase();
+        return it.includes('3G') && !it.includes('SIM');
+      }).length;
+      return { total: count4G + count3G, count4G, count3G };
+    }
+
     function renderHomeStockAreaDashboard() {
       const container = document.getElementById('homeStockAreaDashboard');
       if (!container || !currentUser) return;
@@ -4125,17 +4142,16 @@
       }
       container.classList.remove('hidden');
       const cardsHtml = STOCK_AREAS.map(area => {
-        const totalUnits = warehouseStock.reduce((sum, item) => sum + getItemAreaStock(item, area), 0);
-        const criticalCount = warehouseStock.filter(item => getItemAreaStock(item, area) <= 15).length;
+        const { total, count4G, count3G } = getEdcFreeCountsByArea(area);
         return `
           <div onclick="openStockForArea('${escapeHtml(area)}')" class="cursor-pointer bg-slate-50/80 hover:bg-blue-50/40 p-3.5 rounded-2xl border border-slate-200/80 hover:border-blue-300 transition flex items-center justify-between gap-2">
             <div class="min-w-0">
               <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">${escapeHtml(area)}</p>
-              <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${totalUnits.toLocaleString('id-ID')}</p>
-              <p class="text-[10px] font-semibold ${criticalCount > 0 ? 'text-rose-600' : 'text-emerald-600'} mt-0.5">${criticalCount} SKU kritis</p>
+              <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${total.toLocaleString('id-ID')}</p>
+              <p class="text-[10px] font-semibold text-emerald-700 mt-0.5">4G: ${count4G} &bull; 3G: ${count3G} (Free)</p>
             </div>
             <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-              <i class="fa-solid fa-warehouse text-sm"></i>
+              <i class="fa-solid fa-calculator text-sm"></i>
             </div>
           </div>
         `;
@@ -4144,7 +4160,10 @@
       container.innerHTML = `
         <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
           <div class="flex items-center justify-between gap-2">
-            <h3 class="text-sm font-extrabold text-slate-800">Dashboard Stok Gudang Per Area</h3>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-800">Dashboard Stok EDC Free Per Area</h3>
+              <p class="text-[11px] text-slate-400">Menghitung SN EDC BNI (4G &amp; 3G) berstatus Free</p>
+            </div>
             <button type="button" onclick="switchTab('tab-stock')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition whitespace-nowrap">
               Kelola Stok &rarr;
             </button>
@@ -6207,18 +6226,17 @@
       if (summaryGrid) {
         summaryGrid.innerHTML = STOCK_AREAS.map(area => {
           const isActive = activeStockAreaFilter.toLowerCase() === area.toLowerCase();
-          const areaUnits = warehouseStock.reduce((s, item) => s + getItemAreaStock(item, area), 0);
-          const areaCrit = warehouseStock.filter(item => getItemAreaStock(item, area) <= 15).length;
+          const { total, count4G, count3G } = getEdcFreeCountsByArea(area);
           return `
             <button type="button" onclick="selectStockArea('${escapeHtml(area)}')"
               class="text-left p-4 rounded-2xl border transition flex items-center justify-between gap-2 ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-800 border-slate-200/90 hover:border-blue-300 shadow-2xs'}">
               <div class="min-w-0">
                 <p class="text-[11px] font-bold uppercase tracking-wider truncate ${isActive ? 'text-blue-100' : 'text-slate-400'}">${escapeHtml(area)}</p>
-                <p class="text-xl font-extrabold mt-0.5">${areaUnits.toLocaleString('id-ID')} <span class="text-xs font-semibold ${isActive ? 'text-blue-100' : 'text-slate-400'}">Unit</span></p>
-                <p class="text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : (areaCrit > 0 ? 'text-rose-600' : 'text-emerald-600')}">${areaCrit} SKU kritis</p>
+                <p class="text-xl font-extrabold mt-0.5">${total.toLocaleString('id-ID')} <span class="text-xs font-semibold ${isActive ? 'text-blue-100' : 'text-slate-400'}">EDC Free</span></p>
+                <p class="text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : 'text-emerald-700'}">4G: ${count4G} &bull; 3G: ${count3G}</p>
               </div>
               <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isActive ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}">
-                <i class="fa-solid fa-warehouse text-sm"></i>
+                <i class="fa-solid fa-calculator text-sm"></i>
               </div>
             </button>
           `;
