@@ -361,6 +361,7 @@
 
         <!-- Bento Middle Row: Dashboard Movement SN EDC -->
         <div id="homeMovementDashboard" class="hidden"></div>
+        <div id="homeStockAreaDashboard" class="hidden"></div>
 
         <!-- Bento Bottom Row: Pintasan Operasional -->
         <div>
@@ -847,8 +848,8 @@
       <section id="tab-stock" class="hidden space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Manajemen Stok Gudang</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Pantau saldo stok real-time, koreksi stok fisik, ekspor laporan Excel, dan reset periode bulanan.</p>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Manajemen Stok Gudang Per Area</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Pantau saldo stok real-time per area (01 Cirebon &amp; HUB), koreksi stok fisik, ekspor laporan Excel, dan reset periode bulanan.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button type="button" onclick="exportAllDataToExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-2xs flex items-center gap-1.5">
@@ -861,6 +862,9 @@
             </button>
           </div>
         </div>
+
+        <!-- Ringkasan & Pemilih Area Stok Gudang -->
+        <div id="stockAreaSummaryGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-2xs flex items-center gap-4">
@@ -877,7 +881,7 @@
               <i class="fa-solid fa-cubes"></i>
             </div>
             <div>
-              <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Unit Fisik</p>
+              <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Unit Fisik (<span id="kpiStockAreaLabel">01 Cirebon</span>)</p>
               <p id="kpiTotalUnits" class="text-2xl font-extrabold text-emerald-600 mt-0.5">0</p>
             </div>
           </div>
@@ -894,7 +898,10 @@
 
         <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
           <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 class="font-bold text-sm text-slate-800">Tabel Saldo & Penyesuaian Stok Gudang</h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-bold text-sm text-slate-800">Tabel Saldo &amp; Penyesuaian Stok</h3>
+              <span id="stockActiveAreaBadge" class="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">01 Cirebon</span>
+            </div>
             <input type="text" id="stockTableSearchInput" oninput="debouncedRenderStockManagementTable()" placeholder="Cari nama barang / kategori..."
               class="sm:w-64 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
@@ -3787,6 +3794,7 @@
       const role = currentUser.role;
 
       renderHomeMovementDashboard();
+      renderHomeStockAreaDashboard();
 
       if (role === 'lead' || role === 'logistik' || role === 'viewer') {
         if (elQuoteFoot) elQuoteFoot.textContent = `— Semangat Koordinasi & Operasional ${getRoleLabel(role)}`;
@@ -4052,15 +4060,107 @@
         }
       }
       renderHomeMovementDashboard();
+      renderHomeStockAreaDashboard();
     }
 
     // ==========================================
     // 6. CHECKOUT BARANG & FLOATING CART
     // ==========================================
+    const STOCK_AREAS = ['01 Cirebon', '01 HUB Indramayu', '01 HUB Kuningan', '01 HUB Majalengka'];
+    let activeStockAreaFilter = '01 Cirebon';
+
+    function normalizeStockAreaName(area) {
+      const clean = String(area || '').trim().replace(/\s+/g, ' ');
+      if (!clean) return '01 Cirebon';
+      const matched = STOCK_AREAS.find(a => a.toLowerCase() === clean.toLowerCase());
+      return matched || clean;
+    }
+
+    function getCurrentUserStockArea() {
+      return normalizeStockAreaName(currentUser?.servicePoint || '01 Cirebon');
+    }
+
+    function getItemAreaStock(item, area = '01 Cirebon') {
+      if (!item) return 0;
+      const target = normalizeStockAreaName(area);
+      if (item.areaStocks && typeof item.areaStocks === 'object') {
+        const key = Object.keys(item.areaStocks).find(k => k.toLowerCase() === target.toLowerCase());
+        if (key !== undefined) return Math.max(0, Number(item.areaStocks[key] || 0));
+      }
+      return target.toLowerCase() === '01 cirebon' ? Math.max(0, Number(item.stock || 0)) : 0;
+    }
+
+    function setItemAreaStock(item, area = '01 Cirebon', newVal = 0) {
+      if (!item) return;
+      const target = normalizeStockAreaName(area);
+      if (!item.areaStocks || typeof item.areaStocks !== 'object') {
+        item.areaStocks = { '01 Cirebon': Math.max(0, Number(item.stock || 0)) };
+      }
+      const existingKey = Object.keys(item.areaStocks).find(k => k.toLowerCase() === target.toLowerCase()) || target;
+      const safeVal = Math.max(0, Number(newVal || 0));
+      item.areaStocks[existingKey] = safeVal;
+      if (existingKey.toLowerCase() === '01 cirebon') {
+        item.stock = safeVal;
+      }
+    }
+
+    function selectStockArea(area) {
+      activeStockAreaFilter = normalizeStockAreaName(area);
+      renderStockManagementTable();
+    }
+
+    function openStockForArea(area) {
+      activeStockAreaFilter = normalizeStockAreaName(area);
+      switchTab('tab-stock');
+    }
+
+    function renderHomeStockAreaDashboard() {
+      const container = document.getElementById('homeStockAreaDashboard');
+      if (!container || !currentUser) return;
+      const canSee = currentUser.role === 'lead' || currentUser.role === 'logistik' || isReadOnlyViewer() || userHasPermission('stock');
+      if (!canSee) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+      container.classList.remove('hidden');
+      const cardsHtml = STOCK_AREAS.map(area => {
+        const totalUnits = warehouseStock.reduce((sum, item) => sum + getItemAreaStock(item, area), 0);
+        const criticalCount = warehouseStock.filter(item => getItemAreaStock(item, area) <= 15).length;
+        return `
+          <div onclick="openStockForArea('${escapeHtml(area)}')" class="cursor-pointer bg-slate-50/80 hover:bg-blue-50/40 p-3.5 rounded-2xl border border-slate-200/80 hover:border-blue-300 transition flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">${escapeHtml(area)}</p>
+              <p class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">${totalUnits.toLocaleString('id-ID')}</p>
+              <p class="text-[10px] font-semibold ${criticalCount > 0 ? 'text-rose-600' : 'text-emerald-600'} mt-0.5">${criticalCount} SKU kritis</p>
+            </div>
+            <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-warehouse text-sm"></i>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-3.5">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-extrabold text-slate-800">Dashboard Stok Gudang Per Area</h3>
+            <button type="button" onclick="switchTab('tab-stock')" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition whitespace-nowrap">
+              Kelola Stok &rarr;
+            </button>
+          </div>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }
+
     function renderCheckoutCatalog() {
       const grid = document.getElementById('checkoutCatalogGrid');
       if (!grid) return;
 
+      const userArea = getCurrentUserStockArea();
       const query = (document.getElementById('checkoutSearchInput')?.value || '').trim().toLowerCase();
       const filtered = warehouseStock.filter(item =>
         item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query)
@@ -4072,10 +4172,11 @@
       }
 
       grid.innerHTML = filtered.map(item => {
-        const st = getStockStatusBadge(item.stock);
+        const areaStock = getItemAreaStock(item, userArea);
+        const st = getStockStatusBadge(areaStock);
         const iconStyle = getColorClasses(item.color);
         const inCart = cartItems.find(c => c.id === item.id);
-        const isOut = Number(item.stock) <= 0;
+        const isOut = Number(areaStock) <= 0;
 
         return `
           <div class="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-2xs flex flex-col justify-between gap-4 hover:border-blue-200 transition">
@@ -4094,10 +4195,10 @@
 
             <div class="flex items-end justify-between pt-2 border-t border-slate-100">
               <div>
-                ${inCart ? `<span class="text-[11px] font-bold text-blue-600">${inCart.qty} di keranjang</span>` : `<span class="text-[11px] text-slate-400">Stok Gudang</span>`}
+                ${inCart ? `<span class="text-[11px] font-bold text-blue-600">${inCart.qty} di keranjang</span>` : `<span class="text-[11px] text-slate-400">Stok ${escapeHtml(userArea)}</span>`}
               </div>
               <div class="text-right">
-                <span class="text-xl font-extrabold ${st.numCls}">${item.stock}</span>
+                <span class="text-xl font-extrabold ${st.numCls}">${areaStock}</span>
                 <span class="text-xs font-semibold text-slate-400 ml-1">${escapeHtml(item.unit)}</span>
               </div>
             </div>
@@ -4132,14 +4233,15 @@
       if (isReadOnlyViewer()) return;
       const stockObj = warehouseStock.find(s => s.id === itemId);
       if (!stockObj) return;
-      const maxStock = Number(stockObj.stock || 0);
+      const userArea = getCurrentUserStockArea();
+      const maxStock = getItemAreaStock(stockObj, userArea);
       let nextQty = parseInt(rawQty, 10);
 
       if (isNaN(nextQty) || nextQty <= 0) {
         cartItems = cartItems.filter(c => c.id !== itemId);
       } else {
         if (nextQty > maxStock) {
-          showCustomAlert('Batas Stok Maksimal', `Jumlah permintaan tidak dapat melebihi stok gudang (${maxStock} ${stockObj.unit}).`);
+          showCustomAlert('Batas Stok Maksimal', `Jumlah permintaan tidak dapat melebihi stok ${userArea} (${maxStock} ${stockObj.unit}).`);
           nextQty = maxStock;
         }
         const existing = cartItems.find(c => c.id === itemId);
@@ -4163,12 +4265,14 @@
     function addItemToCart(itemId) {
       if (isReadOnlyViewer()) return;
       const stockObj = warehouseStock.find(s => s.id === itemId);
-      if (!stockObj || Number(stockObj.stock) <= 0) return;
+      const userArea = getCurrentUserStockArea();
+      const areaStock = getItemAreaStock(stockObj, userArea);
+      if (!stockObj || areaStock <= 0) return;
 
       const existing = cartItems.find(c => c.id === itemId);
       if (existing) {
-        if (existing.qty >= Number(stockObj.stock)) {
-          showCustomAlert('Batas Stok Maksimal', `Jumlah permintaan tidak dapat melebihi stok gudang (${stockObj.stock} ${stockObj.unit}).`);
+        if (existing.qty >= areaStock) {
+          showCustomAlert('Batas Stok Maksimal', `Jumlah permintaan tidak dapat melebihi stok ${userArea} (${areaStock} ${stockObj.unit}).`);
           return;
         }
         existing.qty += 1;
@@ -4386,6 +4490,7 @@
 
     function deductWarehouseStockForTicket(ticket) {
       if (!ticket || ticket.stockDeducted) return;
+      const ticketArea = normalizeStockAreaName(ticket.servicePoint || '01 Cirebon');
       const hasAssignedEdc = Array.isArray(ticket.assignedSNs) && ticket.assignedSNs.length > 0;
       (ticket.items || []).forEach(reqItem => {
         // Jika item adalah EDC yang SN-nya sudah dipilih dari Movement, stok EDC disinkronkan otomatis dari Movement (status Free)
@@ -4394,7 +4499,8 @@
         }
         const stockObj = warehouseStock.find(s => s.id === reqItem.id || s.name === reqItem.name);
         if (stockObj) {
-          stockObj.stock = Math.max(0, Number(stockObj.stock) - Number(reqItem.qty || 0));
+          const curAreaQty = getItemAreaStock(stockObj, ticketArea);
+          setItemAreaStock(stockObj, ticketArea, curAreaQty - Number(reqItem.qty || 0));
         }
       });
       ticket.stockDeducted = true;
@@ -5775,9 +5881,12 @@
       const isLead = currentUser.role === 'lead';
       const canManageStatus = currentUser.role === 'lead' || currentUser.role === 'logistik';
       const isTeknisiConfirmAllowed = currentUser.role === 'teknisi' && !isReadOnlyViewer();
+      const visibleBaseHubs = (canManageStatus || isReadOnlyViewer())
+        ? hubRequests
+        : hubRequests.filter(h => isOwnedByCurrentUser(h.requesterId, h.requesterName));
       const q = (document.getElementById('hubSearchInput')?.value || '').trim().toLowerCase();
       const filteredHubs = q
-        ? hubRequests.filter(h =>
+        ? visibleBaseHubs.filter(h =>
             String(h.poNo || '').toLowerCase().includes(q) ||
             String(h.requesterName || '').toLowerCase().includes(q) ||
             String(h.itemName || '').toLowerCase().includes(q) ||
@@ -5785,7 +5894,7 @@
             String(h.notes || '').toLowerCase().includes(q) ||
             String(h.status || '').toLowerCase().includes(q)
           )
-        : hubRequests;
+        : visibleBaseHubs;
       if (badge) badge.textContent = `${filteredHubs.length} Pengajuan`;
 
       if (filteredHubs.length === 0) {
@@ -5994,22 +6103,21 @@
       if (category === 'EDC') req.receivedSerialNumbers = unitPairs.map(p => p.sn);
       if (!Array.isArray(req.auditLogs)) req.auditLogs = [];
 
-      const asalNormalized = String(req.asalHub || '').trim().toLowerCase();
-      const isMainCirebonStock = asalNormalized === '01 cirebon';
+      const targetArea = normalizeStockAreaName(targetSp);
       let stockNote = '';
       if (!req.stockAdded) {
-        if (isMainCirebonStock) {
+        if (category !== 'EDC') {
           const stockObj = warehouseStock.find(s => s.id === req.itemId || s.name === req.itemName);
           if (stockObj) {
-            stockObj.stock = Number(stockObj.stock) + Number(req.qty);
+            const curAreaQty = getItemAreaStock(stockObj, targetArea);
+            setItemAreaStock(stockObj, targetArea, curAreaQty + Number(receivedQty));
             syncToCloud('app_stock_cirebon', warehouseStock);
           }
-          req.stockAdded = true;
-          stockNote = ` (+${req.qty} ${req.unit} masuk ke Stok Gudang 01 Cirebon)`;
+          stockNote = ` (+${receivedQty} ${req.unit} masuk ke Stok ${targetArea})`;
         } else {
-          req.stockAdded = true;
-          stockNote = ` (Diterima untuk ${targetSp} — tidak menambah stok 01 Cirebon)`;
+          stockNote = ` (EDC diterima untuk ${targetArea} — stok EDC disinkronkan dari Movement)`;
         }
+        req.stockAdded = true;
       }
 
       let movementSummaryNote = '';
@@ -6095,16 +6203,42 @@
       const tbody = document.getElementById('stockManagementTableBody');
       if (!tbody) return;
 
+      const summaryGrid = document.getElementById('stockAreaSummaryGrid');
+      if (summaryGrid) {
+        summaryGrid.innerHTML = STOCK_AREAS.map(area => {
+          const isActive = activeStockAreaFilter.toLowerCase() === area.toLowerCase();
+          const areaUnits = warehouseStock.reduce((s, item) => s + getItemAreaStock(item, area), 0);
+          const areaCrit = warehouseStock.filter(item => getItemAreaStock(item, area) <= 15).length;
+          return `
+            <button type="button" onclick="selectStockArea('${escapeHtml(area)}')"
+              class="text-left p-4 rounded-2xl border transition flex items-center justify-between gap-2 ${isActive ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-800 border-slate-200/90 hover:border-blue-300 shadow-2xs'}">
+              <div class="min-w-0">
+                <p class="text-[11px] font-bold uppercase tracking-wider truncate ${isActive ? 'text-blue-100' : 'text-slate-400'}">${escapeHtml(area)}</p>
+                <p class="text-xl font-extrabold mt-0.5">${areaUnits.toLocaleString('id-ID')} <span class="text-xs font-semibold ${isActive ? 'text-blue-100' : 'text-slate-400'}">Unit</span></p>
+                <p class="text-[10px] font-semibold mt-0.5 ${isActive ? 'text-blue-100' : (areaCrit > 0 ? 'text-rose-600' : 'text-emerald-600')}">${areaCrit} SKU kritis</p>
+              </div>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isActive ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'}">
+                <i class="fa-solid fa-warehouse text-sm"></i>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
       const totalSku = warehouseStock.length;
-      const totalUnits = warehouseStock.reduce((s, item) => s + Number(item.stock || 0), 0);
-      const criticalSku = warehouseStock.filter(item => Number(item.stock || 0) <= 15).length;
+      const totalUnits = warehouseStock.reduce((s, item) => s + getItemAreaStock(item, activeStockAreaFilter), 0);
+      const criticalSku = warehouseStock.filter(item => getItemAreaStock(item, activeStockAreaFilter) <= 15).length;
 
       const elSku = document.getElementById('kpiTotalSku');
       const elUnits = document.getElementById('kpiTotalUnits');
       const elCrit = document.getElementById('kpiCriticalSku');
+      const elAreaLabel = document.getElementById('kpiStockAreaLabel');
+      const elAreaBadge = document.getElementById('stockActiveAreaBadge');
       if (elSku) elSku.textContent = totalSku;
       if (elUnits) elUnits.textContent = totalUnits.toLocaleString('id-ID');
       if (elCrit) elCrit.textContent = criticalSku;
+      if (elAreaLabel) elAreaLabel.textContent = activeStockAreaFilter;
+      if (elAreaBadge) elAreaBadge.textContent = activeStockAreaFilter;
 
       const q = (document.getElementById('stockTableSearchInput')?.value || '').trim().toLowerCase();
       const filtered = warehouseStock.filter(i =>
@@ -6117,7 +6251,8 @@
       }
 
       tbody.innerHTML = filtered.map(item => {
-        const st = getStockStatusBadge(item.stock);
+        const areaStock = getItemAreaStock(item, activeStockAreaFilter);
+        const st = getStockStatusBadge(areaStock);
         const iconStyle = getColorClasses(item.color);
         return `
           <tr class="hover:bg-slate-50/70">
@@ -6130,7 +6265,7 @@
               </div>
             </td>
             <td class="p-4 text-slate-500 font-semibold">${escapeHtml(item.category)}</td>
-            <td class="p-4 font-extrabold text-sm ${st.numCls}">${item.stock} ${escapeHtml(item.unit)}</td>
+            <td class="p-4 font-extrabold text-sm ${st.numCls}">${areaStock} ${escapeHtml(item.unit)}</td>
             <td class="p-4">
               <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}">${st.label}</span>
             </td>
@@ -6154,11 +6289,13 @@
 
       const stockObj = warehouseStock.find(s => s.id === itemId);
       if (!stockObj) return;
-      stockObj.stock = Math.max(0, Number(stockObj.stock) + delta);
+      const nextVal = getItemAreaStock(stockObj, activeStockAreaFilter) + delta;
+      setItemAreaStock(stockObj, activeStockAreaFilter, nextVal);
+      const updatedVal = getItemAreaStock(stockObj, activeStockAreaFilter);
       inp.value = '';
       syncToCloud('app_stock_cirebon', warehouseStock);
       refreshAllActiveViews();
-      showCustomAlert('Stok Diperbarui', `Stok ${stockObj.name} sekarang menjadi ${stockObj.stock} ${stockObj.unit}.`);
+      showCustomAlert('Stok Diperbarui', `Stok ${stockObj.name} di ${activeStockAreaFilter} sekarang menjadi ${updatedVal} ${stockObj.unit}.`);
     }
 
     // ==========================================
@@ -6893,55 +7030,68 @@
     // 16. MODUL MOVEMENT SN EDC & SINKRONISASI STOK / PROFILING
     // ==========================================
     function syncMovementToWarehouseStock(shouldSyncCloud = true) {
-      // Hitung hanya Qty EDC berstatus Free di Movement (tanpa menghitung data simcard/ICCID)
+      // Hitung Qty EDC berstatus Free di Movement per Area
       const freeEdcs = movementLogs.filter(m => m.status === 'Free');
-      const free4G = freeEdcs.filter(m => String(m.itemType || '').toUpperCase().includes('4G')).length;
-      const free3G = freeEdcs.filter(m => String(m.itemType || '').toUpperCase().includes('3G')).length;
-
       let changed = false;
 
-      // Sinkronkan EDC BNI 4G
       let edc4G = warehouseStock.find(s =>
         s.id === 'ITM-04' || (String(s.name || '').toUpperCase().includes('EDC') && String(s.name || '').toUpperCase().includes('4G'))
       );
-      if (edc4G) {
-        if (Number(edc4G.stock) !== free4G) {
-          edc4G.stock = free4G;
-          changed = true;
-        }
-      } else if (free4G > 0 || movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('4G'))) {
-        warehouseStock.push({
+      if (!edc4G && movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('4G'))) {
+        edc4G = {
           id: 'ITM-04',
           name: 'EDC BNI 4G - Move 2500',
           category: 'HARDWARE',
           unit: 'Unit',
-          stock: free4G,
+          stock: 0,
+          areaStocks: {},
           icon: 'fa-calculator',
           color: 'blue'
-        });
+        };
+        warehouseStock.push(edc4G);
         changed = true;
       }
+      if (edc4G) {
+        STOCK_AREAS.forEach(area => {
+          const areaFree4G = freeEdcs.filter(m =>
+            String(m.itemType || '').toUpperCase().includes('4G') &&
+            normalizeStockAreaName(m.servicePoint || '01 Cirebon').toLowerCase() === area.toLowerCase()
+          ).length;
+          if (getItemAreaStock(edc4G, area) !== areaFree4G) {
+            setItemAreaStock(edc4G, area, areaFree4G);
+            changed = true;
+          }
+        });
+      }
 
-      // Sinkronkan EDC BNI 3G
       let edc3G = warehouseStock.find(s =>
         String(s.name || '').toUpperCase().includes('EDC') && String(s.name || '').toUpperCase().includes('3G')
       );
-      if (edc3G) {
-        if (Number(edc3G.stock) !== free3G) {
-          edc3G.stock = free3G;
-          changed = true;
-        }
-      } else if (free3G > 0 || movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('3G'))) {
-        warehouseStock.push({
+      if (!edc3G && movementLogs.some(m => String(m.itemType || '').toUpperCase().includes('3G'))) {
+        edc3G = {
           id: 'ITM-EDC3G',
           name: 'EDC BNI 3G',
           category: 'HARDWARE',
           unit: 'Unit',
-          stock: free3G,
+          stock: 0,
+          areaStocks: {},
           icon: 'fa-calculator',
           color: 'amber'
-        });
+        };
+        warehouseStock.push(edc3G);
         changed = true;
+      }
+      if (edc3G) {
+        STOCK_AREAS.forEach(area => {
+          const areaFree3G = freeEdcs.filter(m =>
+            String(m.itemType || '').toUpperCase().includes('3G') &&
+            normalizeStockAreaName(m.servicePoint || '01 Cirebon').toLowerCase() === area.toLowerCase()
+          ).length;
+          if (getItemAreaStock(edc3G, area) !== areaFree3G) {
+            setItemAreaStock(edc3G, area, areaFree3G);
+            changed = true;
+          }
+        });
       }
 
       if (changed) {
@@ -8301,6 +8451,7 @@
     function onHomeMovementSpFilterChange(value) {
       homeMovementSpFilter = value || 'ALL';
       renderHomeMovementDashboard();
+      renderHomeStockAreaDashboard();
     }
 
     function updateMovementKPIs() {
