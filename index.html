@@ -1939,24 +1939,25 @@
           </div>
         </div>
 
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Jumlah Unit yang Diterima <span class="text-rose-500">*</span></label>
+          <input type="number" id="hubReceiveQtyInput" min="1" max="100" value="1" required oninput="renderHubReceiveUnitRows()"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-600" />
+          <p id="hubReceiveQtyHint" class="text-[10px] text-slate-500 mt-1">Masukkan jumlah unit yang diterima untuk memunculkan baris input SN EDC &amp; ICCID.</p>
+        </div>
+
         <div id="hubReceiveSnSection" class="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-200/80 space-y-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Jenis Perangkat EDC</label>
             <select id="hubReceiveEdcType" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
           </div>
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block font-bold text-slate-700">Serial Number (SN) EDC <span class="text-rose-500">*</span></label>
-              <span id="hubReceiveSnCountBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">0 SN</span>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block font-bold text-slate-700">Input SN EDC &amp; ICCID Per Unit <span class="text-rose-500">*</span></label>
+              <span id="hubReceiveSnCountBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">1 Unit</span>
             </div>
-            <textarea id="hubReceiveSnInput" rows="3" oninput="updateHubReceiveSnCounter()" placeholder="Masukkan 1 SN per baris (atau pisahkan dengan koma jika lebih dari 1 unit)..."
-              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-xs uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-            <p class="text-[10px] text-slate-500 mt-1">SN yang diinput akan otomatis masuk ke data Movement HUB Anda dengan status <strong>Free</strong>.</p>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">ICCID (Opsional)</label>
-            <input type="text" id="hubReceiveIccidInput" placeholder="Kosongkan jika tidak ada"
-              class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div id="hubReceiveUnitRowsContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+            <p class="text-[10px] text-slate-500 mt-1.5">Setiap paket SN EDC &amp; ICCID akan otomatis masuk ke Movement HUB Anda dengan status <strong>Free</strong>.</p>
           </div>
         </div>
 
@@ -5802,7 +5803,7 @@
           ? `<div class="mt-1"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold"><i class="fa-solid fa-location-dot text-[9px]"></i>${escapeHtml(h.asalHub)}</span></div>`
           : '';
         const receivedDetailBadge = h.receivedItemCategory
-          ? `<div class="mt-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded-md inline-block">Diterima (${escapeHtml(h.receivedItemCategory)})${Array.isArray(h.receivedSerialNumbers) && h.receivedSerialNumbers.length ? `: ${escapeHtml(h.receivedSerialNumbers.join(', '))}` : ''}</div>`
+          ? `<div class="mt-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded-md inline-block">Diterima (${escapeHtml(h.receivedItemCategory)}${h.receivedQty ? ` • ${h.receivedQty} Unit` : ''})${Array.isArray(h.receivedSerialNumbers) && h.receivedSerialNumbers.length ? `: ${escapeHtml(h.receivedSerialNumbers.join(', '))}` : ''}</div>`
           : '';
 
         const stageOptionsHtml = HUB_STATUS_STAGES.map(st =>
@@ -5875,11 +5876,13 @@
       const targetRadio = document.querySelector(`input[name="hubReceiveCategory"][value="${isThermalHint ? 'Thermal' : 'EDC'}"]`);
       if (targetRadio) targetRadio.checked = true;
 
-      document.getElementById('hubReceiveSnInput').value = '';
-      document.getElementById('hubReceiveIccidInput').value = '';
+      const qtyEl = document.getElementById('hubReceiveQtyInput');
+      if (qtyEl) qtyEl.value = Math.max(1, Math.min(100, parseInt(req.qty, 10) || 1));
+      const container = document.getElementById('hubReceiveUnitRowsContainer');
+      if (container) container.innerHTML = '';
       document.getElementById('hubReceiveNotesInput').value = '';
-      updateHubReceiveSnCounter();
       toggleHubReceiveCategoryFields();
+      renderHubReceiveUnitRows();
 
       document.getElementById('hubReceiveConfirmModal').classList.remove('hidden');
     }
@@ -5891,22 +5894,53 @@
     function toggleHubReceiveCategoryFields() {
       const cat = document.querySelector('input[name="hubReceiveCategory"]:checked')?.value || 'EDC';
       const snSec = document.getElementById('hubReceiveSnSection');
+      const qtyHint = document.getElementById('hubReceiveQtyHint');
       if (snSec) snSec.classList.toggle('hidden', cat !== 'EDC');
+      if (qtyHint) {
+        qtyHint.textContent = cat === 'EDC'
+          ? 'Masukkan jumlah unit yang diterima untuk memunculkan baris input SN EDC & ICCID.'
+          : 'Masukkan jumlah unit Thermal yang diterima (tidak menambah data ke Movement).';
+      }
+      if (cat === 'EDC') renderHubReceiveUnitRows();
     }
 
-    function parseHubReceiveSerialNumbers(raw) {
-      const tokens = String(raw || '')
-        .split(/[\r\n,;\s]+/)
-        .map(s => s.trim().toUpperCase())
-        .filter(Boolean);
-      return Array.from(new Set(tokens));
-    }
-
-    function updateHubReceiveSnCounter() {
-      const raw = document.getElementById('hubReceiveSnInput')?.value || '';
-      const sns = parseHubReceiveSerialNumbers(raw);
+    function renderHubReceiveUnitRows() {
+      const container = document.getElementById('hubReceiveUnitRowsContainer');
       const badge = document.getElementById('hubReceiveSnCountBadge');
-      if (badge) badge.textContent = `${sns.length} SN`;
+      const qtyEl = document.getElementById('hubReceiveQtyInput');
+      if (!container || !qtyEl) return;
+
+      let count = parseInt(qtyEl.value, 10);
+      if (isNaN(count) || count < 1) count = 1;
+      if (count > 100) count = 100;
+      if (badge) badge.textContent = `${count} Unit`;
+
+      const prevValues = {};
+      container.querySelectorAll('[data-hub-unit-row]').forEach(row => {
+        const idx = row.getAttribute('data-hub-unit-row');
+        const snVal = row.querySelector('[data-hub-sn-input]')?.value || '';
+        const iccidVal = row.querySelector('[data-hub-iccid-input]')?.value || '';
+        prevValues[idx] = { snVal, iccidVal };
+      });
+
+      let html = '';
+      for (let i = 1; i <= count; i++) {
+        const prev = prevValues[String(i)] || { snVal: '', iccidVal: '' };
+        html += `
+          <div data-hub-unit-row="${i}" class="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded-xl border border-slate-200/90">
+            <div class="col-span-2 sm:col-span-1 text-[10px] font-extrabold text-indigo-600 text-center">#${i}</div>
+            <div class="col-span-5 sm:col-span-6">
+              <input type="text" data-hub-sn-input value="${escapeHtml(prev.snVal)}" placeholder="SN EDC *"
+                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono text-[11px] uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
+            </div>
+            <div class="col-span-5">
+              <input type="text" data-hub-iccid-input value="${escapeHtml(prev.iccidVal)}" placeholder="ICCID (Opsional)"
+                class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono text-[11px] uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white" />
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
     }
 
     function handleHubReceiveConfirmSubmit(e) {
@@ -5917,14 +5951,33 @@
       if (!req) return;
 
       const category = document.querySelector('input[name="hubReceiveCategory"]:checked')?.value || 'EDC';
+      const receivedQty = Math.max(1, parseInt(document.getElementById('hubReceiveQtyInput')?.value, 10) || 1);
       const edcType = document.getElementById('hubReceiveEdcType')?.value || 'EDC BNI 4G';
-      const iccid = (document.getElementById('hubReceiveIccidInput')?.value || '').trim() || '-';
       const notes = (document.getElementById('hubReceiveNotesInput')?.value || '').trim();
-      const snList = parseHubReceiveSerialNumbers(document.getElementById('hubReceiveSnInput')?.value || '');
 
-      if (category === 'EDC' && snList.length === 0) {
-        showCustomAlert('SN EDC Wajib Diisi', 'Untuk penerimaan EDC, masukkan minimal 1 Serial Number (SN) EDC.');
-        return;
+      const unitPairs = [];
+      if (category === 'EDC') {
+        const rows = document.querySelectorAll('#hubReceiveUnitRowsContainer [data-hub-unit-row]');
+        const seenSn = new Set();
+        for (const row of rows) {
+          const idx = row.getAttribute('data-hub-unit-row');
+          const sn = (row.querySelector('[data-hub-sn-input]')?.value || '').trim().toUpperCase();
+          const iccid = (row.querySelector('[data-hub-iccid-input]')?.value || '').trim().toUpperCase() || '-';
+          if (!sn) {
+            showCustomAlert('SN EDC Belum Lengkap', `Isi Serial Number (SN) EDC pada Unit #${idx}.`);
+            return;
+          }
+          if (seenSn.has(sn)) {
+            showCustomAlert('SN EDC Duplikat', `SN ${sn} terinput lebih dari satu kali pada form ini.`);
+            return;
+          }
+          seenSn.add(sn);
+          unitPairs.push({ sn, iccid });
+        }
+        if (unitPairs.length === 0) {
+          showCustomAlert('SN EDC Wajib Diisi', 'Masukkan minimal 1 unit SN EDC.');
+          return;
+        }
       }
 
       const prevStatus = req.status;
@@ -5935,9 +5988,10 @@
       req.processedBy = `${currentUser.name} (${getRoleLabel(currentUser.role)})`;
       req.processedAt = ts;
       req.receivedItemCategory = category;
+      req.receivedQty = receivedQty;
       req.receivedBy = currentUser.name;
       req.receivedAt = ts;
-      if (category === 'EDC') req.receivedSerialNumbers = snList;
+      if (category === 'EDC') req.receivedSerialNumbers = unitPairs.map(p => p.sn);
       if (!Array.isArray(req.auditLogs)) req.auditLogs = [];
 
       const asalNormalized = String(req.asalHub || '').trim().toLowerCase();
@@ -5960,11 +6014,11 @@
 
       let movementSummaryNote = '';
       if (category === 'EDC') {
-        const movTs = formatMovementTimestamp();
+        const movTs = formatTimestampNow();
         let addedMov = 0;
         let updatedMov = 0;
-        snList.forEach((sn, idx) => {
-          const existingIdx = movementLogs.findIndex(m => String(m.sn || '').trim().toUpperCase() === sn);
+        unitPairs.forEach((pair, idx) => {
+          const existingIdx = movementLogs.findIndex(m => String(m.sn || '').trim().toUpperCase() === pair.sn);
           if (existingIdx !== -1) {
             const prev = movementLogs[existingIdx];
             const nextHistory = Array.isArray(prev.editHistory) ? [...prev.editHistory] : [];
@@ -5980,7 +6034,7 @@
               type: 'In',
               spk: 'Kiriman WH Pusat',
               itemType: edcType,
-              iccid: iccid !== '-' ? iccid : (prev.iccid || '-'),
+              iccid: pair.iccid !== '-' ? pair.iccid : (prev.iccid || '-'),
               servicePoint: targetSp,
               technician: currentUser.name,
               status: 'Free',
@@ -5996,8 +6050,8 @@
               type: 'In',
               spk: 'Kiriman WH Pusat',
               itemType: edcType,
-              sn,
-              iccid,
+              sn: pair.sn,
+              iccid: pair.iccid,
               tid: '-',
               servicePoint: targetSp,
               agentName: req.poNo,
@@ -6010,11 +6064,11 @@
         });
         syncToCloud('app_movement_edc', movementLogs);
         syncMovementToWarehouseStock(true);
-        movementSummaryNote = ` • ${snList.length} SN EDC masuk ke Movement (${addedMov} baru, ${updatedMov} diperbarui)`;
+        movementSummaryNote = ` • ${unitPairs.length} SN EDC & ICCID masuk ke Movement (${addedMov} baru, ${updatedMov} diperbarui)`;
       }
 
       req.auditLogs.push({
-        action: `Konfirmasi Penerimaan Teknisi (${category}): ${prevStatus} → Diterima${stockNote}${movementSummaryNote}${notes ? ' • Catatan: ' + notes : ''}`,
+        action: `Konfirmasi Penerimaan Teknisi (${category}, ${receivedQty} Unit): ${prevStatus} → Diterima${stockNote}${movementSummaryNote}${notes ? ' • Catatan: ' + notes : ''}`,
         actorName: currentUser.name,
         actorRole: getRoleLabel(currentUser.role),
         timestamp: ts
@@ -6024,7 +6078,7 @@
       pushSystemNotification({
         targetRoles: ['lead', 'logistik'],
         title: `Penerimaan HUB Dikonfirmasi: ${req.poNo}`,
-        message: `${currentUser.name} mengonfirmasi penerimaan ${category} untuk ${req.poNo} (${targetSp})${category === 'EDC' ? ` • ${snList.length} SN masuk ke Movement` : ''}.`,
+        message: `${currentUser.name} mengonfirmasi penerimaan ${receivedQty} unit ${category} untuk ${req.poNo} (${targetSp})${category === 'EDC' ? ` • ${unitPairs.length} SN masuk ke Movement` : ''}.`,
         goToTab: 'tab-hub'
       });
 
@@ -6033,8 +6087,8 @@
       showCustomAlert(
         'Penerimaan Dikonfirmasi',
         category === 'EDC'
-          ? `${req.poNo} dikonfirmasi Diterima (${category}). ${snList.length} SN EDC otomatis masuk ke Movement (${targetSp}).`
-          : `${req.poNo} dikonfirmasi Diterima (${category}) untuk ${targetSp}.`
+          ? `${req.poNo} dikonfirmasi Diterima (${receivedQty} unit EDC). ${unitPairs.length} SN & ICCID otomatis masuk ke Movement (${targetSp}).`
+          : `${req.poNo} dikonfirmasi Diterima (${receivedQty} unit Thermal) untuk ${targetSp}.`
       );
     }
     function renderStockManagementTable() {
