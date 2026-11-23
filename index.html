@@ -649,6 +649,36 @@
                   </div>
                   <div id="profApnContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-semibold text-slate-700"></div>
                 </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-800 mb-1">Foto SN EDC <span class="text-rose-500">*</span> <span class="font-normal text-[11px] text-slate-400">(Wajib dilampirkan)</span></label>
+                  <input type="file" id="profSnPhotoInput" accept="image/*" onchange="handleProfilingSnPhotoSelect(event)" class="hidden" />
+                  <div id="profSnPhotoDropBox" onclick="document.getElementById('profSnPhotoInput').click()"
+                    class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white hover:bg-blue-50/30 rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <i class="fa-solid fa-camera text-base"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-slate-800">Ambil Foto / Pilih Gambar SN EDC</p>
+                      <p class="text-[11px] text-slate-500 mt-0.5">Formulir tidak dapat dikirim tanpa foto SN EDC.</p>
+                    </div>
+                  </div>
+                  <div id="profSnPhotoPreviewWrapper" class="hidden mt-2 p-2.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <img id="profSnPhotoPreviewImg" src="" alt="Preview Foto SN EDC" class="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0" />
+                      <div class="min-w-0">
+                        <p class="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                          <i class="fa-solid fa-circle-check"></i> Foto SN EDC Siap
+                        </p>
+                        <p id="profSnPhotoMeta" class="text-[10px] text-slate-500 truncate mt-0.5">-</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <button type="button" onclick="document.getElementById('profSnPhotoInput').click()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold">Ganti</button>
+                      <button type="button" onclick="clearProfilingSnPhoto()" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-bold">Hapus</button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs sm:text-sm shadow-sm transition">
@@ -1905,6 +1935,25 @@
         <button type="button" onclick="saveDropdownEditorOptions()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-2xs">
           Simpan Perubahan
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW FOTO SN EDC PROFILING -->
+  <div id="profSnPhotoViewerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div onclick="closeProfilingSnPhotoModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"></div>
+    <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 animate-pop">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-sm text-slate-900">Foto SN EDC</h3>
+          <p id="profSnPhotoViewerSubtitle" class="text-[11px] font-mono text-blue-600 font-bold">-</p>
+        </div>
+        <button type="button" onclick="closeProfilingSnPhotoModal()" class="w-8 h-8 rounded-xl bg-slate-200/70 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 bg-slate-900/5 flex items-center justify-center max-h-[75vh] overflow-auto">
+        <img id="profSnPhotoViewerImg" src="" alt="Foto SN EDC" class="max-w-full max-h-[65vh] rounded-2xl object-contain shadow-sm" />
       </div>
     </div>
   </div>
@@ -5550,6 +5599,83 @@
     // ==========================================
     // 9. PROFILING BNI
     // ==========================================
+    let pendingProfilingSnPhotoDataUrl = '';
+
+    function handleProfilingSnPhotoSelect(e) {
+      const file = e.target?.files?.[0];
+      if (!file) return;
+      if (!file.type || !file.type.startsWith('image/')) {
+        showCustomAlert('Format Tidak Valid', 'Harap pilih file gambar (JPG, PNG, WEBP, dll.).');
+        clearProfilingSnPhoto();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        const img = new Image();
+        img.onload = function () {
+          const maxDim = 900;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.68);
+          pendingProfilingSnPhotoDataUrl = compressed;
+
+          const previewImg = document.getElementById('profSnPhotoPreviewImg');
+          const previewWrap = document.getElementById('profSnPhotoPreviewWrapper');
+          const dropBox = document.getElementById('profSnPhotoDropBox');
+          const metaEl = document.getElementById('profSnPhotoMeta');
+          if (previewImg) previewImg.src = compressed;
+          if (metaEl) metaEl.textContent = `${file.name} (${Math.max(1, Math.round(compressed.length * 0.75 / 1024))} KB)`;
+          if (previewWrap) previewWrap.classList.remove('hidden');
+          if (dropBox) dropBox.classList.add('hidden');
+        };
+        img.onerror = function () {
+          showCustomAlert('Gagal Memuat Foto', 'File gambar tidak dapat dibaca. Coba pilih foto lain.');
+          clearProfilingSnPhoto();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearProfilingSnPhoto() {
+      pendingProfilingSnPhotoDataUrl = '';
+      const inp = document.getElementById('profSnPhotoInput');
+      if (inp) inp.value = '';
+      const previewImg = document.getElementById('profSnPhotoPreviewImg');
+      if (previewImg) previewImg.src = '';
+      document.getElementById('profSnPhotoPreviewWrapper')?.classList.add('hidden');
+      document.getElementById('profSnPhotoDropBox')?.classList.remove('hidden');
+    }
+
+    function openProfilingSnPhotoModal(ticketId) {
+      const ticket = profilingHistory.find(p => p.id === ticketId);
+      if (!ticket || !ticket.snPhoto) return;
+      const subEl = document.getElementById('profSnPhotoViewerSubtitle');
+      const imgEl = document.getElementById('profSnPhotoViewerImg');
+      if (subEl) subEl.textContent = `${ticket.id} • TID: ${ticket.tid} • SN: ${ticket.snBaru || '-'}`;
+      if (imgEl) imgEl.src = ticket.snPhoto;
+      document.getElementById('profSnPhotoViewerModal')?.classList.remove('hidden');
+    }
+
+    function closeProfilingSnPhotoModal() {
+      document.getElementById('profSnPhotoViewerModal')?.classList.add('hidden');
+    }
+
     function handleProfilingSubmit(e) {
       e.preventDefault();
       if (!currentUser) return;
@@ -5560,6 +5686,11 @@
       const kebutuhanChecked = Array.from(document.querySelectorAll('input[name="profKebutuhan"]:checked')).map(cb => cb.value);
       if (kebutuhanChecked.length === 0) {
         showCustomAlert('Pilih Kebutuhan', 'Centang minimal satu pilihan pada bagian Kebutuhan.');
+        return;
+      }
+
+      if (!pendingProfilingSnPhotoDataUrl) {
+        showCustomAlert('Foto SN EDC Wajib', 'Wajib melampirkan atau mengambil foto SN EDC sebelum mengirim formulir.');
         return;
       }
 
@@ -5582,6 +5713,7 @@
         snBaru,
         iccidBaru,
         apn,
+        snPhoto: pendingProfilingSnPhotoDataUrl,
         officeResponse: '',
         status: 'Proses',
         timestamp: ts,
@@ -5609,6 +5741,7 @@
       });
 
       e.target.reset();
+      clearProfilingSnPhoto();
       refreshAllActiveViews();
       showCustomAlert('Formulir Terkirim', `Pengajuan Profiling BNI untuk TID ${tid} berhasil dikirim.`);
     }
@@ -5744,6 +5877,11 @@
               <div class="font-mono text-[11px] text-slate-700">SN: <strong>${escapeHtml(snText)}</strong></div>
               <div class="font-mono text-[11px] text-slate-700">ICCID: <strong>${escapeHtml(iccidText)}</strong></div>
               <div class="text-[10px] font-bold text-slate-500 mt-0.5">${escapeHtml(apnText)}</div>
+              ${p.snPhoto ? `
+                <button type="button" onclick="openProfilingSnPhotoModal('${p.id}')" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold transition">
+                  <i class="fa-solid fa-image"></i> Lihat Foto SN
+                </button>
+              ` : ''}
             </td>
             <td class="p-3.5">
               <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${statusBadge}">${escapeHtml(p.status)}</span>
