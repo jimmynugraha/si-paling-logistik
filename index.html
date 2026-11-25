@@ -189,45 +189,108 @@
   <!-- ===================================================================== -->
   <div id="loginShell" class="min-h-screen flex flex-col lg:flex-row bg-[#f8fafc]">
     <!-- Panel Kiri: Hero Biru -->
-    <div class="lg:w-[56%] bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 text-white relative overflow-hidden flex flex-col justify-between p-7 sm:p-10 lg:p-14 min-h-[240px] lg:min-h-screen">
-      <div class="relative z-10 flex items-center gap-2.5">
+    <div class="lg:w-[56%] bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-700 text-white relative overflow-hidden flex flex-col p-6 sm:p-8 lg:p-12 min-h-[220px] lg:min-h-screen">
+      <div class="relative z-10 flex items-center gap-2.5 shrink-0">
         <div class="w-8 h-8 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center">
           <i class="fa-solid fa-boxes-packing text-sm"></i>
         </div>
         <span class="font-extrabold text-sm tracking-tight">Si Paling Logistik</span>
       </div>
 
-      <div class="relative z-10 my-8 lg:my-auto max-w-md">
-        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.08]">
-          Logistik,<br />tanpa ribet.
-        </h1>
-        <p class="text-blue-100/90 text-xs sm:text-sm mt-4 leading-relaxed">
-          Checkout barang, retur, dan stok gudang EDC dalam satu tempat.
-        </p>
-      </div>
-
-      <div class="hidden lg:block h-28"></div>
-
-      <!-- Kartu Preview Miring di Pojok Kanan Bawah -->
-      <div class="hidden lg:flex flex-col gap-4 absolute -bottom-10 right-6 w-80 pointer-events-none select-none">
-        <div class="bg-white text-slate-900 rounded-2xl p-4 shadow-2xl shadow-blue-950/30 -rotate-6 border border-white/80">
-          <div class="flex items-start justify-between">
-            <span class="text-2xl font-extrabold tracking-tight text-slate-900">12</span>
-            <span class="text-[11px] font-semibold text-slate-400">Antrean</span>
-          </div>
-          <div class="my-2.5 border-t border-dashed border-slate-200"></div>
-          <p class="text-xs font-extrabold text-slate-800">Checkout</p>
-          <p class="text-[11px] text-slate-400">menunggu verifikasi</p>
+      <div class="relative z-10 my-auto py-6 lg:py-8 flex flex-col gap-5 lg:gap-6 max-w-2xl w-full mx-auto">
+        <div>
+          <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.08]">
+            Logistik, tanpa ribet.
+          </h1>
+          <p class="text-blue-100/90 text-xs sm:text-sm mt-2.5 leading-relaxed max-w-lg">
+            Checkout barang, retur, profiling, dan stok gudang EDC per area dalam satu tempat.
+          </p>
         </div>
 
-        <div class="bg-white text-slate-900 rounded-2xl p-4 shadow-2xl shadow-blue-950/30 -rotate-6 translate-x-2 border border-white/80">
-          <div class="flex items-start justify-between">
-            <span class="text-2xl font-extrabold tracking-tight text-slate-900">4</span>
-            <span class="text-[11px] font-semibold text-slate-400">Retur</span>
+        <!-- Preview Mini Aplikasi Si Paling Logistik -->
+        <div class="hidden lg:block pointer-events-none select-none w-full">
+          <div class="bg-[#f8fafc] text-slate-900 rounded-2xl shadow-2xl shadow-blue-950/40 border border-white/30 overflow-hidden">
+          <!-- Mini App Navbar -->
+          <div class="bg-white border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-[10px]">
+                <i class="fa-solid fa-boxes-packing"></i>
+              </div>
+              <span class="font-extrabold text-xs text-slate-900">Si Paling Logistik</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] font-bold">
+              <span class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white">Beranda</span>
+              <span class="px-2 py-1 rounded-lg text-slate-500">Movement</span>
+              <span class="px-2 py-1 rounded-lg text-slate-500">Profiling</span>
+              <span class="px-2 py-1 rounded-lg text-slate-500">Stok Gudang</span>
+            </div>
           </div>
-          <div class="my-2.5 border-t border-dashed border-slate-200"></div>
-          <p class="text-xs font-extrabold text-slate-800">Retur pending</p>
-          <p class="text-[11px] text-slate-400">menunggu validasi</p>
+
+          <!-- Mini App Body -->
+          <div class="p-4 space-y-3">
+            <!-- Mini Hero Banner -->
+            <div class="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3.5 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] font-semibold text-blue-100">Operasional Real-Time • 01 Cirebon &amp; HUB</p>
+                <p class="text-sm font-extrabold mt-0.5">Selamat Datang di Si Paling Logistik!</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-white/15 text-[10px] font-bold">Live Sync</span>
+            </div>
+
+            <!-- Mini Dashboard Movement SN EDC -->
+            <div class="bg-white rounded-2xl p-3 border border-slate-200/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold text-slate-800">Dashboard Movement SN EDC</span>
+                <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Semua SP / HUB</span>
+              </div>
+              <div class="grid grid-cols-4 gap-2">
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200/70">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase">Total SN</p>
+                  <p class="text-sm font-extrabold text-slate-900 mt-0.5">125</p>
+                </div>
+                <div class="bg-emerald-50/70 rounded-xl p-2 border border-emerald-200/70">
+                  <p class="text-[9px] font-bold text-emerald-700 uppercase">Free</p>
+                  <p class="text-sm font-extrabold text-emerald-700 mt-0.5">118</p>
+                </div>
+                <div class="bg-blue-50/70 rounded-xl p-2 border border-blue-200/70">
+                  <p class="text-[9px] font-bold text-blue-700 uppercase">Buffer</p>
+                  <p class="text-sm font-extrabold text-blue-700 mt-0.5">5</p>
+                </div>
+                <div class="bg-rose-50/70 rounded-xl p-2 border border-rose-200/70">
+                  <p class="text-[9px] font-bold text-rose-700 uppercase">Damaged</p>
+                  <p class="text-sm font-extrabold text-rose-700 mt-0.5">2</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mini Dashboard Stok EDC Free Per Area -->
+            <div class="bg-white rounded-2xl p-3 border border-slate-200/80 space-y-2">
+              <span class="text-[11px] font-extrabold text-slate-800 block">Stok EDC Free Per Area (4G &amp; 3G)</span>
+              <div class="grid grid-cols-4 gap-2">
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200/70">
+                  <p class="text-[9px] font-bold text-slate-500 truncate">01 Cirebon</p>
+                  <p class="text-xs font-extrabold text-slate-900 mt-0.5">54 Unit</p>
+                  <p class="text-[9px] text-emerald-700 font-semibold">4G &bull; 3G</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200/70">
+                  <p class="text-[9px] font-bold text-slate-500 truncate">HUB Indramayu</p>
+                  <p class="text-xs font-extrabold text-slate-900 mt-0.5">24 Unit</p>
+                  <p class="text-[9px] text-emerald-700 font-semibold">4G &bull; 3G</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200/70">
+                  <p class="text-[9px] font-bold text-slate-500 truncate">HUB Kuningan</p>
+                  <p class="text-xs font-extrabold text-slate-900 mt-0.5">22 Unit</p>
+                  <p class="text-[9px] text-emerald-700 font-semibold">4G &bull; 3G</p>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200/70">
+                  <p class="text-[9px] font-bold text-slate-500 truncate">HUB Majalengka</p>
+                  <p class="text-xs font-extrabold text-slate-900 mt-0.5">18 Unit</p>
+                  <p class="text-[9px] text-emerald-700 font-semibold">4G &bull; 3G</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </div>
     </div>
@@ -290,12 +353,12 @@
     <header class="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-2xs">
       <div class="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400"></div>
 
-      <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div class="max-w-[1440px] w-full mx-auto px-3 sm:px-5 min-h-[64px] py-2 flex flex-wrap xl:flex-nowrap items-center justify-between gap-2.5">
 
         <!-- Kiri: Logo + Lokasi + Identitas Akun Login -->
         <div class="flex items-center gap-2.5 min-w-0 shrink-0">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
-            <i class="fa-solid fa-boxes-packing text-base"></i>
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <i class="fa-solid fa-boxes-packing text-sm sm:text-base"></i>
           </div>
           <div class="min-w-0">
             <div class="font-display font-extrabold text-slate-900 text-sm sm:text-base leading-tight truncate">Si Paling Logistik</div>
@@ -303,18 +366,18 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
               <span id="headerServicePoint" class="truncate">01 Cirebon</span>
               <span class="text-slate-300">•</span>
-              <span id="headerUserAccountBadge" class="text-blue-600 font-semibold truncate max-w-[120px] sm:max-w-[170px]">
+              <span id="headerUserAccountBadge" class="text-blue-600 font-semibold truncate max-w-[100px] sm:max-w-[150px]">
                 <i class="fa-solid fa-user text-[10px] mr-0.5"></i>User
               </span>
             </div>
           </div>
         </div>
 
-        <!-- Tengah: Navigasi Desktop Satu Baris (Segmented Pill Bar) -->
-        <nav id="desktopNav" class="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/70"></nav>
+        <!-- Tengah: Navigasi Desktop Dinamis (Auto-Wrap saat Zoom / Layar Sempit) -->
+        <nav id="desktopNav" class="hidden lg:flex flex-wrap items-center justify-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/70 min-w-0 max-w-full order-3 xl:order-2 w-full xl:w-auto"></nav>
 
         <!-- Kanan: Lonceng Notifikasi, Profil Avatar Gradien, & Keluar -->
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 order-2 xl:order-3">
           <div class="relative" id="notificationWrapper">
             <button type="button" onclick="toggleNotificationDropdown(event)" class="relative p-2.5 rounded-xl bg-slate-100/90 hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition" title="Notifikasi">
               <i class="fa-solid fa-bell text-sm"></i>
@@ -337,11 +400,11 @@
             </div>
           </div>
 
-          <div class="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-2xl bg-slate-50 border border-slate-200/80">
+          <div class="hidden sm:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-2xl bg-slate-50 border border-slate-200/80 min-w-0 max-w-[170px]">
             <div id="headerUserAvatar" class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-2xs shrink-0">A</div>
-            <div class="flex flex-col items-start">
-              <span id="headerUserName" class="text-xs font-bold text-slate-800 leading-tight whitespace-nowrap">Administrator</span>
-              <span id="headerUserRole" class="text-[10px] font-bold text-blue-600 uppercase tracking-wider whitespace-nowrap">Team Leader</span>
+            <div class="flex flex-col items-start min-w-0">
+              <span id="headerUserName" class="text-xs font-bold text-slate-800 leading-tight truncate max-w-[110px]">Administrator</span>
+              <span id="headerUserRole" class="text-[10px] font-bold text-blue-600 uppercase tracking-wider truncate max-w-[110px]">Team Leader</span>
             </div>
           </div>
 
