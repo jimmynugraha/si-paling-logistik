@@ -30,6 +30,12 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
+  <!-- GSAP + ScrollTrigger, Motion, & Lenis Smooth Scroll -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -49,6 +55,20 @@
       max-width: 100vw;
       overflow-x: hidden;
       touch-action: pan-y;
+    }
+    html.lenis, html.lenis body {
+      height: auto;
+    }
+    .lenis.lenis-smooth {
+      scroll-behavior: auto !important;
+    }
+    .lenis.lenis-smooth [data-lenis-prevent] {
+      overscroll-behavior: contain;
+    }
+    .gsap-word-mask {
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
     }
     button, input, select, textarea {
       font-family: inherit;
@@ -3753,6 +3773,9 @@
           break;
       }
       applyReadOnlyViewerMode();
+      if (typeof scheduleMotionAndScrollEffects === 'function') {
+        scheduleMotionAndScrollEffects();
+      }
     }
 
     function applyReadOnlyViewerMode() {
@@ -9086,7 +9109,198 @@
     }
 
     // ==========================================
-    // 17. INISIALISASI SAAT HALAMAN DIMUAT
+    // 17. ANIMASI GSAP + SCROLLTRIGGER, MOTION, & LENIS SMOOTH SCROLL
+    // ==========================================
+    let appLenisInstance = null;
+    let motionEffectsTimer = null;
+    let lastAnimatedTabRenderKey = '';
+
+    function initLenisSmoothScroll() {
+      if (appLenisInstance || typeof Lenis === 'undefined') return;
+      try {
+        appLenisInstance = new Lenis({
+          duration: 1.05,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          smoothWheel: true,
+          wheelMultiplier: 0.95,
+          touchMultiplier: 1.4
+        });
+
+        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+          appLenisInstance.on('scroll', ScrollTrigger.update);
+          gsap.ticker.add((time) => {
+            appLenisInstance.raf(time * 1000);
+          });
+          gsap.ticker.lagSmoothing(0);
+        } else {
+          function raf(time) {
+            appLenisInstance.raf(time);
+            requestAnimationFrame(raf);
+          }
+          requestAnimationFrame(raf);
+        }
+
+        // Prevent Lenis from hijacking scroll inside modals or inner scrollable containers
+        document.querySelectorAll('[id*="Modal"], [id*="-modal"], .overflow-y-auto, .overflow-x-auto').forEach(el => {
+          el.setAttribute('data-lenis-prevent', '');
+        });
+      } catch (err) {
+        console.warn('Lenis init skipped:', err);
+      }
+    }
+
+    function animateSectionHeadingsPerWord(scopeRoot) {
+      if (typeof gsap === 'undefined') return;
+      if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
+
+      const root = scopeRoot || document;
+      const headings = root.querySelectorAll('h1, h2, h3');
+      headings.forEach(heading => {
+        if (!heading || heading.offsetParent === null) return;
+        // Skip headings that contain interactive/dynamic child elements with IDs
+        if (heading.querySelector('[id]')) return;
+
+        const rawText = (heading.dataset.originalHeadingText || heading.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!rawText) return;
+
+        // Re-split only if text changed or not yet animated in this view
+        const currentPlain = (heading.textContent || '').replace(/\s+/g, ' ').trim();
+        if (heading.dataset.wordsAnimated === '1' && heading.dataset.originalHeadingText === currentPlain) {
+          return;
+        }
+
+        heading.dataset.originalHeadingText = rawText;
+        heading.dataset.wordsAnimated = '1';
+
+        const words = rawText.split(' ');
+        heading.innerHTML = words.map((w, idx) =>
+          `<span class="gsap-word-mask">${idx > 0 ? '' : ''}<span class="gsap-word inline-block">${escapeHtml(w)}</span></span>${idx < words.length - 1 ? ' ' : ''}`
+        ).join('');
+
+        const wordEls = heading.querySelectorAll('.gsap-word');
+        if (!wordEls.length) return;
+
+        gsap.fromTo(
+          wordEls,
+          { yPercent: 115, opacity: 0 },
+          {
+            yPercent: 0,
+            opacity: 1,
+            duration: 0.55,
+            stagger: 0.045,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+            scrollTrigger: typeof ScrollTrigger !== 'undefined'
+              ? {
+                  trigger: heading,
+                  start: 'top 94%',
+                  once: true
+                }
+              : undefined
+          }
+        );
+      });
+
+      if (typeof ScrollTrigger !== 'undefined') {
+        ScrollTrigger.refresh();
+      }
+    }
+
+    function animateCardsWithMotion(scopeRoot) {
+      const motionLib = window.Motion;
+      if (!motionLib || typeof motionLib.animate !== 'function') return;
+
+      const root = scopeRoot || document;
+      const cardSelectors = [
+        '#tekHomeStatsGrid > div',
+        '#tekHomeMenuGrid > button',
+        '#homeMovementDashboard .grid > div',
+        '#homeStockAreaDashboard .grid > div',
+        '#mov-kpi-grid > div',
+        '#mov-hub-kpi-grid > div',
+        '#stockAreaSummaryGrid > button',
+        '#checkoutCatalogGrid > div',
+        '#catalogEditorGrid > div',
+        'main section:not(.hidden) > .rounded-3xl',
+        'main section:not(.hidden) > .grid > .rounded-3xl'
+      ];
+
+      const seen = new Set();
+      const cards = [];
+      cardSelectors.forEach(sel => {
+        root.querySelectorAll(sel).forEach(el => {
+          if (!seen.has(el) && el.offsetParent !== null) {
+            seen.add(el);
+            cards.push(el);
+          }
+        });
+      });
+
+      cards.forEach((card, idx) => {
+        if (card.dataset.motionEntered !== '1') {
+          card.dataset.motionEntered = '1';
+          const runEnter = () => {
+            motionLib.animate(
+              card,
+              { opacity: [0, 1], y: [18, 0], scale: [0.975, 1] },
+              {
+                duration: 0.42,
+                delay: Math.min(idx * 0.03, 0.25),
+                easing: [0.22, 1, 0.36, 1]
+              }
+            );
+          };
+
+          if (typeof motionLib.inView === 'function') {
+            motionLib.inView(card, () => {
+              runEnter();
+            }, { amount: 0.05 });
+          } else {
+            runEnter();
+          }
+        }
+
+        // Hover lift animation on interactive/stat cards
+        const isInteractiveCard = card.matches('button, [onclick]') || card.closest('#tekHomeStatsGrid, #tekHomeMenuGrid, #homeMovementDashboard, #homeStockAreaDashboard, #mov-kpi-grid, #mov-hub-kpi-grid, #stockAreaSummaryGrid, #checkoutCatalogGrid, #catalogEditorGrid');
+        if (isInteractiveCard && card.dataset.motionHoverBound !== '1') {
+          card.dataset.motionHoverBound = '1';
+          if (typeof motionLib.hover === 'function') {
+            motionLib.hover(card, () => {
+              motionLib.animate(card, { y: -3, scale: 1.014 }, { duration: 0.18, easing: 'ease-out' });
+              return () => {
+                motionLib.animate(card, { y: 0, scale: 1 }, { duration: 0.2, easing: 'ease-out' });
+              };
+            });
+          } else {
+            card.addEventListener('pointerenter', () => {
+              motionLib.animate(card, { y: -3, scale: 1.014 }, { duration: 0.18, easing: 'ease-out' });
+            });
+            card.addEventListener('pointerleave', () => {
+              motionLib.animate(card, { y: 0, scale: 1 }, { duration: 0.2, easing: 'ease-out' });
+            });
+          }
+        }
+      });
+    }
+
+    function runPageMotionAndScrollEffects() {
+      const activeSection = document.querySelector('main section:not(.hidden)') || document.getElementById('loginScreen');
+      if (!activeSection) return;
+      animateSectionHeadingsPerWord(activeSection);
+      animateCardsWithMotion(activeSection);
+    }
+
+    function scheduleMotionAndScrollEffects() {
+      if (motionEffectsTimer) clearTimeout(motionEffectsTimer);
+      motionEffectsTimer = setTimeout(() => {
+        motionEffectsTimer = null;
+        requestAnimationFrame(runPageMotionAndScrollEffects);
+      }, 45);
+    }
+
+    // ==========================================
+    // 18. INISIALISASI SAAT HALAMAN DIMUAT
     // ==========================================
     window.addEventListener('DOMContentLoaded', () => {
       systemUsers = ensureMasterAdminExists(systemUsers);
@@ -9095,6 +9309,8 @@
       syncMovementToWarehouseStock(false);
       initRealtimeCloudListeners();
       restoreUserSession();
+      initLenisSmoothScroll();
+      scheduleMotionAndScrollEffects();
       if (window.lucide) lucide.createIcons();
     });
   </script>
