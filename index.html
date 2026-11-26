@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Si Paling Logistik</title>
+  <title>Si Paling Logistik — Sistem Inventaris & Operasional</title>
 
   <!-- Custom SVG Favicon (Mengganti Ikon Globe Default Browser) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232563eb'/%3E%3Cpath d='M16 24l16-8 16 8v18l-16 8-16-8V24z' fill='none' stroke='%23ffffff' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M16 24l16 8 16-8M32 32v18' fill='none' stroke='%23ffffff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
@@ -194,7 +194,7 @@
         <div class="w-8 h-8 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center">
           <i class="fa-solid fa-boxes-packing text-sm"></i>
         </div>
-        <span class="font-extrabold text-sm tracking-tight">Si Paling Logistik</span>
+        <span class="font-extrabold text-sm tracking-tight">Si Paling</span>
       </div>
 
       <div class="relative z-10 my-auto py-6 lg:py-8 flex flex-col gap-5 lg:gap-6 max-w-2xl w-full mx-auto">
@@ -775,9 +775,9 @@
                 </div>
 
                 <div>
-                  <label class="block text-xs font-bold text-slate-800 mb-1">Foto SN EDC <span class="text-rose-500">*</span> <span class="font-normal text-[11px] text-slate-400">(Wajib dilampirkan)</span></label>
-                  <input type="file" id="profSnPhotoInput" accept="image/*" onchange="handleProfilingSnPhotoSelect(event)" class="hidden" />
-                  <div id="profSnPhotoDropBox" onclick="document.getElementById('profSnPhotoInput').click()"
+                  <label for="profSnPhotoInput" class="block text-xs font-bold text-slate-800 mb-1">Foto SN EDC <span class="text-rose-500">*</span> <span class="font-normal text-[11px] text-slate-400">(Wajib dilampirkan)</span></label>
+                  <input type="file" id="profSnPhotoInput" accept="image/*" onchange="handleProfilingSnPhotoSelect(event)" class="sr-only" />
+                  <label id="profSnPhotoDropBox" for="profSnPhotoInput"
                     class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white hover:bg-blue-50/30 rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition">
                     <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                       <i class="fa-solid fa-camera text-base"></i>
@@ -786,7 +786,7 @@
                       <p class="text-xs font-bold text-slate-800">Ambil Foto / Pilih Gambar SN EDC</p>
                       <p class="text-[11px] text-slate-500 mt-0.5">Formulir tidak dapat dikirim tanpa foto SN EDC.</p>
                     </div>
-                  </div>
+                  </label>
                   <div id="profSnPhotoPreviewWrapper" class="hidden mt-2 p-2.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
                       <img id="profSnPhotoPreviewImg" src="" alt="Preview Foto SN EDC" class="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0" />
@@ -798,7 +798,7 @@
                       </div>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
-                      <button type="button" onclick="document.getElementById('profSnPhotoInput').click()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold">Ganti</button>
+                      <label for="profSnPhotoInput" class="cursor-pointer px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold">Ganti</label>
                       <button type="button" onclick="clearProfilingSnPhoto()" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-bold">Hapus</button>
                     </div>
                   </div>
@@ -5731,19 +5731,20 @@
     function handleProfilingSnPhotoSelect(e) {
       const file = e.target?.files?.[0];
       if (!file) return;
-      if (!file.type || !file.type.startsWith('image/')) {
+      const fileType = String(file.type || '').toLowerCase();
+      const fileName = String(file.name || '').toLowerCase();
+      const hasImageExt = /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(fileName);
+      if (fileType && !fileType.startsWith('image/') && !hasImageExt) {
         showCustomAlert('Format Tidak Valid', 'Harap pilih file gambar (JPG, PNG, WEBP, dll.).');
         clearProfilingSnPhoto();
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = function (evt) {
-        const img = new Image();
-        img.onload = function () {
+      const processLoadedImage = (img, cleanupFn) => {
+        try {
           const maxDim = 900;
-          let w = img.width;
-          let h = img.height;
+          let w = img.naturalWidth || img.width || 800;
+          let h = img.naturalHeight || img.height || 600;
           if (w > maxDim || h > maxDim) {
             if (w >= h) {
               h = Math.round((h * maxDim) / w);
@@ -5766,17 +5767,50 @@
           const dropBox = document.getElementById('profSnPhotoDropBox');
           const metaEl = document.getElementById('profSnPhotoMeta');
           if (previewImg) previewImg.src = compressed;
-          if (metaEl) metaEl.textContent = `${file.name} (${Math.max(1, Math.round(compressed.length * 0.75 / 1024))} KB)`;
+          if (metaEl) metaEl.textContent = `${file.name || 'foto-sn.jpg'} (${Math.max(1, Math.round(compressed.length * 0.75 / 1024))} KB)`;
           if (previewWrap) previewWrap.classList.remove('hidden');
           if (dropBox) dropBox.classList.add('hidden');
-        };
-        img.onerror = function () {
-          showCustomAlert('Gagal Memuat Foto', 'File gambar tidak dapat dibaca. Coba pilih foto lain.');
+        } catch (err) {
+          showCustomAlert('Gagal Memproses Foto', 'Foto tidak dapat dikompresi. Coba ambil foto ulang.');
           clearProfilingSnPhoto();
-        };
-        img.src = evt.target.result;
+        } finally {
+          if (cleanupFn) cleanupFn();
+        }
       };
-      reader.readAsDataURL(file);
+
+      if (window.URL && typeof URL.createObjectURL === 'function') {
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => processLoadedImage(img, () => URL.revokeObjectURL(objectUrl));
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          // Fallback ke FileReader jika objectURL gagal
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const fbImg = new Image();
+            fbImg.onload = () => processLoadedImage(fbImg);
+            fbImg.onerror = () => {
+              showCustomAlert('Gagal Memuat Foto', 'File gambar tidak dapat dibaca (jika memakai iPhone, pilih format JPEG/Most Compatible atau screenshot terlebih dahulu).');
+              clearProfilingSnPhoto();
+            };
+            fbImg.src = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        };
+        img.src = objectUrl;
+      } else {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const img = new Image();
+          img.onload = () => processLoadedImage(img);
+          img.onerror = () => {
+            showCustomAlert('Gagal Memuat Foto', 'File gambar tidak dapat dibaca. Coba pilih foto lain.');
+            clearProfilingSnPhoto();
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     }
 
     function clearProfilingSnPhoto() {
